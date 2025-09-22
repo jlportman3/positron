@@ -1,0 +1,3343 @@
+G.hn Access Multiplexer (GAM)
+  Installation and Activation Guide
+         GAM-12-M / GAM-24-M
+         GAM-12-C / GAM-24-C
+GAM Installation and Activation Guide
+
+
+
+
+Publication Information
+©2020 Positron Access Solutions
+
+GAM (G.hn Access Multiplexer)
+Installation and Activation Guide
+
+
+
+Publication date: May 2020
+
+Printed in Canada
+
+Published By
+Positron Access Solutions
+5101 Buchan Street, Suite 220
+Montreal, Quebec, Canada
+H4P 2R9
+Telephone US and Canada: 1-888-577-5254
+International: +1-514-345-2220
+
+Product names, other than Positron's, mentioned herein may be trademarks and/or registered trademarks
+their respective companies.
+
+
+Disclaimer Notice
+Although Positron Access Solutions has made every effort to ensure the accuracy of the information
+contained herein, this document is subject to change.
+
+
+
+
+Positron Access Solutions                       2                  Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+CONTENTS
+Chapter 1 ......................................................................................................................................... 7
+About the GAM ............................................................................................................................... 7
+  1.1    Introduction ........................................................................................................................ 8
+  1.2    GAM Connections ............................................................................................................. 9
+     1.2.1 Power Connection ........................................................................................................ 9
+     1.2.2 Ethernet (SFP+) Ports................................................................................................ 10
+     1.2.3 G.hn Ports .................................................................................................................. 10
+     1.2.4 Local management ports ........................................................................................... 11
+     1.2.5 GAM LED Indicators .................................................................................................. 12
+     1.2.6 GAM Reset Button ..................................................................................................... 13
+  1.3    G1000-M (MIMO/SISO) Copper Endpoint ...................................................................... 13
+  1.4    G1001-M and G1001-MP (MIMO/SISO) Copper Endpoint ............................................. 14
+  1.5    G1000-C (COAX) Endpoint ............................................................................................. 15
+  1.6    G1001-C (COAX) Endpoint ............................................................................................. 16
+Chapter 2 ....................................................................................................................................... 17
+WEB Management ........................................................................................................................ 17
+  2.1    Introduction ...................................................................................................................... 18
+  2.2    System Management ...................................................................................................... 18
+     2.2.1 Logging into the WEB GUI ......................................................................................... 18
+     2.2.2 System ....................................................................................................................... 19
+     2.2.3 General Information ................................................................................................... 20
+  2.3    Configuring the Uplink (WAN) ......................................................................................... 21
+     2.3.1 SFP+ ports ................................................................................................................. 21
+     2.3.2 Inband Management .................................................................................................. 22
+  2.4    Configuring a G.hn Service ............................................................................................. 23
+     2.4.1 G.hn Port .................................................................................................................... 23
+     2.4.2 Bandwidth Profiles (Bandwidth Plans) ....................................................................... 24
+     2.4.3 Endpoint Devices (G.hn Bridge) ................................................................................ 25
+     2.4.4 Subscribers ................................................................................................................ 27
+  2.5    G.hn Power Mask Configuration ..................................................................................... 29
+  2.6    VectorBoost configuration ............................................................................................... 30
+  2.7    Managing VLANs on the uplink. ...................................................................................... 33
+  2.8    IPTV application .............................................................................................................. 38
+     2.8.1 Configure allowed VLAN in subscriber ...................................................................... 38
+     2.8.2 Create an IP interface VLAN for IGMP snooping. ..................................................... 38
+     2.8.3 Enable IGMP snooping .............................................................................................. 38
+     2.8.4 IP Multicast (IPMC) Profile Management ................................................................... 44
+     2.8.5 Optional MVR proxy ................................................................................................... 48
+  2.9    DHCP Snooping / Option-82 ........................................................................................... 51
+     2.9.1 DHCP relay (unicast request) .................................................................................... 54
+     2.9.2 DHCP forward (broadcast request) ........................................................................... 54
+  2.10      PPPoE Intermediate Agent ......................................................................................... 54
+Chapter 3 ....................................................................................................................................... 56
+Monitoring the GAM ..................................................................................................................... 56
+
+Positron Access Solutions                                          3                          Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+  3.1    Monitoring the GAM ........................................................................................................ 57
+  3.2    System Information ......................................................................................................... 57
+  3.3    G.hn Ports, End-Points and Subscribers ........................................................................ 58
+  3.4    Monitor IP multicast group (IGMP snooping) .................................................................. 61
+  3.5    MIMO Diagnostics: SNR, NOISE, PSD Rx Graphs ........................................................ 64
+  3.6    COAX Diagnostics: SNR, NOISE, PSD Rx Graphs ........................................................ 70
+  3.7    Firmware upgrade ........................................................................................................... 73
+     3.7.1 Upgrade GAM Firmware from File on your PC .......................................................... 73
+     3.7.2 Upgrade GAM Firmware from URL............................................................................ 74
+     3.7.3 Activate Alternate Image ............................................................................................ 75
+  3.8    Configuration backup and restore ................................................................................... 76
+     3.8.1 Backup the configuration ........................................................................................... 76
+     3.8.2 Restore the configuration ........................................................................................... 76
+Chapter 4 ....................................................................................................................................... 78
+Technical and Regulatory Specifications .................................................................................. 78
+  4.1    GAM Technical Specifications ........................................................................................ 79
+  4.2    G1000/1001 Technical Specifications ............................................................................. 83
+  4.3    Regulatory Compliance ................................................................................................... 84
+Chapter 5 ....................................................................................................................................... 86
+Safety and Warnings .................................................................................................................... 86
+Chapter 6 ....................................................................................................................................... 89
+Warranty and Customer Service ................................................................................................ 89
+
+
+
+
+Positron Access Solutions                                         4                          Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Table of Figures
+
+FIGURE 1: GAM-12-M FRONT PLATE .....................................................................................................................9
+FIGURE 2: GAM-24-M FRONT PLATE ....................................................................................................................9
+FIGURE 3: GAM-12-C FRONT PLATE.......................................................................................................................9
+FIGURE 4: GAM-24-C FRONT PLATE.......................................................................................................................9
+FIGURE 5: GAM POWER INPUT CONNECTOR.............................................................................................................9
+FIGURE 6: GAM SFP+ CONNECTORS .....................................................................................................................10
+FIGURE 7: GAM G.HN RJ-45 CONNECTORS ...........................................................................................................10
+FIGURE 8: CLOSE-UP OF GAM G.HN RJ-14 CONNECTOR...........................................................................................11
+FIGURE 9:CLOSE-UP OF GAM G.HN RJ-45 CONNECTOR ...........................................................................................11
+FIGURE 10: GAM G.HN F-TYPE CONNECTORS .........................................................................................................11
+FIGURE 11: GAM SERIAL MANAGEMENT PORT PINOUT ............................................................................................12
+FIGURE 12: GAM LOCAL MANAGEMENT PORTS ......................................................................................................12
+FIGURE 13: GAM RESET (RST) BUTTON ................................................................................................................13
+FIGURE 14: G1000-M PORT DEFINITION................................................................................................................14
+FIGURE 15: G1001-M PORT DEFINITION................................................................................................................14
+FIGURE 16: G1001-MP PORT DEFINITION .............................................................................................................15
+FIGURE 17: G1000-C PORT DEFINITION .................................................................................................................15
+FIGURE 18: G1001-C PORT DEFINITION .................................................................................................................16
+FIGURE 19: GAM LOGIN PAGE (BROWSER SPECIFIC) ................................................................................................18
+FIGURE 20: GAM PORT STATUS PAGE (DEFAULT PAGE AFTER LOGIN) ...........................................................................19
+FIGURE 21: PORT CONFIGURATION PAGE ................................................................................................................21
+FIGURE 22: IN-BAND MANAGEMENT SETTINGS........................................................................................................22
+FIGURE 23: SERVICE CONFIGURATION ....................................................................................................................23
+FIGURE 24: G.HN (COAX) PORT CONFIGURATION SETTINGS........................................................................................23
+FIGURE 25: G.HN (COPPER) PORT CONFIGURATION SETTINGS ....................................................................................24
+FIGURE 26: CONFIGURING & MANAGING BANDWIDTH PLANS ....................................................................................24
+FIGURE 27: ADDING A BANDWIDTH PLAN ...............................................................................................................25
+FIGURE 28: MANAGING ENDPOINT DEVICES ............................................................................................................26
+FIGURE 29: ADDING AN ENDPOINT DEVICE ..............................................................................................................26
+FIGURE 30: MANAGING SUBSCRIBERS ....................................................................................................................27
+FIGURE 31: ADDING SUBSCRIBERS .........................................................................................................................28
+FIGURE 32: SETTING THE G.HN POWER MASK NOTCHES ...........................................................................................30
+FIGURE 33: UNDERSTANDING VECTORBOOST LEVELS................................................................................................31
+FIGURE 34: VECTORBOOST CONFIGURATION ...........................................................................................................33
+FIGURE 38: GLOBAL VLAN CONFIGURATION TABLE ..................................................................................................34
+FIGURE 39: CONFIGURATION IGMP SNOOPING.......................................................................................................40
+FIGURE 40: CONFIGURATION IGMP SNOOPING VLAN SETTINGS ................................................................................42
+FIGURE 41: ASSIGNING AN IGMP PROFILE TO A GAM PORT ......................................................................................43
+FIGURE 42: MANAGING AN IP MULTICAST PROFILE ..................................................................................................44
+FIGURE 43: CREATING OR EDITING AN IP MULTICAST PROFILE ....................................................................................45
+FIGURE 44: MANAGING IP ADDRESSES FOR AN IP MULTICAST PROFILE ........................................................................45
+FIGURE 45: CREATING AN IP ADDRESS RANGE FOR AN IP MULTICAST PROFILE ...............................................................46
+FIGURE 46: SETTING THE PRIORITY RULES FOR AN IP MULTICAST PROFILE .....................................................................47
+
+Positron Access Solutions                                            5                           Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+FIGURE 47: ADDING A BLOCK ALL RULE TO PROTECT THE IP MULTICAST SERVICE ............................................................48
+FIGURE 48: MANAGING MVR VLAN ASSIGNMENTS.................................................................................................51
+FIGURE 49: MANAGING DHCP OPTION 82 ............................................................................................................52
+FIGURE 50: BASIC DHCP RELAY CONFIGURATION SETTINGS ......................................................................................54
+FIGURE 51: BASIC PPPOE INTERMEDIATE AGENT CONFIGURATION SETTINGS ................................................................55
+FIGURE 52: GAM SYSTEM OVERVIEW ...................................................................................................................57
+FIGURE 53: GAM G.HN OVERVIEW (COAX – POINT TO MULTIPOINT) ........................................................................58
+FIGURE 54: GAM G.HN OVERVIEW (COPPER).........................................................................................................59
+FIGURE 55: DETAILED ENDPOINT INFORMATION (MIMO) .........................................................................................60
+FIGURE 56: IGMP SNOOPING STATUS AND STATISTICS .............................................................................................62
+FIGURE 57: IGMP SNOOPING GROUP INFORMATION ...............................................................................................63
+FIGURE 58: IGMP SOURCE FILTERING MULTICAST (SF) INFORMATION ........................................................................64
+FIGURE 59: SELECTING THE TYPE OF G.HN MEASUREMENT GRAPH (MIMO) .................................................................65
+FIGURE 60: SNR PROBE GRAPH (MIMO) ..............................................................................................................66
+FIGURE 61: SNR DATA GRAPH (MIMO) ................................................................................................................67
+FIGURE 62: RECEIVE PSD GRAPH FROM REMOTE END-POINT (MIMO)........................................................................68
+FIGURE 63: NOISE GRAPH (MIMO) ......................................................................................................................69
+FIGURE 64: SELECTING THE END-POINT FOR THE OF G.HN MEASUREMENT GRAPH (COAX) .............................................70
+FIGURE 65: SELECTING THE TYPE OF MEASUREMENT GRAPH (COAX)...........................................................................71
+FIGURE 66: SNR PROBE GRAPH (COAX) ................................................................................................................71
+FIGURE 67: SNR DATA GRAPH (COAX) .................................................................................................................72
+FIGURE 68: RECEIVE PSD GRAPH FROM REMOTE END-POINT (COAX) .........................................................................72
+FIGURE 69: NOISE GRAPH (COAX) ........................................................................................................................73
+FIGURE 70: SELECT FILE FOR FIRMWARE UPLOAD TO THE GAM..................................................................................74
+FIGURE 68: ENTERING THE URL FOR FIRMWARE UPLOAD TO THE GAM .......................................................................74
+FIGURE 69: SELECTING THE FIRMWARE IMAGE FOR THE GAM ....................................................................................75
+FIGURE 70: SELECTING THE FIRMWARE IMAGE FOR THE GAM ....................................................................................76
+FIGURE 71: SELECTING THE FIRMWARE IMAGE FOR THE GAM ....................................................................................77
+FIGURE 73: GAM PRODUCT SPECIFICATION ............................................................................................................83
+FIGURE 74: G1001 PRODUCT SPECIFICATION .........................................................................................................83
+
+
+
+
+Positron Access Solutions                                           6                           Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Chapter 1
+______________________________________
+About the GAM
+
+
+
+
+Positron Access Solutions               7   Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+1.1   Introduction
+
+      The GAM is a Fiber to the Distribution Point (FTTDp) solution typically installed
+      inside a wiring closet. Each GAM comes with two (2) 10 Gigabit SFP+ interfaces
+      to support any type of fiber or PON standards (using an SFP-based or external
+      ONT as required that is compatible with the OLT). These SFP+ ports can further
+      support additional GAM devices in medium to large MDUs and share the fiber
+      backhaul link.
+
+      The ITU-T G.9960 G.hn Wave-2 standard leverages the existing telephone wiring
+      (UTP, CAT-3 or CAT-5/5e) or RG-6/RG-59 coax cabling to deliver a Gigabit
+      Internet service to each subscriber without the cost, complexity and delays
+      associated with in-building fiber installation. G.hn is an Access technology for
+      Operators looking to simplify their access network and backend infrastructure
+      with an Ethernet-like technology that is highly scalable without some of the
+      inherent complexity of DSL-related technologies. With G.hn, Operators deliver
+      advanced services such as Gigabit High Speed Residential Internet and 4K IPTV
+      without the high capital and operational expenses associated with a fiber retrofit.
+      Each G.hn subscriber port supports up to 1.7 Gbps of dynamically allocated
+      bandwidth for near symmetrical Gigabit services over the existing telephone wire
+      or coaxial cable. The Positron GAM solution is MEF CE 2.0 compliant and is
+      ideally suited to deliver Business Ethernet services in an MDU and/or MTU
+      deployment.
+
+      Note: Read Chapter 5 Safety and Warnings before proceeding.
+
+
+
+
+      Positron Access Solutions               8           Document 180-0186-001 R03
+       GAM Installation and Activation Guide
+
+
+
+
+1.2    GAM Connections
+
+       All ports and connectors of GAM devices are located on the front of the device.
+
+
+
+
+                                   Figure 1: GAM-12-M Front Plate
+
+
+
+
+                                   Figure 2: GAM-24-M Front Plate
+
+
+
+
+                                   Figure 3: GAM-12-C Front Plate
+
+
+
+
+                                   Figure 4: GAM-24-C Front Plate
+
+  1.2.1 Power Connection
+
+       The GAM devices require local 110-220Vac power and come with a country-
+       specific power cord. The power connector incorporates an ON/OFF power
+       switch. A field-replaceable fuse (250v / 5A 5mm x 20mm cartridge type time lag
+       (slow blow) is part of the AC power connector housing as per the following
+       illustration.
+
+
+                                                             Field-replaceable fuse, remove from
+                                                             cover to access the fuse.
+
+
+
+                                Figure 5: GAM Power Input Connector
+
+
+
+
+       Positron Access Solutions               9             Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+1.2.2 Ethernet (SFP+) Ports
+
+
+
+
+                                  Figure 6: GAM SFP+ Connectors
+
+      The GAM has two (2) SFP+ ports that support any MSA-compliant SFP/SFP+
+      modules. (Fiber: 1G, 10G and Copper RJ-45: 100M, 1G)
+
+      Second uplink allows you to:
+               Increase overall capacity
+                       o Either via Link aggregation, or
+                       o By splitting subscriber traffic between the two uplinks.
+               Uplink protection
+                       o LACP
+                       o Ring G.8032
+                       o Point to point G.8031
+               Daisy chain another GAM
+
+
+      Important note: When connecting the SFP+ port to a Passive Optical Network
+      (PON) fiber connection, please make sure to use an Optical Network Unit (ONU)
+      approved by the OLT vendor you are using.
+
+1.2.3 G.hn Ports
+
+      The GAM-12-M has 12 G.hn RJ-45 ports and the GAM-24-M has 24 G.hn RJ-45
+      ports. When connecting a single telephone pair to an RJ-45 port (SISO mode),
+      you need to use the “inner” pair. When connecting a second pair (MIMO mode),
+      the second pair needs to be connected to the “outer” pair.
+
+
+
+
+                               Figure 7: GAM G.hn RJ-45 Connectors
+
+
+
+      NOTE: RJ-45 or RJ-14 cables can both be used to connect to the GAM
+
+
+      Positron Access Solutions               10           Document 180-0186-001 R03
+     GAM Installation and Activation Guide
+
+
+
+
+     Looking at the RJ-14 connector below, pair 1 (inner pair) is connected to pins 2
+     and 3. Pair 2 (outer pair) is connected to pins 1 and 4.
+
+
+
+
+                         Figure 8: Close-up of GAM G.hn RJ-14 Connector
+
+     Looking at the RJ-45 connector below, pair 1 (inner pair) is connected to pins 4
+     and 5. Pair 2 (outer pair) is connected to pins 3 and 6.
+
+
+
+
+                         Figure 9:Close-up of GAM G.hn RJ-45 Connector
+
+     The GAM-12-C has 12 G.hn F-type Coax ports and the GAM-24-C has 24 G.hn
+     F-type Coax ports. Each F-type G.hn port of the GAM can serve up to sixteen
+     (16) remote G.hn end-point devices using standard coax splitters (5 MHz to 2400
+     MHz). Note: coax splitters are optional and not included with the GAM devices.
+
+
+
+
+                             Figure 10: GAM G.hn F-type Connectors
+
+1.2.4 Local management ports
+
+     The GAM devices have two (2) local management ports. The CRAFT port is a
+     standard serial (V.24, 115200, 8, N, 1)) port that provides access to the
+     command line interface of the GAM device. The pinout of the RJ-45 serial port is
+     compatible with the popular Cisco pinout as per the following diagram:
+
+
+     Positron Access Solutions               11            Document 180-0186-001 R03
+     GAM Installation and Activation Guide
+
+
+
+
+                           Figure 11: GAM Serial Management Port pinout
+
+     The MGMT port is a 10/100/1000BaseTX Ethernet port that provides access to
+     the WEB GUI interface using a standard WEB browser or an SSH interface to the
+     command line interface of the GAM device.
+
+
+
+
+                              Figure 12: GAM Local Management Ports
+
+1.2.5 GAM LED Indicators
+
+     The GAM uses two (2) LED indicators to provide information about its global
+     status and operating mode. The G.hn ports have status LEDs under each port.
+     The two (2) SFP+ ports of the GAM each have a dedicated status LED located
+     under each SFP+ connector.
+
+          LED                     Condition           Function
+                                  Solid Green         System OK
+          SRV                     Solid Yellow        GAM is starting up
+                                  Solid Red           No Internet Connection
+                                  Solid Green         Normal
+                                  Solid Yellow        Minor Alarm Active
+          STA
+                                  Blinking Yellow     Firmware Update in Progress
+                                  Solid Red           Critical or Major Alarm Active
+                                  Off                 Disabled or Link Down
+          G.hn ports              Blinking             Bad or low speed G.hn link
+                                  On                  Link is Up
+                                  Off                 Disabled or Link is Down
+          1 or 2 (located under
+                                  Green               Link is Up
+          SFP+ connector)
+                                  Blinking green      Link Activity
+
+                                     Table 1: GAM LED indicators
+
+
+
+     Positron Access Solutions                   12              Document 180-0186-001 R03
+       GAM Installation and Activation Guide
+
+
+
+
+  1.2.6 GAM Reset Button
+
+       Press the recessed RST button to reset the GAM. When depressed for two (2)
+       to ten (10) seconds, it will perform a cold reboot of the GAM. When depressed
+       for more than ten (10) seconds, it will return the GAM device to its original factory
+       default settings and will perform a cold reboot of the GAM
+
+
+
+
+                                   Figure 13: GAM Reset (RST) button
+
+1.3    G1000-M (MIMO/SISO) Copper Endpoint
+
+       The G1000-M (copper) G.hn bridge to Gigabit Ethernet comes with 2 Gigabit
+       ports for customer connection, only one port should be use to connect the RG
+       (residential Gateway). User traffic can be untagged, VLAN tagged or VLAN
+       remapped to a different VLAN. A list of allowed VLANs per end-point device can
+       be configured. This list is required for some application such as IPTV. The
+       second Gigabit port of the G1000-M is available for connection to dedicated or
+       specialized devices such as a TV set-top box.
+
+       The G1000-M comes with a built-in passive POTS splitter/combiner allowing
+       analog phone service to multiplex the POTS service along with the G.hn signal.
+       In this application, make sure to use a POTS splitter/combiner suitable for
+       G.fast/G.hn at the GAM location. During power outage, the phone service will
+       continue to operate.
+
+                  LED position          Description
+                  Top (yellow)          indicates unit booting or reset
+                  Middle (green)        On/Off: indicates G.hn link up or
+                                        down
+                                        Blinking: bad or low speed G.hn link
+                  Bottom (green)        indicates power on or off
+
+                                    Table 2: G1000-M LED summary
+
+
+
+
+       Positron Access Solutions               13             Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+                                 Figure 14: G1000-M port definition
+
+1.4   G1001-M and G1001-MP (MIMO/SISO) Copper Endpoint
+
+      The G1001-M and G1001-MP (copper) G.hn Bridge to Gigabit Ethernet come
+      with one (1) Gigabit port to connect the RG (residential Gateway). User traffic
+      can be untagged, VLAN tagged or VLAN remapped to a different VLAN. A list of
+      allowed VLANs per end-point device can be configured. This list is required for
+      some application such as IPTV.
+
+      The G1001-MP comes with a built-in passive POTS splitter/combiner allowing
+      analog phone service to multiplex the POTS service along with the G.hn signal.
+      In this application, make sure to use a POTS splitter/combiner suitable for
+      G.fast/G.hn at the GAM location. During power outage, the phone service will
+      continue to operate.
+
+                 LED position          Description
+                 STA (yellow)          indicates unit booting or reset
+                 G.hn (green)          On/Off: indicates G.hn link up or
+                                       down
+                                       Blinking: bad or low speed G.hn link
+                 PWR (green)           indicates power on or off
+
+                            Table 3: G1001-M / G1001-MP LED summary
+
+
+
+
+                                 Figure 15: G1001-M port definition
+
+
+
+
+      Positron Access Solutions               14              Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+                                Figure 16: G1001-MP port definition
+
+1.5   G1000-C (COAX) Endpoint
+
+      The G1000-C (coax) G.hn bridge to Gigabit Ethernet comes with 2 Gigabit ports
+      for customer connection, only one port should be use to connect the RG
+      (residential Gateway). User traffic can be untagged, VLAN tagged or VLAN
+      remapped to a different VLAN. A list of allowed VLANs per end-point device can
+      be configured. This list is required for some application such as IPTV. The
+      second Gigabit port of the G1000-C is available for connection to dedicated or
+      specialized devices such as a TV set-top box.
+
+      The G1000-C comes with a built-in passive COAX splitter/combiner; the second
+      port is available to handle other Coax services such as Cable TV or Satellite
+      (DIRECTV or others). Note: G.hn uses up to 200 MHz of spectrum in the range
+      of 2-200 MHz, which leaves room for services using higher frequencies.
+
+                        LED position           Description
+                        Top (yellow)           indicates unit booting or reset
+                        Middle (green)         On/Off: indicates G.hn link up
+                                               or down
+                                               blinking: bad or low speed G.hn
+                                               link
+                        Bottom (green)         indicates power on or off
+
+                                  Table 4: G1000-C LED summary
+
+
+
+
+                                 Figure 17: G1000-C port definition
+
+
+
+
+      Positron Access Solutions               15              Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+1.6   G1001-C (COAX) Endpoint
+
+      The G1001-C (coax) G.hn Bridge to Gigabit Ethernet comes with one (1) Gigabit
+      port to connect the RG (residential Gateway). User traffic can be untagged,
+      VLAN tagged or VLAN remapped to a different VLAN. A list of allowed VLANs
+      per end-point device can be configured. This list is required for some application
+      such as IPTV.
+
+      The G1001-C comes with a built-in passive COAX splitter/combiner; the second
+      port is available to handle other Coax services such as Cable TV or Satellite
+      (DIRECTV or others). Note: G.hn uses up to 200 MHz of spectrum in the range
+      of 2-200 MHz, which leaves room for services using higher frequencies.
+
+                        LED position           Description
+                        STA (yellow)           indicates unit booting or reset
+                        G.hn (green)           On/Off: indicates G.hn link up
+                                               or down
+                                               blinking: bad or low speed G.hn
+                                               link
+                        PWR (green)            indicates power on or off
+
+                                  Table 5: G1001-C LED summary
+
+
+
+
+                                 Figure 18: G1001-C port definition
+
+
+
+
+      Positron Access Solutions               16              Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Chapter 2
+______________________________________
+WEB Management
+
+
+
+
+Positron Access Solutions               17   Document 180-0186-001 R03
+       GAM Installation and Activation Guide
+
+
+
+
+2.1    Introduction
+       A WEB GUI interface and a Command Line Interface (CLI) are available to
+       manage GAM devices. Supported WEB browsers include Chrome, Edge or
+       Firefox.
+
+2.2    System Management
+  2.2.1 Logging into the WEB GUI
+
+
+       The default configuration values of the GAM devices are:
+
+                    IP Address                            192.168.10.1
+                    Subnet Mask                           255.255.255.0
+                    Username                              admin
+                    Password
+
+                                   Table 6: GAM default credentials
+
+       Important Note: older firmware versions prior of v1.1.x had default IP set to
+       192.168.1.1
+
+       Enter the system's IP Address into the Web browser and a login screen similar to
+       the following will appear:
+
+
+
+
+                            Figure 19: GAM Login Page (Browser specific)
+
+
+       Positron Access Solutions               18              Document 180-0186-001 R03
+     GAM Installation and Activation Guide
+
+
+
+
+     Enter a Username and Password for the GAM device. The default Username is
+     admin and the default password is null (not defined). Click OK.
+
+     IMPORTANT SECURITY NOTE: After a successful initial login, please change
+     the password to avoid unauthorized access to the GAM device.
+
+     About the X.509 Public Key Infrastructure (PKI) Certificate: you may want to
+     replace the default Positron-signed PKI Certificate used by the WEB GUI
+     Administration Interface pre-installed by Positron with one from your preferred
+     Certificate Authority.
+
+     Note: Secure HTTP is disabled by default. HTTPS can be enabled via menu:
+     Configuration>Security>Switch>HTTPS
+
+2.2.2 System
+
+     The System monitor page provides a front panel representation of the GAM
+     device. The front panel is specific to the version of the GAM device. The sample
+     screenshot below is for the GAM-12-M.
+
+
+
+
+                    Figure 20: GAM Port Status page (default page after login)
+
+
+
+
+     Positron Access Solutions               19              Document 180-0186-001 R03
+     GAM Installation and Activation Guide
+
+
+
+
+2.2.3 General Information
+
+
+        Navigation Icons      Description
+
+                              Help for specific page
+
+                              Logout
+
+                              Return to the Home page (under monitoring /
+                              global port view).
+                              Save configuration to Flash. (same as using
+                              this CLI command: copy running-configuration
+                              start-config)
+                              Apply parameter to running-configuration. Any
+                              configuration change is not permanently saved
+                              to FLASH memory and will be lost after a
+                              restart of the GAM
+                              Reset configuration parameters to previous
+                              view
+                              Click to refresh
+                              Auto-refresh every 3 seconds
+
+                              Expand or collapse view
+                or
+
+                              Table 7: WEB GUI Navigation Buttons
+
+
+
+
+     Positron Access Solutions               20           Document 180-0186-001 R03
+       GAM Installation and Activation Guide
+
+
+
+
+2.3    Configuring the Uplink (WAN)
+
+
+  2.3.1 SFP+ ports
+
+       The GAM supports (2) SFP+ 100Mbps/1Gbps/10Gbps ports and either one is
+       available as uplink. The second SFP+ port is then usable as a second uplink for
+       more capacity, for uplink protection or for daisy chaining two or more GAM
+       devices together.
+
+       By default, both ports operate as 10Gbps SFPs. You can change the settings to
+       100Mbps/1Gbps fiber or copper SFPs. We recommend setting unused ports to
+       the Disabled state to avoid unwanted alarms. Note: the alarm module of the GAM
+       does not monitor the MGMT port. No alarm or error condition reported if the
+       MGMT port is down.
+
+
+
+
+                                  Figure 21: Port Configuration page
+
+
+
+
+       Positron Access Solutions               21             Document 180-0186-001 R03
+     GAM Installation and Activation Guide
+
+
+
+
+2.3.2 Inband Management
+
+     While it is possible to manage the GAM via one of the local management port, it
+     is more convenient to manage remote installations via the Inband management
+     capabilities of the GAM. The in-band management used a VLAN inside the
+     uplink interface.
+
+     You can add a VLAN to the Interface by using the “add interface” button under
+     Configuration>System>IP
+
+     In the example below, VLAN 4093 is used for management, and IP address
+     192.168.101.22 accesses the management interface of the GAM.
+
+     Important Note: the GAM uses VLAN 2 to manage the G1000-x and G1001-x
+     End-Point bridge devices. Do not change or delete.
+
+
+
+
+                             Figure 22: In-band Management Settings
+
+     To manage the GAM from a different subnet, you can add a default route using
+     the “add route” button.
+
+
+
+
+     Positron Access Solutions               22            Document 180-0186-001 R03
+        GAM Installation and Activation Guide
+
+
+
+
+2.4     Configuring a G.hn Service
+
+        A G.hn service consists of an association of a subscriber, a bandwidth plan
+        (optional), an endpoint and a Client VLAN (CVLAN). If an association is missing,
+        user traffic will not work.
+
+        Upon detection of an Endpoint not associated with a Subscriber, the GAM will
+        automatically assign VLAN 4094 used for the Self-Care Captive Portal of the
+        GAM.
+
+
+
+
+                                    Figure 23: Service Configuration
+
+  2.4.1 G.hn Port
+
+  2.4.1.1      Coax
+
+
+
+
+                           Figure 24: G.hn (coax) Port Configuration Settings
+
+        Enable/Disable: Ports are either Enabled (default) or Disabled.
+
+        Name: A friendly name can be set (optional)
+
+        Note: The GAM does not monitor ports in Disabled state for any alarm conditions
+        but traffic will still go through when a service is configured.
+
+
+
+
+        Positron Access Solutions               23              Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+2.4.1.2      MIMO
+
+
+
+
+                        Figure 25: G.hn (copper) Port Configuration Settings
+
+      Enable/Disable: Ports are either Enabled (default) or Disabled.
+
+      Name: A friendly name can be set (optional)
+
+      MIMO/SISO: Each port can be set to either MIMO (2-pair@100Mhz) or SISO (1-
+      pair@ 200MHz) mode.
+
+      Note: The GAM does not monitor ports in Disabled state for any alarm conditions
+      but traffic will still go through when a service is configured.
+
+2.4.2 Bandwidth Profiles (Bandwidth Plans)
+
+      A bandwidth profile defines the maximum Downstream and Upstream bandwidth
+      assigned to User Profiles. Rate Limiters enforce the bandwidth rules. Rate
+      limiters operate at Layer-2 (Ethernet). For best Speed Test results, the rate
+      limiter should be set 6% to 8% higher to take into account the typical IP/TCP
+      overhead of about 6%.
+
+      The GAM creates and assigns a default bandwidth plan automatically to any
+      Endpoint not yet attached to a subscriber profile. This default bandwidth plan
+      provides enough bandwidth to support access to the Self-care Captive portal
+      feature (VLAN 4094).
+
+      An administrator can create up to 14 additional bandwidth plans. (Note: this
+      corresponds to ID 2 to 15 when using the CLI).
+
+
+
+
+                        Figure 26: Configuring & Managing Bandwidth Plans
+
+      Positron Access Solutions               24              Document 180-0186-001 R03
+     GAM Installation and Activation Guide
+
+
+
+
+     Click on a Bandwidth to manage it or click on the Add New Bandwidth Plan
+     button to create a new one.
+
+
+
+
+                               Figure 27: Adding a Bandwidth Plan
+
+     Name: This field is mandatory, and the name must be unique among all
+     bandwidth plans. It must contain between 1 and 31 alphanumeric characters.
+
+     Bandwidth: Set the Downstream/Upstream bandwidth limits (in Mbps).
+     Acceptable values are:
+         MIMO / SISO: 10 to 1000 Mbps,
+         COAX: 10 to 800 Mbps. A service over 800Mbps must be set to
+           “unthrottled”.
+
+     Description: Use this optional free-form field to add a description of this
+     bandwidth plan. There is no validation for the content of this field, which can hold
+     up to 63 characters.
+
+2.4.3 Endpoint Devices (G.hn Bridge)
+
+     The GAM device authenticates and authorizes each managed Endpoint device to
+     make sure the overall G.hn infrastructure is secure and delivers the required
+     services to each Subscriber. You can pre-define Endpoints and assign them to a
+     Subscriber profile or you can select from the list of Endpoint discovered by the
+     GAM.
+
+     The following illustrates the list of Endpoint devices for a single Coax Port of the
+     GAM where each port can handle up to 16 subscribers in a Point to Multipoint
+     configuration using standard coax splitters. For copper ports (MIMO or SISO),
+     each port only allows a single Endpoint device.
+
+
+
+
+     Positron Access Solutions               25            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+                         Figure 28: Managing Endpoint devices
+
+
+
+Clicking on the Add New Endpoint button takes you to the following screen:
+
+
+
+
+                         Figure 29: Adding an Endpoint device
+
+MAC: Set the endpoint MAC address. Enter the MAC address manually or select
+from the discovered endpoints list.
+
+Port: Set the port that connects to the endpoint. You can set 'Unassigned' to pre-
+configure a device. However, traffic will not flow until you assign the Endpoint to
+its specific port. Note: In copper mode (MIMO/SISO), each G.hn port maps to a
+single Endpoint. In Coax mode, you can assign up to 16 Endpoint devices to a
+port.
+
+
+
+
+Positron Access Solutions               26            Document 180-0186-001 R03
+     GAM Installation and Activation Guide
+
+
+
+
+     Name: This field is mandatory, and the name must be unique among all
+     endpoints. It must contain between 1 and 31 alphanumeric characters.
+
+     Description: Use this optional field to add a free-form description for this
+     Endpoint. There is no validation for the content of this field; it can hold up to 63
+     characters.
+
+2.4.4 Subscribers
+
+     The GAM device relies on Subscriber profiles to control how it delivers High
+     Speed Internet (HSI) services. Each Subscriber is associated to a specific
+     Endpoint and a VLAN. Each subscriber can be assigned to different VLANs, or
+     all subscribers can be assigned to the same VLAN (data VLAN).
+
+     The G.hn protocol will isolate traffic between endpoints when connected to the
+     same port (coax). The GAM will isolate traffic between ports (port isolation).
+     You can then assign an optional Bandwidth Plan to a Subscriber to control how
+     much bandwidth is available at any time.
+
+     The following illustrates the list of Subscribers of the GAM along with the
+     Endpoint assigned to each Subscriber.
+
+
+
+
+                                Figure 30: Managing Subscribers
+
+
+
+
+     Positron Access Solutions               27           Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Click the Add New Subscriber button to get the following screen:
+
+
+
+
+                             Figure 31: Adding Subscribers
+
+Id: The subscriber ID. This ID is available in the command-line interface (CLI) to
+specify an entity.
+
+Subscriber Name: This field is mandatory, and the name must be unique among
+all subscribers. It must contain between 1 and 31 characters.
+
+VLAN: Primary VLAN, this VLAN can be untagged, keep VLAN tag, or remapped
+to a different VLAN. A G.hn service can use any VLAN between 3 and 4093.
+The GAM reserves VLANs 1, 2 and 4095 for its internal use. The GAM
+automatically assigns VLAN 4094 to non-configured service to force the
+subscriber to use the Self-Care Captive Portal of the GAM (future capability).
+
+Remapped VID: specify the VLAN ID used between the G.hn bridge and the
+GAM. In other words, the GAM remaps the Ingress user traffic (from the NNI port
+of the GAM) to this VLAN ID before forwarding to the End-Point. The reverse
+action takes place for traffic from the End-Point to the Internet. The GAM
+replaces the VLAN ID of the End-Point with the VLAN ID assigned to the
+Subscriber on the NNI port by the GAM.
+
+Endpoint Tagging: Enable or disable primary VLAN tag at the subscriber
+endpoint. If disabled, the traffic will be untagged at the subscriber end. If enabled,
+the VLAN tag will be kept
+
+Allowed Tagged VLAN: The Allowed tagged VLAN field is a list of VLAN (up to
+14) that will be forwarded (untouched). This allows applications such as IPTV to
+preserve the VLAN and P-BIT information through to the Residential Gateway or
+set top box.
+
+Endpoint: The endpoint assigned to this subscriber. We recommend creating the
+endpoint prior to creating the subscriber. A subscriber can be pre-configured
+(reserved) before creating an endpoint, but traffic will only flow upon its
+association to an endpoint.
+
+
+
+
+Positron Access Solutions               28             Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+      Bandwidth Plan: Optional Rate limiter associated to the subscriber. The
+      Bandwidth Plan should be created prior of creating the subscriber. If set to
+      "unthrottled", this subscriber will have no bandwidth limit restriction.
+
+      Description: The field is optional, free-form description given to this subscriber.
+      There is no validation for the content of this field, apart the number of characters,
+      it can contain up to 63 characters.
+
+2.5   G.hn Power Mask Configuration
+
+      G.hn uses up to 200 MHz of spectrum on single copper pairs (SISO) and on
+      COAX ports. When operating on two (2) copper pairs (MIMO), the 200 MHz of
+      spectrum is split evenly on these two pairs with 100 MHz per pair.
+
+      In order to facilitate co-habitation with other services, you can adjust the Power
+      Mask to avoid using specific spectrum frequency ranges. A Power Mask
+      includes a Start Frequency, a Stop Frequency and a Depth. In a power mask
+      (also called notch), all of the carriers (or signal) are removed and it is guaranteed
+      that the transmitted Power Spectral Density (PSD) is at least as deep as the
+      Depth setting for the interval specified by the start and stop frequency range.
+
+      Important Note: you can create up to 10 user notches and all User notches are
+      applied system wide (to all ports)
+
+      A User Defined Notch entry includes the following:
+
+      Delete: click the delete button to remove an existing notch entry.
+
+      Frequency Range (MHz): specify the frequency range over which the power
+      mask notch applies.
+
+      Range: allowed range for a notch is:
+                MIMO: between 3.5 MHz and 100.0 MHz
+                SISO: between 3.5 MHz and 200.0 MHz
+                Coax: between 1.955 and 200.0MHz
+
+      Depth: specify the depth (in dB) of the attenuation applied to the G.hn signal.
+      You should use this setting when you want to reduce the signal depth but not
+      remove it completely. See remove below about how to completely remove a
+      range of frequency. The allowed attenuation depth is from 0.5 dB to 40.0 dB
+
+      Remove: check this setting when you need to filter out the specified frequency
+      range completely.
+
+      Positron Access Solutions               29           Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+                          Figure 32: Setting the G.hn Power Mask Notches
+
+2.6   VectorBoost configuration
+
+      VectorBoost is an innovative approach to dealing with crosstalk in broadband
+      access networks based on G.hn operating over twisted-pair. Unlike “brute-force”
+      approaches like precoding based vectoring used in standards like VDSL2 or
+      G.fast, VectorBoost exploits the statistical properties of network traffic in
+      broadband networks to achieve virtually the same user experience as if crosstalk
+      did not exist.
+
+      Each G.hn line in a GAM can be configured to operate in five different levels of
+      “boosting.” “Level 0” represents the lowest boosting, in which the line is only
+      using spectrum from 2 to 30 MHz. “Level 4” represents the highest level of
+      boosting, which uses up to 200 MHz. When a subscriber line is carrying a very
+      small amount of traffic (for example, less than 100 Mbps), VectorBoost will tend
+      to configure that G.hn pair in “level 0 boosting.” Because “level 0 boosting” uses
+      only the lowest part of spectrum it will minimize the amount of crosstalk induced
+      on neighboring pairs. VectorBoost will configure a higher boosting level, up to
+      level 4 for G.hn links (or pairs) carrying a lot of traffic, for instance when users
+      download or upload multiple large files.
+
+
+
+
+      Positron Access Solutions               30            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+                     Figure 33: Understanding VectorBoost Levels
+
+In practice, VectorBoost needs to look at all G.hn links in a global way in order to
+compute the optimum level of boosting for each pair. The reason is that when
+VectorBoost decides the level of boosting for some of the pairs, it needs to know
+how much interference the other pairs are inducing on it. It is possible that a pair
+that only would need “level 1” boosting if it were isolated may actually need “level
+2” boosting once the neighbor interference is taken into account.
+
+VDSL Coexistence
+
+G.hn can co-habit with VDSL2 pairs in the same binder.
+
+Note: Even if there are DSL services in the binder, we recommend you initially
+keep this option disabled. Only enable in the presence of high interference levels.
+
+Enabled: All of the G.hn pairs in the binder must be under the control of this
+GAM. Other G.hn equipment using the same pair binder will cause interference
+that may prevent the VectorBoost™ engine from operating properly.
+
+Disabled: The G.hn pairs can co-exist with other G.hn devices in the same
+binder, although with a reduced performance.
+
+
+
+
+Positron Access Solutions               31            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+CDTA Configuration
+
+With VectorBoost™ enabled, you can allow the GAM to use the Collective
+Dynamic Transmit Allocation (CDTA) to adjust dynamically the allocation ratio of
+the available bandwidth between the downstream and upstream direction.
+
+Mode: Enable or disable VectorBoost™ CDTA.
+
+Down:Up Weight: Set G.hn VectorBoost™ engine CDTA “Down:Up weight”. For
+example, a value of 75 results in a 75:25 weight. This means that when there is
+full utilization of the bandwidth in both directions, you will end up with the total
+available bandwidth allocated 75% for downstream and 25% for upstream.
+Requires CDTA Mode set to: enable.
+
+Minimum Down:Up Rate: Sets G.hn VectorBoost™ engine CDTA minimum
+Down:Up rate. Allowed values range from 30:70 to 80:20 (in percentage).
+Requires CDTA Mode set to: enable.
+
+Maximum Down:Up Rate: Sets G.hn VectorBoost™ engine CDTA maximum
+Down:Up rate. Allowed values range from 30:70 to 80:20 (in percentage).
+Requires CDTA Mode set to: enable.
+
+Default Down:Up Rate: Sets G.hn VectorBoost™ engine CDTA default
+Down:Up rate. The allowed range is from 30:70 to 80:20 (in percentage). This
+setting should be between is the rate at which the engine is initialized with.
+
+Important note: with CDTA enabled, the actual downstream and upstream rates
+automatically adjust to match the actual bandwidth demand of each G.hn port.
+When CDTA is disabled, the selected Down:Up ratio will remain constant.
+
+Percentage Metric Change: Sets the percentage metric change in the traffic
+demand that triggers the CDTA algorithm. CDTA will re-adjust the Down:Up
+bandwidth allocation as soon as the traffic ratio on the link differs from the
+currently allocated bandwidth ratio by the configured percentage. This
+configuration setting is effective only when CDTA is enabled.
+
+
+
+
+Positron Access Solutions               32           Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+                                Figure 34: VectorBoost configuration
+
+2.7   Managing VLANs on the uplink.
+
+      By default, the uplinks of the GAM are set in “trunk” mode and allow all VLANs
+      from 3 to 4094 to go through. In the table below, only the configuration of the 2
+      uplinks (10G-1 and 10G-2) can be modified. The VLAN table for the G.hn 1 to 12
+      or 24) is managed by the G.hn subscriber configuration.
+
+      A user can decide not to use VLANs on a uplink, the mode must be changed to
+      the following:
+          Mode Access: all traffic will be untagged on the egress, and in the ingress
+              all traffic will be tagged (inside de GAM) with the port VLAN.
+
+            Mode Hybrid: in the egress, a specific VLAN (Port VLAN) can be untagged
+             but all other VLAN will stay tagged. In the ingress, the untagged traffic will
+             be tagged with the Port VLAN.
+
+      More information below about the different parameters.
+
+
+
+
+      Positron Access Solutions               33             Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Configuration>VLAN>Configuration
+
+
+
+
+                       Figure 35: Global VLAN Configuration table
+
+Let us begin with the Global VLAN Configuration settings.
+
+Allowed Access VLANs: This field shows the allowed Access VLANs, for the
+G.hn ports configured as Access ports. Ports in other modes are members of the
+VLANs specified in the Allowed VLANs field. By default, VLAN 1 is the only one
+enabled. More VLANs may be created using an enumeration list syntax where
+the individual elements are separated by commas. You can specify a range of
+VLANs with a dash separating the lower and upper bound. The following
+example sets VLANs 1, 10, 11, 12, 13, 200, and 300: 1, 10-13, 200, 300.
+
+Ethertype for Custom S-ports: Specify the Ethertype/TPID (in hexadecimal)
+used for Custom S-ports. The setting applies to all of the ports with the Port
+Type set to S-Custom-Port.
+
+Port VLAN Configuration
+
+The following settings apply on a Port-by-Port basis. Looking at the Port VLAN
+Configuration table, we see:
+
+Port. This is the logical port number of this row.
+
+Mode: The port mode (default is Trunk) controls the fundamental behavior of the
+port in question. A port can be in one of three modes as described below.
+
+Positron Access Solutions               34             Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Whenever you select a particular mode, the configurable fields in that row entry
+may change (grayed out). Grayed out fields will show the value that the port will
+get when the mode is applied. The available MODE settings are:
+
+Access: use Access ports to connect to end stations. Dynamic features like
+Voice VLAN may add the port to more VLANs behind the scenes. Access ports
+have the following characteristics:
+
+      Member of exactly one VLAN, the Port VLAN (a.k.a. Access VLAN), which
+       by default is 1
+      Accept untagged and C-tagged frames
+      Discard all frames not classified to the Access VLAN
+      On egress all frames are transmitted untagged
+
+Trunk: Trunk ports carry traffic on multiple VLANs simultaneously, and usually
+connect to other switches. Trunk ports have the following characteristics:
+
+      By default, a trunk port is member of all VLANs (1-4095)
+      The VLANs for a specific port may be limited by the use of Allowed
+       VLANs for that port
+      Frames classified to a VLAN outside of the list of allowed VLANs for that
+       port are discarded
+      By default, the GAM tags all frames not classified to the Port VLAN (a.k.a.
+       Native VLAN) on Egress. Frames classified to the Port VLAN do not get
+       C-tagged on Egress
+      Egress tagging can be changed to tag all frames, in which case only
+       tagged frames are accepted on Ingress
+
+Hybrid: Hybrid ports add additional port configuration features beyond those
+available for trunk ports. These additional characteristics (beyond the ones for
+trunk ports above) include:
+
+      VLAN Awareness: each port is configurable to be VLAN tag unaware, C-
+       tag aware, S-tag aware, or S-custom-tag aware
+      Ingress filtering is controllable
+      Ingress acceptance of frames and configuration of egress tagging is
+       configured independently
+
+Port VLAN: Determines the port's VLAN ID (a.k.a. PVID). Allowed VLANs are in
+the range of 1 through 4095, with a default of 1. On ingress, frames are
+classified to the Port VLAN whenever the port is configured as: VLAN unaware,
+
+
+Positron Access Solutions               35          Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+the frame is untagged, or VLAN awareness is enabled on the port and the frame
+is priority tagged (VLAN ID = 0). On egress, frames classified to the Port VLAN
+are untagged when Egress Tagging configuration is set to untag Port VLAN. The
+Port VLAN is known as "Access VLAN" for ports in Access mode and as “Native
+VLAN” for ports in Trunk or Hybrid mode.
+
+Port Type: Ports in hybrid mode allow for changing the port type, that is, whether
+a frame's VLAN tag is used to classify the frame on ingress to a particular VLAN,
+and if so, which TPID it reacts on. Likewise, on egress, the Port Type determines
+the TPID of the VLAN tag, if a VLAN tag is required. Available Port Types are:
+
+      Unaware: On ingress, all frames (whether carrying a VLAN tag or not) get
+       classified to the Port VLAN, and any VLAN tags present are not removed
+       on egress.
+      C-Port: On ingress, frames with a VLAN tag with TPID = 0x8100 are
+       classified to the VLAN ID embedded in the tag. If a frame is untagged or
+       priority tagged, the frame is classified to the Port VLAN. If frames are to be
+       tagged on egress, they will be tagged with a C-tag.
+      S-Port: On egress, whenever frames must be tagged, they will be tagged
+       with an S-tag. On ingress, frames with a VLAN tag and a TPID = 0x88A8
+       get classified to the VLAN ID embedded in the tag. Priority-tagged frames
+       are classified to the Port VLAN. If the port is configured to accept “Tagged
+       Only” frames (see Ingress Acceptance below), frames without this TPID
+       are dropped.
+      S-Custom-Port: On egress, if frames must be tagged, they will be tagged
+       with the custom S-tag. On ingress, frames with a VLAN tag and a TPID
+       equal to the Ethertype configured for Custom-S ports are classified to the
+       VLAN ID embedded in the tag. Priority-tagged frames are classified to the
+       Port VLAN. If the port is configured to accept “Tagged Only” frames (see
+       Ingress Acceptance below), frames without this TPID are dropped.
+
+Q-in-Q Enable: This enables 802.1Q double-tag on hybrid ports that have the
+port type set to C-Port or S-Port. If set, it will set an inner tag of 0x8100, and an
+outer tag defined by the port type (0x8100 if port type is set to C-Port or 0x88A8
+if the port type is set to S-Port).
+
+Q-in-Q VID: defines the outer tag VLAN (VID) used when Q-in-Q is enabled.
+The valid range is 3 to 4093.
+
+
+
+
+Positron Access Solutions               36           Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Ingress Filtering: Hybrid ports allow for flexible ingress filtering. Access and
+Trunk ports always have ingress filtering enabled. If ingress filtering is enabled
+(checkbox is checked), frames classified to a VLAN that the port is not a member
+of are discarded. If ingress filtering is disabled, frames classified to a VLAN that
+the port is not a member of are accepted and forwarded to the switch engine.
+However, the port will never transmit frames classified to VLANs that it is not a
+member of.
+
+Ingress Acceptance: Hybrid ports allow for changing the type of frames
+accepted on ingress. The available settings are:
+    Tagged and Untagged: Both tagged and untagged frames are accepted.
+      See Port Type for a description of when a frame is considered tagged.
+    Tagged Only: Only frames tagged with the corresponding Port Type tag
+      are accepted on ingress.
+    Untagged Only: Only untagged frames are accepted on ingress. See Port
+      Type for a description of when a frame is considered untagged.
+
+Egress Tagging: Ports in Trunk and Hybrid mode may control the tagging of
+frames on egress. The available settings are:
+    Untag Port VLAN: Frames classified to the Port VLAN are untagged.
+      Other frames are transmitted with the relevant tag.
+    Tag All: All frames, whether classified to the Port VLAN or not, are
+      transmitted with a tag.
+    Untag All: All frames, whether classified to the Port VLAN or not, are
+      transmitted without a tag. This option is only available for ports in Hybrid
+      mode.
+
+Allowed VLANs: Ports in Trunk and Hybrid mode control the VLANs they are
+allowed to become members of. Access ports can only be member of one VLAN,
+the Access VLAN. The field's syntax is identical to the syntax used in the
+Enabled VLANs field. By default, a Trunk or Hybrid port will become a member
+of all VLANs, and is therefore set to 3-4094. An empty field means that the port
+will not become a member of any VLAN.
+
+Forbidden VLANs: A port may be configured to never become member of one
+or more VLANs. This is particularly useful to prevent dynamic VLAN protocols
+like MVRP and GVRP from dynamically adding ports to forbidden VLANs. The
+syntax is identical to the syntax used in the Enabled VLANs field. An empty field
+means that the port may become a member of all possible VLANs.
+
+
+Positron Access Solutions               37           Document 180-0186-001 R03
+        GAM Installation and Activation Guide
+
+
+
+
+2.8     IPTV application
+
+        G.hn offers comprehensive support for IPTV and other multicast applications
+        over copper and coax. This section discusses how to configure VLAN and other
+        settings.
+
+  2.8.1 Configure allowed VLAN in subscriber
+
+        Make sure the VLAN used for video is properly configured in the subscriber
+        configuration.
+
+  2.8.2 Create an IP interface VLAN for IGMP snooping.
+
+        In order for the IGMP snooping to work, an IP interface VLAN must be create on
+        the VLAN of the snooping.
+
+  2.8.3 Enable IGMP snooping
+
+        IGMP snooping is the process of listening to Internet Group Management
+        Protocol (IGMP) network traffic to control delivery of IP multicasts. The GAM
+        listens in on the IGMP conversation between hosts and routers and creates and
+        maintains a map of which links need which IP multicast transmission. These
+        Multicasts feed are then be filtered from the end-point devices which do not need
+        them, conserving bandwidth on those links.
+
+        The IGMP Snooping function requires the configuration of global settings for the
+        GAM. Additional Port Settings further define how the IGMP Snooping operates
+        for each port of the GAM.
+
+        Global Configuration Settings
+
+        The following settings are applied to the GAM device:
+
+        Snooping Enabled: Enables the Global IGMP Snooping function
+
+        Unregistered IPMCv4 Flooding Enabled: Enables support for unregistered
+        IPMCv4 traffic flooding. The flooding control takes effect only when you enable
+        IGMP Snooping. When IGMP Snooping is disabled, unregistered IPMCv4 traffic
+        flooding is always active in spite of this setting.
+
+        IGMP SSM Range: SSM (Source-Specific Multicast) Range allows the SSM-
+        aware hosts and routers to run the SSM service model for the groups in the
+
+
+
+        Positron Access Solutions               38         Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+address range. You need to assign a valid IPv4 multicast address as prefix with
+a prefix length (from 4 to 32) for the range.
+
+Leave Proxy Enabled: Enables the IGMP Leave Proxy capability. This feature
+avoids forwarding unnecessary IGMP Leave messages to the router side.
+
+Proxy Enabled: Enables IGMP Proxy. This feature avoids forwarding
+unnecessary IGMP Join and Leave messages to the router side.
+
+Port Related Configuration Settings
+
+The following settings operate on the ports (G.hn and SFP+) of the GAM device.
+
+Router Port: for each port of the GAM, you can specify which ones act as router
+ports. A router port is a port on the GAM that leads towards the Layer-3 multicast
+source or IGMP Querier. These ports are typically the SFP+ ports labelled as
+10G-1 and 10G-2.
+
+Important note: When you select a port that is a member of an aggregation
+group as a router port, the whole aggregation group will act as a router port.
+
+Fast Leave: Enable the fast leave support on the selected port(s). The GAM
+IGMP Snooping will remove group record and will stop forwarding data upon
+receiving the IGMP Leave message without sending a last member query
+messages. You should enable this feature only when there is a single IGMPv2
+host connected to the specific port.
+
+Throttling: enable this feature to limit the number of multicast groups to which a
+switch port can belong. By default, the throttling function is disabled for each
+port.
+
+
+
+
+Positron Access Solutions               39          Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+                        Figure 36: Configuration IGMP Snooping
+
+
+
+
+Positron Access Solutions               40            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+VLAN configuration for IGMP Snooping
+
+Each page shows up to 99 entries from the VLAN table, the default being 20
+pages, selected through the "entries per page" input field. When first visited, the
+web page will show the first 20 entries from the beginning of the VLAN Table.
+The first entry shows the lowest VLAN ID found in the VLAN Table.
+
+Start from VLAN: allows you to select the starting point in the VLAN Table.
+Clicking the refresh button will update the displayed table starting from the
+specified VLAN or with the next closest VLAN Table match.
+
+The >> button will use the last entry of the currently displayed entry as a basis for
+the next lookup. When reaching the last entry in the VLAN table, the WEB GUI
+displays "No more entries" in the displayed table. Use the << button to start over.
+
+IGMP Snooping VLAN Table Columns
+
+When creating an IGMP VLAN interface, make sure you setup the IP interface
+first. Please go to System -> IP -> Add IP interface.
+
+VLAN ID: This is the VLAN ID of each entry in the VLAN table.
+
+Snooping Enabled: Enables the per-VLAN IGMP Snooping. You can select up
+to 128 VLANs for IGMP Snooping.
+
+Querier Election: Enable when participating in the IGMP Querier election of the
+VLAN. Otherwise, disable to act as an IGMP Non-Querier.
+
+Querier Address: Defines the IPv4 address source address used in IP header
+for IGMP Querier election. When the Querier address is not set, the GAM uses
+the IPv4 management address of the IP interface associated with this VLAN.
+When the IPv4 management address is not set, the GAM uses the first available
+IPv4 management address. Otherwise, the GAM uses a pre-defined value. By
+default, this value is 192.0.2.1.
+
+Compatibility: Compatibility is the result of hosts and routers taking appropriate
+actions depending on the versions of IGMP operating on hosts and routers within
+a network. The default compatibility setting is IGMP-Auto. The allowed
+selections are:
+     IGMP-Auto
+     Forced IGMPv1
+     Forced IGMPv2
+     Forced IGMPv3
+
+Positron Access Solutions               41           Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+PRI: this is the priority of the interface. It specifies the IGMP control frame
+priority level generated by the GAM. Use these settings to prioritize different
+classes of multicast traffic. The allowed range is 0 (best effort) to 7 (highest),
+with the default interface priority value set to 0.
+
+RV: The Robustness Variable allows tuning for the expected packet loss on a
+network. The allowed range is 1 to 255, with the default robustness variable
+value set to 2.
+
+QI: the Query Interval is the interval between General Queries sent by the
+Querier. The allowed range is 1 to 31744 seconds, with the default query interval
+set to 125 seconds.
+
+QRI: The Query Response Interval is the Maximum Response Delay used to
+calculate the Maximum Response Code inserted into the periodic General
+Queries. The allowed range is 0 to 31744 in tenths of seconds. The default
+query response interval is set to 100 tenths of seconds (or 10 seconds).
+
+LLQI (LMQI for IGMP): The Last Member Query Time is the time value
+represented by the Last Member Query Interval, multiplied by the Last Member
+Query Count. The allowed range is 0 to 31744 in tenths of seconds, with the
+default Last Member Query Interval set to 10 tenths of seconds (or 1 second).
+
+URI: The Unsolicited Report Interval is the time between repetitions of a host's
+initial report of membership in a group. The allowed range is 0 to 31744
+seconds, with the default unsolicited report interval set to 1 second.
+
+
+
+
+                 Figure 37: Configuration IGMP Snooping VLAN settings
+
+
+
+
+Positron Access Solutions               42            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+IGMP Snooping Port Filtering Profile Configuration
+
+Port: this column lists all of the available ports of the GAM and their associated
+IGMP Snooping profiles.
+
+Filtering Profile: Select from the IPMC Profile defined for the GAM as the
+filtering condition for the specific port. You can view a summary of the assigned
+profile by clicking the view button.
+
+Profile Management: You can inspect the rules of the assigned IP Multicast
+Profile (ICMP) by using the view button. Please refer to the next sub-section for
+more information about IPMC Profile creation and management:
+
+
+
+
+                   Figure 38: Assigning an IGMP Profile to a GAM port
+
+
+
+
+Positron Access Solutions               43             Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+2.8.4 IP Multicast (IPMC) Profile Management
+
+      The IPMC profile is used for access control to IP multicast streams. You can
+      create a maximum of 64 Profiles with at maximum 128 corresponding rules for
+      each profile.
+
+      Global Profile Mode: Enable the Global IPMC Profile to indicate to the GAM to
+      filter IP Multicast feeds based on the configured IPMC Profiles.
+
+      IPMC Profile Table Setting
+
+      Delete: Check to delete the entry. The selected entry(ies) will be deleted during
+      the next save.
+
+
+
+
+                             Figure 39: Managing an IP Multicast Profile
+
+      Adding a New IPMC Profile
+
+      Click the Add New IPMC Profile button to create a new profile.
+
+      Profile Name: The unique name used associated to the IPMC profile in the
+      profile table. Each name is composed of at maximum 16 alphabetic and numeric
+      characters. At least one alphabet must be present.
+
+      Profile Description: You can insert a brief description of the IPMC profile. It is
+      composed of at maximum 64 alphabetic and numeric characters. No blank or
+      space characters are permitted as part of description. You can use "_" or "-"
+      instead of blank characters.
+
+
+
+
+      Positron Access Solutions               44              Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Rule: When creating a new IPMC profile, click the edit button to open the rule
+settings page. Open a summary view of the IPMC profile by clicking the view
+button.
+
+
+
+
+                     Figure 40: Creating or Editing an IP Multicast Profile
+
+Click the Save button when done.
+
+Click the edit      button to open the IPMC Profile Address Configuration page.
+
+Entry Name: this is a unique name to identify the new IPMC Profile and index
+the entry in the IPMC address table. Each entry is composed of a maximum of
+16 alphabetic and numeric characters. At least one alphabetic character shall be
+present.
+
+Start Address: specify the starting IPv4 Multicast Group Address for the IP
+Multicast address range.
+
+End Address: specify the ending IPv4 Multicast Group Address for the IP
+Multicast address range.
+
+
+
+
+                 Figure 41: Managing IP Addresses for an IP Multicast Profile
+
+Positron Access Solutions                 45                Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Click the Add New Address (Range) Entry button to create another IPMC
+Profile Address Configuration entry.
+
+Entry Name: this is a unique name to identify the new IPMC Profile and index
+the entry in the IPMC address table. Each entry is composed of a maximum of
+16 alphabetic and numeric characters. At least one alphabetic character shall be
+present.
+
+Start Address: specify the starting IPv4 Multicast Group Address for the IP
+Multicast address range.
+
+End Address: specify the ending IPv4 Multicast Group Address for the IP
+Multicast address range.
+
+
+
+
+            Figure 42: Creating an IP Address range for an IP Multicast Profile
+
+Creating or Managing Rules for an IPMC Profile
+
+This page provides the filtering rule settings for a specific IPMC profile. It displays
+the configured rule entries in precedence order. First rule entry has highest
+priority in lookup, while the last rule entry has lowest priority in lookup.
+
+Profile Name and Index: The name of the selected IPMC profile to manage.
+The Profile Name itself is not editable.
+
+Entry Name: Select from the drop list of entries created for available address
+range you want to apply to this rule. You cannot select a blank entry (“-“)
+
+Address Range: This is the IP Multicast address range matching the selected
+entry name. This field is not editable. The GAM adjusts the range automatically
+as per the selected profile entry.
+
+
+Positron Access Solutions               46               Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Action: Indicates the learning action performed upon receiving the Join/Report
+frame with a group address that corresponds to the address range of the rule.
+The available rules are:
+    Permit: Group address matches the range specified in the rule will be
+      learned.
+    Deny: Group address matches the range specified in the rule will be
+      dropped.
+
+Log: Indicates the logging preference upon receiving Join/Report frames that
+match the address range of the rule. The available actions are:
+   Enable: log information about the group address when it matches the
+      range specified in the rule.
+   Disable: Do not log information about the group address when it matches
+      the range specified in the rule.
+
+You can manage rules and the corresponding precedence order by using the
+following buttons:
+         Insert: Insert a new rule before the current entry of rule.
+         Delete: Delete the current entry of rule.
+         Up: Moves the current entry of rule up in the list.
+         Down: Moves the current entry of rule down in the list.
+
+
+
+
+              Figure 43: Setting the priority rules for an IP Multicast Profile
+
+When creating IPMC Profiles, it may be a good idea to also create a last rule
+(inserted at the end of the rules tables) to block any other IP Multicast traffic and
+associated IGP Join / Leave not explicitly allowed. This is achieved with a rule
+such as this one.
+
+
+
+Positron Access Solutions                47                Document 180-0186-001 R03
+     GAM Installation and Activation Guide
+
+
+
+
+                Figure 44: Adding a Block All rule to protect the IP Multicast service
+
+2.8.5 Optional MVR proxy
+
+     The Multicast VLAN Registration (MVR) feature allows forwarding a multicast
+     traffic to multiple recipient VLANs. (e.g. 1 VLAN unicast and 1 VLAN multicast)
+     In an IP Multicast Television (IPTV) application, a Networked TV, PC or set-top
+     box can receive the multicast stream. In order to eliminate the need for multiple
+     (identical) IP Multicast feed to multiple set-top boxes or PCs, you can configure
+     the GAM as a MVR receiver. When a subscriber selects an allowed channel
+     (defined in an IPMC Profile), the IP Multicast recipient (IPTV, set-top box or PC)
+     sends an IGMP/MLD report message to the GAM to join the appropriate
+     multicast group address. MVR source ports are uplink ports that send and
+     receive multicast data to and from the multicast VLAN. The Querier should
+     connect to the source port. The GAM handles the MVR VLAN(s) and it is the only
+     one that forwards the IGMP reports on behalf of the downstream (receiver ports)
+     toward the upstream (source ports). The GAM always ignores Query packet from
+     the downstream (receiver ports) and discards them silently.
+
+     Once the MVR VLAN members are configured, they shall associate with an
+     IPMC profile with the specific MVR VLAN set as the allowed channel. The IPMC
+     Profiles define the channel profiles (see previous section). NOTE: the GAM
+     supports a maximum of four (4) MVR VLANs for each of the IPMC channel
+     profile.
+
+     IMPORTANT NOTES: when using MVR it is important NOT to have a VLAN IP
+     interface on the MVR VLAN (snoop VLAN). You shall also make sure to use an
+     IPMC profile.
+
+
+
+
+     Positron Access Solutions               48                Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+MVR Configuration
+
+The following page allows you to configure the MVR function.
+
+MVR Mode: Enables or Disables the MVR function in the GAM. The control of
+Unregistered Flooding depends on the current configuration in IGMP/MLD
+Snooping. NOTE: we strongly recommend you enable Unregistered Flooding
+control when the MVR group table is full.
+
+VLAN Interface Settings
+
+The following table lists the defined MVR entries and allows you to add or delete
+these entries.
+
+Delete: Select the entry(ies) you wish to delete and then click the save button to
+remove them.
+
+Click the Add New MVR LAN button to create a new MVR entry. Each entry
+requires the following:
+
+MVR VID: Specify the Multicast VLAN ID. NOTE: make sure to avoid configuring
+MVR source ports that overlap with management VLAN ports.
+
+MVR Name: this is an optional attribute to identify the specific MVR VLAN. The
+maximum length of the MVR VLAN unique Name is sixteen (16) alphanumeric
+characters. You can edit the MVR VLAN name for existing MVR VLAN entries if
+needed.
+
+Querier Election: set to Enable to join IGMP Querier election in the VLAN. Set
+to Disable to act as an IGMP Non-Querier.
+
+IGMP Address: use this parameter to define the IP address when the device
+acts as an IGMP Querier. The default IGMP address is not set (0.0.0.0). When
+the IGMP address is not set, the GAM uses the IPv4 management address of the
+IP interface associated with this VLAN. When the IPv4 management address is
+not set, the GAM then uses the first available IPv4 management address.
+Otherwise, the GAM uses a default value of 192.0.2.1.
+
+Mode: in Dynamic mode, MVR allows dynamic MVR membership reports on
+source ports. In Compatible mode, the GAM will discard MVR membership
+reports from source ports. The default is Dynamic mode.
+
+Tagging: specify whether the traversed IGMP/MLD control frames are sent as
+Untagged or Tagged with the MVR VID. The default is Tagged.
+
+Positron Access Solutions               49          Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Priority: Specify the priority assigned to IGMP/MLD control frames. The default
+Priority is zero (0).
+
+LLQI: The parameter defines the maximum time to wait for IGMP/MLD report
+memberships on a receiver port before removing the port from multicast group
+membership. The value is in units of tenths of a second. The valid range is 0 to
+31744. The default LLQI is five (5) tenths or one-half second.
+
+Interface Channel Profile: When creating an MVR VLAN, you shall select the
+required IPMC Profile to define THE channel filtering rules. Click the view button
+for a summary of the ICMP Profile. NOTE: the GAM does not allow overlapping
+permit group address. You can inspect the rules of the designated profile by
+using the     button:
+
+Port Role: click on the         button to expand the view and configure the Port
+Role of each port of the GAM for this MVR entry. The available roles are:
+    Inactive (I): The designated port does not take part in MVR operations.
+      This is the default port role.
+    Source (S): Configure uplink ports that receive and send multicast data as
+      source ports. Subscribers cannot connect to source ports.
+    Receiver (R): Configure a port as a receiver port if it is a subscriber port
+      and should only receive multicast data. It does not receive data unless it
+      becomes a member of the multicast group by issuing IGMP/MLD
+      messages.
+
+Port Remap VID: This applies to ports that configured as receivers. This is the
+VLAN ID (of the receiver) for the remapped multicast stream. A value of 0
+removes any VLAN tag at the output interface. Otherwise, the GAM maps the
+multicast stream to the specified VLAN ID. In this case, the valid values range
+from 3 to 4093 (inclusively).
+
+Immediate Leave Settings
+
+Immediate Leave: Enables the fast leave feature for the selected port(s). Upon
+receiving an IGMPv2/MLDv1 leave message from the port, the GAM will remove
+the port from the group record and will stop forwarding multicast data to that port.
+The GAM will not send a last member query messages. NOTE: we recommend
+you enable this feature only when there is a single IGMPv2/MLDv1 host
+connected to the selected port.
+
+
+
+
+Positron Access Solutions               50           Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+                           Figure 45: Managing MVR VLAN assignments
+
+2.9   DHCP Snooping / Option-82
+
+      The DHCP agent of the GAM supports DHCP Option 82. It forwards and
+      transfers DHCP messages between DHCP clients and the DHCP server on
+      same or different subnets (Relay mode). The GAM stores the incoming interface
+      IP address in the GIADDR field of the DHCP packet. The DHCP server can use
+      the value of GIADDR field to determine the assigned subnet. For such condition,
+      please make sure the switch configuration of VLAN interface IP address and Port
+      VLAN ID (PVID) correctly.
+
+      You can configure the DHCP Snooping function as follows:
+
+      Snooping Mode: Indicates the DHCP snooping mode. Possible modes are:
+         Enabled: when you enable DHCP snooping, the GAM forwards the DHCP
+           request messages a DHCP Server to trusted ports and only allow reply
+           packets from trusted ports.
+         Disabled: Disables the DHCP snooping function.
+
+
+
+
+      Positron Access Solutions               51         Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Port Mode Configuration Table
+
+For each port in the table, you can set the mode of a port as trusted or
+untrusted.
+
+
+
+
+                         Figure 46: Managing DHCP Option 82
+
+You then need to configure the DHCP Relay settings as follows:
+
+Relay Mode: select the mode of operation for the DHCP relay function. Possible
+modes are:
+    Enabled: DHCP unicast to a specific DHCP server enables the DHCP
+      Relay function where the GAM forwards and transfers DHCP messages
+      between the DHCP clients and the DHCP server on different subnets.
+      DHCP broadcast messages are not flooded on all interfaces for security
+      considerations.
+    Disabled: Disable the DHCP relay function. DHCP packets will be sent as
+      broadcast packets.
+
+Relay Server: specify the IP address of the DHCP relay server.
+
+Relay Information Mode: when you enable this function, the DHCP Snooping
+operates as per the Broadband Forum TR-101 specification that dictates how to
+
+Positron Access Solutions               52           Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+use Option 82. The Option 82 Circuit ID format is "[Agent Identifier][interface]
+[slot]/[port number]". For example, "000ED8-GAM12C-01012973" eth 0/6.0:3
+indicates that the DHCP request was issued by Agent 000ED8-GAM12C-
+01012973 on an Ethernet interface by a GAM at slot 0. It further indicates that
+the DHCP packet originates from port #6 of the GAM, sent by endpoint #0 to this
+port, with a VLAN ID of 3. The Option 82 Remote ID value is set to the G.hn
+subscriber name associated to the G.hn end-point.
+     Enabled: the DHCP agent of the GAM inserts the information for option
+         82 into DHCP messages toward the DHCP server and removes it on
+         DHCP messages to the DHCP client.
+     Disabled: Disable the DHCP relay function.
+
+Relay Information Policy: the selected policy dictates the behavior of the DHCP
+Agent when it receives a DHCP message that already contains relay agent
+information. Available policies are:
+     Replace: Replace the original relay information when a DHCP message
+      that already contains it is received.
+     Keep: Keep the original relay information when a DHCP message that
+      already contains it is received.
+     Drop: Drop the package when a DHCP message that already contains
+      relay information is received.
+
+Relay Information Access Node ID: specify the Agent Identifier to use when
+formatting the Circuit ID sub-option of Option 82. When empty, it will use the
+GAM SNMP System Name. When the SNMP System Name is empty, it will use
+the GAM serial number.
+
+Relay Information Index Base: specify whether the GAM slot number and the
+G.hn end-point number in the Circuit ID are zero-based or one-based.
+    0-based: GAM Slot / G.hn end-point numbers specified in the Circuit ID
+      are zero-based
+    1-based: GAM Slot / G.hn end-point numbers specified in the Circuit ID
+      are one-based
+
+
+
+
+Positron Access Solutions               53        Document 180-0186-001 R03
+        GAM Installation and Activation Guide
+
+
+
+
+                          Figure 47: Basic DHCP Relay Configuration Settings
+
+  2.9.1 DHCP relay (unicast request)
+
+        Configuring the GAM as a DHCP Relay ensures that the DHCP messages to and
+        from the DHCP Server are always UNICAST.
+
+  2.9.2 DHCP forward (broadcast request)
+
+        Disabling the DHCP Relay function of the GAM is analogous to the GAM acting
+        as a DHCP Forwarder. In this mode, Broadcast DHCP messages entering the
+        GAM are forwarded as Broadcast DHCP messages to the DHCP Server.
+
+2.10    PPPoE Intermediate Agent
+
+        The GAM supports the PPPoE Intermediate Agent. It operates as per the
+        Broadband Forum TR-101 specification. The PPPoE Intermediate Agent
+        intercepts all upstream PPPoE discovery stage packets, i.e. the PADI, PADR and
+        upstream PADT packets, but does not modify the source or destination MAC
+        address of these PPPoE discovery packets.
+
+        The PPPoE Intermediate Agent operates as per the Broadband Forum TR-101
+        specification. The Circuit ID format is "[Agent Identifier][interface] [slot]/[port
+        number]". For example, "000ED8-GAM12C-01012973" eth 0/6.0:3 indicates that
+        the PPPoE Discovery request was issued by Agent 000ED8-GAM12C-01012973
+        on an Ethernet interface by a GAM at slot 0. It further indicates that the PPPoE
+        packet originates from port #6 of the GAM, sent by endpoint #0 to this port, with a
+        VLAN ID of 3. The Remote ID value is set to the G.hn subscriber name
+        associated to the G.hn end-point.
+
+        You can configure the following settings for the PPPoE Intermediate Agent:
+
+        Positron Access Solutions               54            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Information Mode: select the mode of operation for the PPPoE Intermediate
+Agent function. Possible modes are:
+    Enabled: enables the PPPoE Intermediate Agent where the GAM inserts
+      specific information (Agent Information/TR-101) into a PPPoE Discovery
+      message when forwarding to the PPPoE server and removes it from a
+      PPPoE Discovery message when transferring to the PPPoE client.
+    Disabled: Disable the PPPoE Intermediate Agent function.
+
+Information Policy: the selected policy dictates the behavior of the PPPoE
+Intermediate Agent when it receives a PPPoE Discover message that already
+contains relay agent information. Available policies are:
+     Replace: Replace the original relay information when a PPPoE Discover
+       message that already contains it is received.
+     Keep: Keep the original relay information when a PPPoE Discover
+       message that already contains it is received.
+     Drop: Drop the package when a PPPoE Discover message that already
+       contains relay information is received.
+
+Information Access Node ID: specify the Agent Identifier to use when
+formatting the Circuit ID sub-option. When empty, it will use the GAM SNMP
+System Name. When the SNMP System Name is empty, it will use the GAM
+serial number.
+
+Information Index Base: specify whether the GAM slot number and the G.hn
+end-point number in the Circuit ID are zero-based or one-based.
+    0-based: GAM Slot / G.hn end-point numbers specified in the Circuit ID
+      are zero-based
+    1-based: GAM Slot / G.hn end-point numbers specified in the Circuit ID
+      are one-based
+
+
+
+
+           Figure 48: Basic PPPoE Intermediate Agent Configuration Settings
+
+
+
+
+Positron Access Solutions               55            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Chapter 3
+______________________________________
+Monitoring the GAM
+
+
+
+
+Positron Access Solutions               56   Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+3.1   Monitoring the GAM
+
+      Select the Monitor sub-section on the left hand navigation panel of the WEB GUI
+      to access the GAM monitoring pages.
+
+      Since the GAM is also a complete Carrier Ethernet switch, you will find detailed
+      information beyond the G.hn features. This document is focused on the G.hn
+      feature set, please refer to the online help section of each monitoring page for
+      assistance or refer to the GAM User Guide more additional details.
+
+3.2   System Information
+
+      The System Information page provides a global view of the GAM hardware
+      platform. Of particular information, you will find the revision of the firmware and
+      the uptime of the GAM.
+
+      You will also see the internal temperature of the unit and the speed of the cooling
+      fans. The GAM design sustains ambient temperatures up to 45˚C (113˚F).
+
+
+
+
+                                 Figure 49: GAM System Overview
+
+
+
+
+      Positron Access Solutions               57          Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+3.3   G.hn Ports, End-Points and Subscribers
+
+      The G.hn Overview provides a quick glance at the overall health of the GAM, its
+      G.hn ports and information about the subscribers and their associated Endpoint
+      devices. The figure below shows how the GAM supports multiple Endpoint
+      devices per port when operating over a coax infrastructure in Point to Multipoint
+      mode.
+
+
+
+
+                     Figure 50: GAM G.hn Overview (COAX – Point to Multipoint)
+
+
+
+
+      Positron Access Solutions               58             Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+The G.hn overview when operating over copper (MIMO or SISO) mode shows a
+single Endpoint for each of the GAM G.hn ports.
+
+
+
+
+                        Figure 51: GAM G.hn Overview (Copper)
+
+Please refer to the table below for more information about each column of the
+G.hn Overview page.
+
+                       Associated
+ Column Heading                         Description
+                       Icon
+ Port                                   ID of the G.hn Master Port
+                                        Friendly name to identify the entity (Port,
+ Name
+                                        Endpoint or Subscriber)
+
+                                        Port is disabled
+
+                                        Service fully provisioned and Endpoint
+                                        (bridge) is Up
+ Status                                 Service fully provisioned and Endpoint
+                                        (bridge) is Down (outage is service-
+                                        affecting)
+                                        Endpoint is configured but unreachable.
+                                        No subscriber associated to Endpoint.
+                                        (Outage is non-service-affecting)
+                                        MAC address of the G.hn Port on the
+                                        GAM or Endpoint
+ MAC address                                - MAC address in black text means
+                                                Endpoint is configured
+                                            - MAC address in red text means
+
+Positron Access Solutions               59             Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+                                               Endpoint has been discovered but
+                                               is not yet configured
+                                        Number of endpoints configured on the
+ Number of
+                                        GAM G.hn port: Up to 16. Apply to Coax
+ Endpoints
+                                        only.
+ Model                                  Model and Type of Endpoint discovered
+                                        Endpoint VLAN used in the uplink trunk
+                                        port. The range of allowed VLANs is from
+ VLAN                                   3 to 4093. Note: the Gigabit Ethernet
+                                        ports of the Endpoint always are set to
+                                        Untag.
+
+                            Table 8: G.hn Overview Column
+
+Detailed information of endpoint is available by clicking on MAC address of the
+Endpoint.
+
+
+
+
+                    Figure 52: Detailed Endpoint Information (MIMO)
+
+Notes: When operating in MIMO or SISO mode, the GAM adjusts the bandwidth
+values over time to reflect the actual line utilization. The G.hn VectorBoost
+Engine manages the Dynamic Bandwidth Allocation process to allocate the
+bandwidth as per the demand of the Endpoint devices for the downstream and
+upstream directions. The reported estimated wire length information is in meters.
+You can use a ratio of 3.28 to convert to feet.
+
+
+Positron Access Solutions               60             Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+3.4   Monitor IP multicast group (IGMP snooping)
+
+      This page provides IGMP Snooping status of the GAM.
+
+      IGMP Snooping Status
+
+      The WEB page displays the IGMP Snooping Statistics as per the following
+      table:
+
+      VLAN ID: this is the VLAN ID of the entry.
+
+      Querier Version: this is the IGMP Version of the current Querier.
+
+      Host Version: this is the IGMP Version of the current Working Host.
+
+      Querier Status: the Querier status is "ACTIVE" or "IDLE". "DISABLE" denotes
+      the specific interface is administratively disabled.
+
+      Queries Transmitted: number of Transmitted Queries.
+
+      Queries Received: number of Received Queries.
+
+      V1 Reports Received: number of Received V1 Reports.
+
+      V2 Reports Received: number of Received V2 Reports.
+
+      V3 Reports Received: number of Received V3 Reports.
+
+      V2 Leaves Received: number of Received V2 Leaves.
+
+      Router Port
+
+      The WEB page also displays the GAM ports with an indication of port(s) acting
+      as router ports. A router port is a port on the GAM that connects to the Layer-3
+      multicast device or IGMP Querier. Static denotes the specific port configuration
+      as a router port. Dynamic denotes the specific port is learnt to be a router port.
+      Both denote the specific port is both configured and learnt as a router port.
+
+      Port: GAM port number.
+
+      Status: Indicate whether specific port is a router port or not.
+
+
+
+
+      Positron Access Solutions               61            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+                    Figure 53: IGMP Snooping Status and Statistics
+
+IGMP Snooping Group Information
+
+This WEB page displays entries in the IGMP Snooping Group Table. The IGMP
+Group Table is sorted first by VLAN ID, and then by group.
+
+Start from VLAN: select the starting entry to display in the IGMP Group Table.
+
+Group Address: specify the starting Multicast group address to display.
+
+Entries per page: specify the number of entries (up to 99) to display per WEB
+page. The default is 20 entries.
+
+Click the Refresh button to update the displayed table starting from the exact o
+closest IGMP Group Table match. When displaying multiple pages, you can click
+the refresh button to use the first entry in the table as the to update the Start
+from VLAN and the Group Address input fields allowing for continuous refresh
+with the same start address.
+
+When reaching the last entry in the table, the WEB page displays "No more
+entries". You can use the >> button to start over.
+
+
+
+
+Positron Access Solutions               62            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+                      Figure 54: IGMP Snooping Group Information
+
+The entries in the IGMP Snooping Group include the following:
+
+VLAN ID: this is the VLAN ID of the group.
+
+Groups: this is the address of the group displayed.
+
+Port Members: a check mark (√) indicates the port(s) in the group.
+
+IGMP Source Filtered Multicast (SFM) Information
+
+This WEB page displays the IGMP SFM Information. The IGMP SFM (Source-
+Filtered Multicast) Information table also contains the SSM (Source-Specific
+Multicast) information. This table is sorted first by VLAN IDs, then by group(s),
+and finally by Port Number(s). Different source addresses belonging to the same
+group appear as a single entry.
+
+Start from VLAN: select the starting entry to display in the IGMP Group Table.
+
+Group Address: specify the starting Multicast group address to display.
+
+Entries per page: specify the number of entries (up to 99) to display per WEB
+page. The default is 20 entries.
+
+The entries in the IGMP SFM Information Table include the following:
+
+VLAN ID: this is the VLAN ID of the group.
+
+Group: address of the group displayed.
+
+Port: this is the port number of the GAM.
+
+Mode: Indicates the filtering mode maintained per (VLAN ID, port number, Group
+Address) basis. Valid values are Include or Exclude.
+
+
+
+
+Positron Access Solutions               63            Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+      Source Address: this is the IP Address of the Multicast source. The maximum
+      number of IPv4 source address for filtering (per group) is eight (8). None
+      indicates there is no source filtering address.
+
+      Type: the type of filtering is either Allow or Deny.
+
+      Hardware Filter/Switch: Indicates that the GAM is using hardware acceleration
+      to handle the IGMP traffic.
+
+
+
+
+                     Figure 55: IGMP Source Filtering Multicast (SF) Information
+
+3.5   MIMO Diagnostics: SNR, NOISE, PSD Rx Graphs
+
+      The GAM offers comprehensive Diagnostics Information in the form of graphs for
+      the physical layer of each of the G.hn copper ports. The available diagnostics
+      information represent real-time measurements reported from the End-Point
+      device connected to the selected G.hn port of the GAM.
+
+      This WEB page allows you to select the port and the type of diagnostic as
+      follows:
+
+      Rx Port: select the GAM G.hn port from which the measurements you require
+      diagnostic information
+
+      Tx Endpoint: select the End Point available from the selected GAM port. There
+      is always a single End-Point shown when operating over Copper (MIMO).
+
+      Type: select one of the following available diagnostic graphs:
+          SNR Probe: the graph displays out-of-band probe data from the End-
+            Point and the signal-to-noise ratio (SNR) measured at the GAM G.hn port.
+          SNR Data: the graph displays the Signal-to-noise ratio (SNR) reported by
+            the selected GAM G.hn port and from the in-band data (user traffic)
+            currently transmitted by the End-Point.
+
+
+
+      Positron Access Solutions               64              Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+       PSD Rx: the graph displays out-of-band probe data from the End-Point
+        along with the power spectral density (PSD) measured at the GAM G.hn
+        port.
+       Noise: the graph displays the noise level over the whole frequency range
+        potentially used by the G.hn port.
+
+Averaging: when there is heavy user traffic on the selected G.hn port, you can
+select the number of measurement points taken over the whole frequency range
+to reduce the amount of monitoring traffic requested from the End-Point. Taking
+more measurements (plot more points) allow for a finer graph at the expense of
+using more resources. Reducing the number of measurements provides coarser
+but very adequate graphs. The default value of 4 provides adequate graphs
+while minimizing the monitoring resources required.
+
+Measurements: click on start to open the graph and stop to stop collecting
+diagnostic information from the selected G.hn port and End-Point
+
+
+
+
+.
+
+            Figure 56: Selecting the type of G.hn Measurement graph (MIMO)
+
+Understanding the graphs: Channel 1 represents the 1st pair (inner pair) and
+Channel 2 represents the 2nd pair (outer pair). When operating in SISO mode,
+the graph represents the measurements of the 1st pair.
+
+SNR PROBE
+
+The following graph shows the SNR probe data from the End-Point device
+connected on the selected G.hn port of the GAM. NOTE: This screenshot
+represents a G.hn port in MIMO (2 active copper pairs) and operating at Boost
+Level 0.
+
+
+
+
+Positron Access Solutions               65            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+                          Figure 57: SNR Probe graph (MIMO)
+
+
+
+
+Positron Access Solutions               66           Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+SNR DATA
+
+The following graph shows the SNR data from the End-Point device connected
+on the selected G.hn port of the GAM. NOTE: This screenshot was taken when
+the G.hn port was operating at Boost Level 0.
+
+
+
+
+                           Figure 58: SNR Data graph (MIMO)
+
+
+
+
+Positron Access Solutions               67            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+PSD RX
+
+The following graph shows the Power Spectral Density (PSD) from the End-Point
+device connected on the selected G.hn port of the GAM. NOTE: This screenshot
+was taken when the G.hn port was operating at Boost Level 0.
+
+
+
+
+              Figure 59: Receive PSD graph from remote End-Point (MIMO)
+
+
+
+
+Positron Access Solutions               68           Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+NOISE
+
+The following graph shows the noise reported by the End-Point device connected
+on the selected G.hn port of the GAM. NOTE: This screenshot was taken when
+the G.hn port was operating at Boost Level 0.
+
+
+
+
+                             Figure 60: Noise graph (MIMO)
+
+
+
+
+Positron Access Solutions               69             Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+3.6   COAX Diagnostics: SNR, NOISE, PSD Rx Graphs
+
+      The GAM offers comprehensive Diagnostics Information in the form of graphs for
+      the physical layer of each of the G.hn COAX ports. The available diagnostics
+      information represent real-time measurements reported from the End-Point
+      device connected to the selected G.hn port of the GAM.
+
+      This WEB page allows you to select the port and the type of diagnostic as
+      follows:
+
+      Rx Port: select the GAM G.hn port from which the measurements you require
+      diagnostic information
+
+      Tx Endpoint: select from the End Point device(s) available from the selected
+      GAM port. G.hn COAX ports can handle up to sixteen (16) End-Point devices).
+
+
+
+
+            Figure 61: Selecting the End-point for the of G.hn Measurement graph (COAX)
+
+
+
+      Type: select one of the following available diagnostic graphs:
+          SNR Probe: the graph displays out-of-band probe data from the End-
+            Point and the signal-to-noise ratio (SNR) measured at the GAM G.hn port.
+          SNR Data: the graph displays the Signal-to-noise ratio (SNR) reported by
+            the selected GAM G.hn port and from the in-band data (user traffic)
+            currently transmitted by the End-Point.
+          PSD Rx: the graph displays out-of-band probe data from the End-Point
+            along with the power spectral density (PSD) measured at the GAM G.hn
+            port.
+          Noise: the graph displays the noise level over the whole frequency range
+            potentially used by the G.hn port.
+
+
+
+      Positron Access Solutions               70             Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Averaging: when there is heavy user traffic on the selected G.hn port, you can
+select the number of measurement points taken over the whole frequency range
+to reduce the amount of monitoring traffic requested from the End-Point. Taking
+more measurements (plot more points) allow for a finer graph at the expense of
+using more resources. Reducing the number of measurements provides coarser
+but very adequate graphs. The default value of 4 provides adequate graphs
+while minimizing the monitoring resources required.
+
+Measurements: click on start to open the graph and stop to stop collecting
+diagnostic information from the selected G.hn port and End-Point.
+
+
+
+
+               Figure 62: Selecting the type of Measurement graph (COAX)
+
+SNR PROBE
+
+The following graph shows the SNR probe data from the End-Point device
+connected on the selected G.hn port of the GAM.
+
+
+
+
+                          Figure 63: SNR Probe graph (COAX)
+
+
+
+Positron Access Solutions               71             Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+SNR DATA
+
+The following graph shows the SNR data from the End-Point device connected
+on the selected G.hn port of the GAM.
+
+
+
+
+                           Figure 64: SNR Data graph (COAX)
+PSD RX
+
+The following graph shows the Power Spectral Density (PSD) from the End-Point
+device connected on the selected G.hn port of the GAM.
+
+
+
+
+              Figure 65: Receive PSD graph from remote End-Point (COAX)
+
+Positron Access Solutions               72            Document 180-0186-001 R03
+       GAM Installation and Activation Guide
+
+
+
+
+       NOISE
+
+       The following graph shows the noise reported by the End-Point device connected
+       on the selected G.hn port of the GAM.
+
+
+
+
+                                    Figure 66: Noise graph (COAX)
+
+3.7    Firmware upgrade
+
+       Important note: performing a software upgrade is service affecting. When
+       uploading a new version, the GAM will automatically upgrade the backup
+       bank and reboot to activate new software.
+
+       You can update the GAM firmware either via the web browser or from a URL.
+       The GAM firmware also includes the G1000 / G1001 end-point firmware and the
+       GAM will push a firmware update to G1000 / G1001 devices operating under out
+       of date firmware.
+
+  3.7.1 Upgrade GAM Firmware from File on your PC
+
+       This WEB page facilitates an update of the firmware controlling the GAM.
+
+       Simply BROWSE to the location of a software image on your PC and click
+       UPLOAD
+
+
+
+
+       Positron Access Solutions               73             Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+      Once the new firmware image is uploaded (HTTP post) to the GAM, the WEB
+      page will indicate that the firmware update is in-progress. After about a minute,
+      the firmware is updated and the GAM will automatically restart with the current
+      configuration settings.
+
+      Important Note: WEB Access is temporarily suspended during the GAM
+      firmware update process. Do not restart or power off the device at this time or
+      the switch may fail to function afterwards. If you have physical access to the
+      GAM, you will notice that the front LED flashes Green/Off with a frequency of 10
+      Hz while the firmware update is in progress.
+
+
+
+
+                       Figure 67: Select File for Firmware Upload to the GAM
+
+3.7.2 Upgrade GAM Firmware from URL
+      This WEB page lets you enter a file location where the GAM can go get a new
+      firmware. The GAM acts as a “client” and must get the file from a server (FTP
+      HTTP or HTTPS). All you need to do is provide the full URL of the firmware
+      location and click Download to proceed.
+
+      Note: the upgrade of the GAM firmware automatically takes place once the
+      download to the GAM completes.
+
+
+
+
+                    Figure 68: Entering the URL for Firmware Upload to the GAM
+
+
+
+
+      Positron Access Solutions               74             Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+3.7.3 Activate Alternate Image
+
+      The GAM permanent storage (FLASH Memory) holds two (2) firmware banks (or
+      images). You can use this WEB page to select which firmware the GAM should
+      operate under: active or alternate (backup) firmware images. This WEB page
+      also allows you to revert to the alternate image.
+
+      Note: when the active firmware image is the alternate image, this WEB page only
+      displays the "Active Image" table. In this case, the Activate Alternate Image
+      button is also disabled...When the alternate image is active (due to a corruption
+      of the primary image or by manual intervention), uploading a new GAM firmware
+      image will automatically use the alternate image slot and restart the GAM to
+      make the alternate image the active one.
+
+      Image: file name of the firmware image, from when the image was last updated.
+
+      Version: this is the version of the firmware image.
+
+      Date: creation date of the firmware
+
+
+
+
+                        Figure 69: Selecting the Firmware Image for the GAM
+
+
+
+
+      Positron Access Solutions               75             Document 180-0186-001 R03
+        GAM Installation and Activation Guide
+
+
+
+
+3.8     Configuration backup and restore
+  3.8.1 Backup the configuration
+        Once the system is configured, it is recommended to save a copy of the
+        configuration.
+
+        Under Maintenance>Configuration>Download, select either the running or start
+        config and click download. A copy of the configuration (text file in CLI format) will
+        be downloaded to your PC
+
+
+
+
+                          Figure 70: Selecting the Firmware Image for the GAM
+
+  3.8.2 Restore the configuration
+        To restore a configuration, the user must have a web access to the unit, either
+        using the local management port or remote IP access.
+
+        Under Maintenance>Configuration>Upload, Browse the file on your PC, select
+        either the destination running or start config and click Upload.
+
+
+
+
+        Positron Access Solutions               76             Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+                  Figure 71: Selecting the Firmware Image for the GAM
+
+
+
+
+Positron Access Solutions               77             Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Chapter 4
+______________________________________
+Technical and Regulatory Specifications
+
+
+
+
+Positron Access Solutions               78   Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+4.1   GAM Technical Specifications
+
+                Part            10GigE                G.hn Ports /               Out-of-band
+                Number           SFP+                    Type                  Management Ports
+
+                GAM-12-M             2           12 MIMO (RJ45)       1 x 10/100/1000BaseT
+                                                                      1 x serial
+                GAM-24-M             2           24 MIMO (RJ45)       1 x 10/100/1000BaseT
+                                                                      1 x serial
+                GAM-12-C             2          12 COAX (F-type)      1 x 10/100/1000BaseT
+                                                                      1 x serial
+                GAM-24-C             2          24 COAX (F-type)      1 x 10/100/1000BaseT
+                                                                      1 x serial
+                Environmental
+
+        Dimensions            17.4” (442 mm) Width x 1.73” (44 mm) Height x 10.0” (254 mm) Depth
+
+        Power Source          100-240 VAC / 50~60 Hz
+
+        Operating             0℃ to 45℃ (32°F to 113°F)
+        Temperature
+
+        Storage               -40℃ to 70℃ (-40°F to 158°F)
+        Temperature
+
+        Relative Humidity     Up to 95%, non-condensing
+
+               10 Gbps Network-Network Interface (NNI)
+                             SFP+ offer versatile support for Active Ethernet and for GEPON,
+        2 x SFP+ ports       10GEPON, NG-PON2 and XGS-PON via external ONU/ONT devices
+                                                    rd
+                             Also compatible with 3 party PON SFP ONT modules
+               G.hn Specification
+                             G.hn Wave-2 Domain Master on all GAM ports (MIMO or Coax)
+
+                              Based on GigaWire Alliance specification and fully compliant with the
+                              following ITU-T standards
+        G.hn Standards
+                                    G.9960 Amendment 2 - System Architecture and PHY Layer
+                                    G.9961 Data Link Layer
+                                    G.9962 Management
+                                    G.9964 PSD
+                              Support G.hn operation over telephone wiring (RJ45 with 1 or 2 pairs)
+        Ease of Deployment
+                              and coax cabling (F-type connector)
+        Point to Point and    Point-to-point (twisted pair and coax)
+        Point to Multipoint   Point-to-multipoint operation (coax) for up to 16 Subscriber CPEs per
+        support               G.hn port
+                              Supports firmware and configuration management of G.hn end-point
+        Ease of Operation
+                              devices
+
+
+
+
+      Positron Access Solutions                79                Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+                        AES-128 encryption with individual keys for each End Point. The
+  Encryption            Positron GAM Master Node is also acting as the G.hn Security
+                        Controller
+                        Supports OFDM 200 MHz. Telephone wiring supports 1 pair (Singe
+                        Input Single Output - SISO) and 2 pairs (Multiple Input Multiple Output -
+  Modulation and        MIMO) per RJ45 port
+  Frequency Band        Radio Band Notching function allows cohabitation with legacy analog
+                        cable TV channels on coax cabling and concurrent use with POTS and
+                        DSL on telephone pairs
+                        Up to 1.7 Gbps with Dynamic Bandwidth Allocation to optimize
+  Bandwidth
+                        throughput based on nature of traffic flows with TDD Multiplexing for
+  Management
+                        programmable upstream / downstream ratio
+  Vectoring             Support for VectorBoost™ for FEXT (Far-End Crosstalk) mitigation and
+  (Telephone Wiring)    improved performance over Telephone wiring
+
+  Mitigation of Near-   Near End Crosstalk (NEXT) Mitigation and support for Neighbor
+  end Crosstalk         Domain Interface Mitigation (NDIM)
+                        Programmable PSD mask for coexistence with xDSL / radio and Far
+  PSD
+                        End Crosstalk (FEXT) mitigation
+  Reliability and
+                         State of the art LDPC Forward Error Correction (FEC)
+  Resiliency
+           Layer 2 Switching
+                         Standard Spanning Tree 802.1d
+  Spanning Tree
+                         Rapid Spanning Tree (RSTP) 802.1w
+  Protocol (STP)
+                         Multiple Spanning Tree (MSTP) 802.1s
+  MAC Table             Up to 32K MAC addresses
+                        Link Aggregation Control Protocol (LACP) IEEE 802.3ad for any SFP+
+  Trunking
+                        or G.hn ports
+                        Supports up to 4K VLANs simultaneously (out of 4096 VLAN IDs)
+                               Port-based VLAN
+                               IEEE 802.1Q tag-based VLAN
+  VLAN                         IEEE 802.1ad (Q-in-Q) double tag VLAN
+                               MAC-based VLAN
+                               Management VLAN
+                               Private VLAN Edge (PVE)
+  Generic VLAN          Protocols for automatically propagating and configuring VLANs in a
+  Registration (GVRP)   Multicast Domain for IPTV and other multicast services
+  IGMP v1/v2/v3         IGMP limits bandwidth-intensive multicast traffic to only the requesters
+  snooping              Supports 1024 multicast groups
+                        IGMP snooping with proxy reporting or report suppression actively
+  IGMP Proxy
+                        filters IGMP packets in order to reduce load on the multicast router
+                        IGMP query is used to support layer-2 multicast domain in the absence
+  IGMP Query
+                        of a multicast router
+  MLD v1/v2 snooping    Deliver IPv6 multicast packets only to the required receivers
+  DHCP Server           Supports DHCP server to assign addresses to IPv4 client devices
+                        DHCP snooping provides security by filtering un-trusted DHCP
+  DHCP Snooping         messages and by building and maintaining a DHCP snooping binding
+                        table
+
+
+Positron Access Solutions                80                 Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+                       By supporting DHCP option 82, it is possible to forward DHCP requests
+  DHCP Relay           to another specific DHCP server via DHCP relay. The DHCP server
+                       may be on another network
+          Layer-3 Support
+  IPv4 Static Routing    Static routing of IPv4 unicast traffic
+  IPv6 Static Routing    Static routing of IPv6 unicast traffic
+          Security
+
+  Secure Shell (SSH)     SSH secures Telnet traffic in and out of the switch, SSH v1, v2 are
+  Protocol               supported
+
+  Secure Sockets         SSL encrypts the HTTP traffic, allowing advanced secure access to the
+  Layer (SSL)            browser-based management GUI in the switch
+
+  IEEE 802.1X            IEEE 802.1X: RADIUS authentication, authorization and accounting,
+                         MD5 hash, single / multiple host mode and single / multiple sessions
+                         Supports IGMP-RADIUS based 802.1X Dynamic VLAN assignment
+  RADIUS/ TACACS+        Supports RADIUS and TACACS+ authentication
+                         G.hn Aggregation Multiplexer acting as a RADIUS client
+
+  Layer 2 Isolation      PVE (also known as protected ports) provides L2 isolation between
+  Private VLAN Edge      clients in the same VLAN, supports multiple uplinks
+  (PVE)
+
+  Port Security          Locks MAC Addresses to ports and limits the number of learned MAC
+                         addresses
+
+  IP Source Guard        Prevents datagram with spoofed addresses from being in the network
+
+  Storm Control          Prevents traffic on a LAN from being disrupted by a broadcast,
+                         multicast, or unicast storm on a port
+
+  ACLs                   Supports up to 256 entries
+                         Drop or rate limitation based on source and destination MAC, VLAN ID
+                         or IP address, protocol, port, differentiated services code point (DSCP)
+                         / IP precedence, TCP / UDP source and destination ports, 802.1p
+                         priority, Ethernet type, Internet Control Message Protocol (ICMP)
+                         packets, IGMP packets, TCP flag
+          Quality of Service
+
+  Hardware Priority      Support 8 hardware queues
+  Queue
+
+  Scheduling             Strict priority and Weighted Round-Robin (WRR)
+                         Queue assignment based on DSCP and class of service (802.1p/ CoS)
+  Classification         Port based; 802.1p VLAN priority based; IPv4/IPv6 precedence/ type of
+                         service (ToS) / DSCP based; Differentiated Services (DiffServ);
+                         classification and re-marking ACLs, trusted QoS
+
+
+Positron Access Solutions                  81                     Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+  Rate Limiting         Ingress policer; egress shaping and rate control; per VLAN, per port
+                        and flow based
+
+  IPv6 Support          Web/ SSL, Telnet/ SSH, ping, Simple Network Time Protocol (SNTP),
+                        Trivial File Transfer Protocol (TFTP), SNMP, RADIUS, Syslog, DNS
+                        Client, protocol based VLANs
+
+          Carrier Ethernet Protocol and features
+
+  IEEE 802.3ah          Link Fault Management (LFM) for Ethernet links as defined in IEEE
+  Ethernet OAM          802.3ah
+
+  IEEE 802.1ag          IEEE 802.1ag Ethernet CFM function that provides connectivity fault
+  Ethernet CFM          management
+
+  ITU-T Y.1731          ITU-T service OAM standard Y.1731 divides a network into
+                        maintenance domains in the form of hierarchy levels
+
+  ITU-T G.8031 AND      Provides the standards-based method of delivering high-performance
+  G.8032v2              Carrier Ethernet services over a multi-node ring protection switching to
+                        serve large MDUs or MTUs
+
+          Management
+
+  Web GUI Interface     Built-in configuration utility for browser-based device configuration
+                        (HTTP/ HTTPs). Supports configuration, system dashboard,
+                        maintenance and monitoring
+
+  Firmware Upgrade      Web browser upgrade (HTTP/ HTTPs) and TFTP
+                        Secure upgrade through console port
+  Dual Firmware         Dual image and firmware partition provides independent primary and
+  Image                 secondary OS files for backup while upgrading. Each firmware image
+                        has its corresponding firmware partition
+
+  SNMP                  SNMP version1, 2c and 3 with support for traps and SNMP version 3
+                        user-based security model (USM)
+
+  Remote Monitoring     Embedded RMON software agent supports RMON groups 1,2,3,9
+  (RMON)                (history, statistics, alarms and events) for enhanced traffic
+                        management, monitoring and analysis
+
+  IPv4 and IPv6 Dual    Coexistence of both protocol stacks to support a seamless migration
+  Stack
+
+  Port Mirroring        Traffic on a port can be mirrored to another port for Legal Interception
+                        (CALEA) or analysis with a network analyzer or RMON probe. Up to N-
+                        1 (N is Switch’s Ports) ports can be mirrored to single destination port.
+                        A single session is supported
+
+  Network Time          Network Time Protocol (NTP) for clock synchronization over packet
+
+
+Positron Access Solutions                 82                 Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+        Protocol              switched networks
+
+        Other Management      HTTP / HTTPs; SSH; RADIUS; DHCP Client / DHCPv6 Client; SNTP;
+                              cable diagnostics; ping; syslog; Telnet client (SSH secure support),
+                              IPv6 Management
+
+        Discovery             Link Layer Discovery Protocol (LLDP) (IEEE 802.1ab) with LLDP-MED
+                              extensions
+
+
+                                   Figure 72: GAM Product Specification
+
+4.2   G1000/1001 Technical Specifications
+
+         Part              Gigabit              G.hn Port / Type                     Built-in
+         Number         Ethernet ports                                         splitter/combiner
+
+         G1000-M               2                  1 MIMO (RJ45)        Yes (POTS)
+
+         G1000-C               2                1 COAX (F-type)        Yes (Coax DTV)
+
+         G1001-M               1                  1 MIMO (RJ45)        No
+
+         G1001-MP              1                  1 MIMO (RJ45)        Yes (POTS)
+
+         G1001-C               1                1 COAX (F-type)        Yes (Coax DTV)
+
+               Environmental
+
+        Dimensions           2.6” W x 1.25” H x 4” D / 66 mm W x 32 mm H x 102 mm D
+
+        Power Source         100-240 VAC / 50~60 Hz
+
+        Operating
+                             0℃ to 45℃ (32°F to 113°F)
+        Temperature
+
+        Storage
+                             -40℃ to 70℃ (-40°F to 158°F)
+        Temperature
+
+        Relative Humidity    Up to 95%, non-condensing
+
+
+                               Figure 73: G1001 Product Specification
+
+
+
+
+      Positron Access Solutions                 83                 Document 180-0186-001 R03
+      GAM Installation and Activation Guide
+
+
+
+
+4.3   Regulatory Compliance
+
+      FCC Declaration of Conformance
+
+      The GAM models comply with part 15 of the FCC Rules. Operation is subject to
+      the following two conditions (1) This device may not cause harmful interference,
+      and (2) this device must accept any interference received, including interference
+      that may cause undesired operation.
+
+
+
+      Part 15 Class A Information
+
+      This equipment has been tested and found to comply with the limits for a Class A
+      digital device, pursuant to Part 15 of the FCC rules. These limits are designed to
+      provide reasonable protection against harmful interference when the equipment
+      is operated in a commercial environment. This equipment generates; uses and
+      can radiate radio frequency energy and, if not installed and used in accordance
+      with the instruction manual, may cause harmful interference to radio
+      communications. Operation of this equipment in a residential area is likely to
+      cause harmful interference in which case the user will be required to correct the
+      interference at his own expense.
+
+      Industry Canada
+
+      The GAM models comply with ICES-003 of the Industry Canada Rules.
+      Operation is subject to the following two conditions: (1) This device may not
+      cause harmful interference, and (2) this device must accept any interference
+      received, including interference that may cause undesired operation.
+
+      Les modèles GAM sont conformes à la norme NMB-003 d'Industrie Canada.
+      Leur fonctionnement est sujet aux deux conditions suivantes: (1) le dispositif ne
+      doit pas produire de brouillage préjudiciable, et (2) ce dispositif doit accepter tout
+      brouillage reçu, y compris un brouillage susceptible de provoquer un
+      fonctionnement indésirable.
+
+      Europe - EU Declaration of Conformity
+
+      The GAM models comply with the essential requirements of the EMC Directive
+      2014/30/EU and Low Voltage Directive 2014/35/EU. The following test methods
+      have been applied in order to prove presumption of conformity with the essential
+
+
+      Positron Access Solutions               84            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+requirements of the EMC Directive 2014/30/EU and Low Voltage Directive
+2014/35/EU:
+
+
+
+CSA C22.2#60950-1: Issued: 2007/03/27 Ed: 2 (R2012) Information Technology
+Equipment Safety Part 1: General Requirements; Amd. 1: 2011, Amd. 2: 2014
+
+UL 60950-1: Issued: 2007/03/27 Ed: 2 Rev: 2014/10/14 Information Technology
+Equipment Safety Part 1: General Requirements
+
+IEC 60950-1: Issued: 2013/05/28 Ed: 2.2 Information Technology Equipment -
+Safety - Part 1: General Requirements; Consolidated Edition. Ed. 2: 2005
+
+EN 55022: 2010: Information technology equipment - Radio disturbance
+characteristics Limits and methods of measurement
+
+EN 55024: 2010: Information technology equipment - Immunity characteristics -
+Limits and methods of Measurement
+
+EN 55032: 2012: Electromagnetic compatibility of multimedia equipment -
+Emission Requirements
+
+ English    Hereby, Positron Access solutions Corp., declares that the GAM
+            models comply with the essential requirements and other relevant
+            provisions of Directive 2014/30/EU and 2014/35/EU.
+
+ Français Par la présente Positron Access solutions Corp., déclare que les
+          modèles GAM sont conformes aux exigences essentielles et aux
+          autres dispositions pertinentes selon les normes 2014/30/EU and
+          2014/35/EU.
+
+
+
+Safety
+
+The GAM models conforms to IEC 60950-1/UL 60950-1/CSA C22.2 #60950-1
+standards.
+
+
+
+Les modèles GAM sont conformes aux normes IEC 60950-1/UL 60950-1/CAN
+C22.2 #60950-1.
+
+
+
+Positron Access Solutions               85        Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Chapter 5
+______________________________________
+Safety and Warnings
+
+
+
+
+Positron Access Solutions               86   Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Safety and Warnings
+To ensure your safety when servicing and installing this equipment, please take
+the following precautions:
+
+The GAM products accept 110-220Vac for powering (50-60Hz). A properly fused
+3-contact (live-neutral-protective ground) power outlet wired in accordance to the
+National Electrical Code shall be used to provide the power to the GAM unit.
+
+A power cord meeting IEC 60320 (C13 type) is supplied with the GAM device
+and shall be used to bring power to the GAM. The primary protective ground
+(earthing) is provided through this cord.
+
+The power cord must always be disconnected before servicing the accessible
+front panel fuse to prevent from risk of electrical shock. Always use a
+replacement fuse of the proper current rating.
+
+Only qualified personnel should service this system.
+
+All wiring external to the product should follow the local wiring codes.
+
+Use of this product in a manner other than defined in this installation guide may
+cause damage to equipment or injury to personnel.
+
+If a problem has been isolated to this unit, do not attempt to repair. The unit’s
+components are not user serviceable and therefore must not be replaced. Please
+return the unit to Positron Access Solutions for repair.
+
+Observe local practice electrostatic discharge precautions when handling
+electronic equipment. Do not hold electronic plugs by their edge. Do not touch
+components or circuitry. Use a grounding wrist strap attached to a grounding
+connection point. Use only ESD-protective packaging materials when
+transporting equipment.
+
+
+
+
+When installing in a closed or multi-unit rack environment, ensure that the
+maximum operating ambient temperature of 45°C (113°F) is not exceeded.
+
+Positron Access Solutions               87            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Installation of the equipment in a rack should be such that the amount of airflow
+required for safe operation of the equipment is available.
+
+Connect the unit only to a properly rated supply circuit.
+
+During installation and service, do not connect to a live power source. Ensure
+that fuses/breakers on the main power source are in the OFF/OPEN position or
+that power cords are unplugged from the unit.
+
+Mounting of equipment in a rack should be such that a hazardous condition is not
+achieved due to uneven mechanical loading.
+
+WARNING: The intra-building ports (Electrical Ethernet – RJ-45, G.hn, V.24
+console) of the equipment are suitable for connection to intra-building or
+unexposed wiring or cabling only. The intra-building ports of the equipment
+MUST NOT be metallically connected to interfaces which connect to the OSP or
+its wiring. These interfaces are designed for use as intra-building Interfaces only
+(Type 2 or Type 4 ports as described in GR-1089-CORE, Issue 4) and require
+isolation from the exposed OSP cabling. The addition of Primary Protectors is not
+sufficient protection in order to connect these interfaces metallically to OSP
+wiring.
+
+THIS PRODUCT IS SUITABLE FOR MOUNTING ON OR ABOVE CONCRETE
+OR OTHER NON-CONDUCTIVE SURFACE ONLY.
+
+
+
+
+Positron Access Solutions               88            Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Chapter 6
+______________________________________
+Warranty and Customer Service
+
+
+
+
+Positron Access Solutions               89   Document 180-0186-001 R03
+GAM Installation and Activation Guide
+
+
+
+
+Positron Access Solutions will replace or repair this product within the warranty
+period if it does not meet its published specifications or fails while in service.
+Warranty information can be found in your Positron Access customer web portal:
+http://www.positronaccess.com/Portal.php
+
+
+
+Positron Access Solutions Sales Pricing/Availability and Technical Support
+
+US and Canada: 1-888-577-5254
+
+International: +1-514-345-2220
+
+customerservice@positronaccess.com
+
+
+
+Repair and Return Address
+
+Contact Customer Service prior to returning equipment to Positron.
+
+Telephone US and Canada: 1-888-577-5254 option 6
+
+International: +1-514-345-2220 option 6
+
+
+
+
+Positron Access Solutions               90          Document 180-0186-001 R03
+
