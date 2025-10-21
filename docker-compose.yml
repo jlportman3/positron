@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  positron_postgres:
+    image: postgres:15
+    container_name: positron_gam_postgres
+    environment:
+      POSTGRES_DB: positron_gam
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"  # Changed to 5436 (5432-5435 already in use)
+    volumes:
+      - positron_postgres_data:/var/lib/postgresql/data
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  positron_redis:
+    image: redis:7-alpine
+    container_name: positron_gam_redis
+    ports:
+      - "6380:6379"  # Changed from 6379 to avoid conflicts
+    volumes:
+      - positron_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  positron_backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: positron_gam_backend
+    ports:
+      - "8003:8000"  # Changed to 8003 (8000-8002 already in use)
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@positron_postgres:5432/positron_gam
+      - REDIS_URL=redis://positron_redis:6379/0
+      - DEBUG=true
+      - SECRET_KEY=dev-secret-key-change-in-production
+    depends_on:
+      positron_postgres:
+        condition: service_healthy
+      positron_redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  positron_frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: positron_gam_frontend
+    ports:
+      - "3002:3001"  # Map host 3002 to container 3001 (Vite runs on 3001)
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8003/api/v1
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - positron_backend
+
+  positron_celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: positron_gam_celery
+    volumes:
+      - ./backend:/app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@positron_postgres:5432/positron_gam
+      - REDIS_URL=redis://positron_redis:6379/0
+      - DEBUG=true
+    depends_on:
+      positron_postgres:
+        condition: service_healthy
+      positron_redis:
+        condition: service_healthy
+    command: celery -A app.workers.celery_app worker --loglevel=info
+
+volumes:
+  positron_postgres_data:
+  positron_redis_data:
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.200.0.0/16
+          gateway: 10.200.0.1

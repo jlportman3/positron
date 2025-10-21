@@ -1,0 +1,39 @@
+✅ PORT CONFIGURATION UPDATED
+
+The ports have been updated to avoid conflicts with existing Docker containers on this host.
+
+NEW PORT CONFIGURATION:
+=======================
+
+PostgreSQL:  5436 (was 5433, conflicted with imapserver_api-db)
+Redis:       6380 (unchanged)
+Backend:     8003 (was 8001, conflicted with api container)
+Frontend:    3002 (was 3001, conflicted with perplexica-backend)
+
+ACCESS URLS:
+============
+
+Frontend:    http://localhost:3002
+Backend API: http://localhost:8003
+API Docs:    http://localhost:8003/docs
+
+UPDATED FILES:
+==============
+
+✅ docker-compose.yml - Updated all port mappings
+✅ .env - Updated DATABASE_URL and VITE_API_URL
+✅ .env.example - Updated DATABASE_URL
+✅ backend/alembic.ini - Updated sqlalchemy.url
+✅ frontend/.env - Updated VITE_API_URL
+✅ frontend/.env.example - Updated VITE_API_URL
+✅ Makefile - Updated all port references
+✅ PORT_CONFIGURATION.md - Created comprehensive port documentation
+
+QUICK START:
+============
+
+make dev       # Start with new ports
+make frontend  # Opens http://localhost:3002
+make docs      # Opens http://localhost:8003/docs
+
+See PORT_CONFIGURATION.md for complete details.
