@@ -1,0 +1,446 @@
+-- *****************************************************************
+-- HQOS-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-HQOS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMQosShaperRateType FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamHqosMib MODULE-IDENTITY
+    LAST-UPDATED "201705220000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private MIB for HQoS"
+    REVISION    "201705220000Z"
+    DESCRIPTION
+        "Removed definition of unused OID ...HqosConfigHqos"
+    REVISION    "201507080000Z"
+    DESCRIPTION
+        "Added HqosCapabilities objects."
+    REVISION    "201504070000Z"
+    DESCRIPTION
+        "Added HqosConfigInterfaceHqosShaperRateType,
+         HqosConfigInterfaceHqosQueueShaperRateType objects."
+    REVISION    "201501090000Z"
+    DESCRIPTION
+        "Minor description changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 125 }
+
+
+GAMHqosSchMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The HQoS scheduling mode."
+    SYNTAX      INTEGER { normal(0), basic(1), hierarchical(2) }
+
+gamHqosMibObjects OBJECT IDENTIFIER
+    ::= { gamHqosMib 1 }
+
+gamHqosCapabilities OBJECT IDENTIFIER
+    ::= { gamHqosMibObjects 1 }
+
+gamHqosCapabilitiesHasQueueShaperRateType OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, the platform supports HQoS queue shaper rate-type selection."
+    ::= { gamHqosCapabilities 1 }
+
+gamHqosConfig OBJECT IDENTIFIER
+    ::= { gamHqosMibObjects 2 }
+
+gamHqosConfigInterface OBJECT IDENTIFIER
+    ::= { gamHqosConfig 2 }
+
+gamHqosConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMHqosConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table provides HQoS configuration for interfaces"
+    ::= { gamHqosConfigInterface 1 }
+
+gamHqosConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMHqosConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the configuration for an interface"
+    INDEX       { gamHqosConfigInterfaceIfIndex }
+    ::= { gamHqosConfigInterfaceTable 1 }
+
+GAMHqosConfigInterfaceEntry ::= SEQUENCE {
+    gamHqosConfigInterfaceIfIndex  GAMInterfaceIndex,
+    gamHqosConfigInterfaceSchMode  GAMHqosSchMode
+}
+
+gamHqosConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface index."
+    ::= { gamHqosConfigInterfaceEntry 1 }
+
+gamHqosConfigInterfaceSchMode OBJECT-TYPE
+    SYNTAX      GAMHqosSchMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "HQoS scheduling mode."
+    ::= { gamHqosConfigInterfaceEntry 2 }
+
+gamHqosConfigInterfaceHqosTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMHqosConfigInterfaceHqosEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains the configuration for HQoS entries"
+    ::= { gamHqosConfigInterface 2 }
+
+gamHqosConfigInterfaceHqosEntry OBJECT-TYPE
+    SYNTAX      GAMHqosConfigInterfaceHqosEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the configuration for an HQoS entry"
+    INDEX       { gamHqosConfigInterfaceHqosIfIndex,
+                  gamHqosConfigInterfaceHqosHqosId }
+    ::= { gamHqosConfigInterfaceHqosTable 1 }
+
+GAMHqosConfigInterfaceHqosEntry ::= SEQUENCE {
+    gamHqosConfigInterfaceHqosIfIndex         GAMInterfaceIndex,
+    gamHqosConfigInterfaceHqosHqosId          Integer32,
+    gamHqosConfigInterfaceHqosDwrrCount       GAMUnsigned8,
+    gamHqosConfigInterfaceHqosShaperEnable    TruthValue,
+    gamHqosConfigInterfaceHqosShaperRate      Unsigned32,
+    gamHqosConfigInterfaceHqosMinRate         Unsigned32,
+    gamHqosConfigInterfaceHqosShaperRateType  GAMQosShaperRateType,
+    gamHqosConfigInterfaceHqosAction          GAMRowEditorState
+}
+
+gamHqosConfigInterfaceHqosIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface index."
+    ::= { gamHqosConfigInterfaceHqosEntry 1 }
+
+gamHqosConfigInterfaceHqosHqosId OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "HQoS ID, allowed range depends on platform."
+    ::= { gamHqosConfigInterfaceHqosEntry 2 }
+
+gamHqosConfigInterfaceHqosDwrrCount OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of queues using DWRR."
+    ::= { gamHqosConfigInterfaceHqosEntry 3 }
+
+gamHqosConfigInterfaceHqosShaperEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable or disable shaper."
+    ::= { gamHqosConfigInterfaceHqosEntry 4 }
+
+gamHqosConfigInterfaceHqosShaperRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Shaper rate in kbps."
+    ::= { gamHqosConfigInterfaceHqosEntry 5 }
+
+gamHqosConfigInterfaceHqosMinRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Minimum guaranteed bandwidth in kbps."
+    ::= { gamHqosConfigInterfaceHqosEntry 6 }
+
+gamHqosConfigInterfaceHqosShaperRateType OBJECT-TYPE
+    SYNTAX      GAMQosShaperRateType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the shaper's rate type.
+         
+         Valid selections are line-rate (0) and data-rate (1)."
+    ::= { gamHqosConfigInterfaceHqosEntry 7 }
+
+gamHqosConfigInterfaceHqosAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamHqosConfigInterfaceHqosEntry 10000 }
+
+gamHqosConfigInterfaceHqosTableRowEditor OBJECT IDENTIFIER
+    ::= { gamHqosConfigInterface 3 }
+
+gamHqosConfigInterfaceHqosTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Logical interface index."
+    ::= { gamHqosConfigInterfaceHqosTableRowEditor 1 }
+
+gamHqosConfigInterfaceHqosTableRowEditorHqosId OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "HQoS ID, allowed range depends on platform."
+    ::= { gamHqosConfigInterfaceHqosTableRowEditor 2 }
+
+gamHqosConfigInterfaceHqosTableRowEditorDwrrCount OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of queues using DWRR."
+    ::= { gamHqosConfigInterfaceHqosTableRowEditor 3 }
+
+gamHqosConfigInterfaceHqosTableRowEditorShaperEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable or disable shaper."
+    ::= { gamHqosConfigInterfaceHqosTableRowEditor 4 }
+
+gamHqosConfigInterfaceHqosTableRowEditorShaperRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Shaper rate in kbps."
+    ::= { gamHqosConfigInterfaceHqosTableRowEditor 5 }
+
+gamHqosConfigInterfaceHqosTableRowEditorMinRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Minimum guaranteed bandwidth in kbps."
+    ::= { gamHqosConfigInterfaceHqosTableRowEditor 6 }
+
+gamHqosConfigInterfaceHqosTableRowEditorShaperRateType OBJECT-TYPE
+    SYNTAX      GAMQosShaperRateType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the shaper's rate type.
+         
+         Valid selections are line-rate (0) and data-rate (1)."
+    ::= { gamHqosConfigInterfaceHqosTableRowEditor 7 }
+
+gamHqosConfigInterfaceHqosTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamHqosConfigInterfaceHqosTableRowEditor 10000 }
+
+gamHqosConfigInterfaceHqosQueueTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMHqosConfigInterfaceHqosQueueEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains the configuration for HQoS queues"
+    ::= { gamHqosConfigInterface 4 }
+
+gamHqosConfigInterfaceHqosQueueEntry OBJECT-TYPE
+    SYNTAX      GAMHqosConfigInterfaceHqosQueueEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the configuration for a queue of an HQoS entry"
+    INDEX       { gamHqosConfigInterfaceHqosQueueIfIndex,
+                  gamHqosConfigInterfaceHqosQueueHqosId,
+                  gamHqosConfigInterfaceHqosQueueQueue }
+    ::= { gamHqosConfigInterfaceHqosQueueTable 1 }
+
+GAMHqosConfigInterfaceHqosQueueEntry ::= SEQUENCE {
+    gamHqosConfigInterfaceHqosQueueIfIndex          GAMInterfaceIndex,
+    gamHqosConfigInterfaceHqosQueueHqosId           Integer32,
+    gamHqosConfigInterfaceHqosQueueQueue            Integer32,
+    gamHqosConfigInterfaceHqosQueueShaperEnable     TruthValue,
+    gamHqosConfigInterfaceHqosQueueShaperRate       Unsigned32,
+    gamHqosConfigInterfaceHqosQueueSchedulerWeight  GAMUnsigned8,
+    gamHqosConfigInterfaceHqosQueueShaperRateType   GAMQosShaperRateType
+}
+
+gamHqosConfigInterfaceHqosQueueIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface index."
+    ::= { gamHqosConfigInterfaceHqosQueueEntry 1 }
+
+gamHqosConfigInterfaceHqosQueueHqosId OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "HQoS ID, allowed range depends on platform."
+    ::= { gamHqosConfigInterfaceHqosQueueEntry 2 }
+
+gamHqosConfigInterfaceHqosQueueQueue OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Queue number."
+    ::= { gamHqosConfigInterfaceHqosQueueEntry 3 }
+
+gamHqosConfigInterfaceHqosQueueShaperEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable or disable shaper."
+    ::= { gamHqosConfigInterfaceHqosQueueEntry 4 }
+
+gamHqosConfigInterfaceHqosQueueShaperRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Shaper rate in kbps."
+    ::= { gamHqosConfigInterfaceHqosQueueEntry 5 }
+
+gamHqosConfigInterfaceHqosQueueSchedulerWeight OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Scheduler weight, 1-100."
+    ::= { gamHqosConfigInterfaceHqosQueueEntry 6 }
+
+gamHqosConfigInterfaceHqosQueueShaperRateType OBJECT-TYPE
+    SYNTAX      GAMQosShaperRateType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the shaper's rate type.
+         
+         Valid selections are line-rate (0) and data-rate (1).
+         
+         This object is only available if the capability object
+         'gamHqosCapabilitiesHasQueueShaperRateType' is True."
+    ::= { gamHqosConfigInterfaceHqosQueueEntry 7 }
+
+gamHqosMibConformance OBJECT IDENTIFIER
+    ::= { gamHqosMib 2 }
+
+gamHqosMibCompliances OBJECT IDENTIFIER
+    ::= { gamHqosMibConformance 1 }
+
+gamHqosMibGroups OBJECT IDENTIFIER
+    ::= { gamHqosMibConformance 2 }
+
+gamHqosCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamHqosCapabilitiesHasQueueShaperRateType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamHqosMibGroups 1 }
+
+gamHqosConfigInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamHqosConfigInterfaceIfIndex,
+                  gamHqosConfigInterfaceSchMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamHqosMibGroups 2 }
+
+gamHqosConfigInterfaceHqosTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamHqosConfigInterfaceHqosIfIndex,
+                  gamHqosConfigInterfaceHqosHqosId,
+                  gamHqosConfigInterfaceHqosDwrrCount,
+                  gamHqosConfigInterfaceHqosShaperEnable,
+                  gamHqosConfigInterfaceHqosShaperRate,
+                  gamHqosConfigInterfaceHqosMinRate,
+                  gamHqosConfigInterfaceHqosShaperRateType,
+                  gamHqosConfigInterfaceHqosAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamHqosMibGroups 3 }
+
+gamHqosConfigInterfaceHqosTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamHqosConfigInterfaceHqosTableRowEditorIfIndex,
+                  gamHqosConfigInterfaceHqosTableRowEditorHqosId,
+                  gamHqosConfigInterfaceHqosTableRowEditorDwrrCount,
+                  gamHqosConfigInterfaceHqosTableRowEditorShaperEnable,
+                  gamHqosConfigInterfaceHqosTableRowEditorShaperRate,
+                  gamHqosConfigInterfaceHqosTableRowEditorMinRate,
+                  gamHqosConfigInterfaceHqosTableRowEditorShaperRateType,
+                  gamHqosConfigInterfaceHqosTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamHqosMibGroups 4 }
+
+gamHqosConfigInterfaceHqosQueueTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamHqosConfigInterfaceHqosQueueIfIndex,
+                  gamHqosConfigInterfaceHqosQueueHqosId,
+                  gamHqosConfigInterfaceHqosQueueQueue,
+                  gamHqosConfigInterfaceHqosQueueShaperEnable,
+                  gamHqosConfigInterfaceHqosQueueShaperRate,
+                  gamHqosConfigInterfaceHqosQueueSchedulerWeight,
+                  gamHqosConfigInterfaceHqosQueueShaperRateType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamHqosMibGroups 5 }
+
+gamHqosMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamHqosCapabilitiesInfoGroup,
+                       gamHqosConfigInterfaceTableInfoGroup,
+                       gamHqosConfigInterfaceHqosTableInfoGroup,
+                       gamHqosConfigInterfaceHqosTableRowEditorInfoGroup,
+                       gamHqosConfigInterfaceHqosQueueTableInfoGroup }
+
+    ::= { gamHqosMibCompliances 1 }
+
+END

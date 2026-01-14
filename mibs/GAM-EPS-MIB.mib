@@ -1,0 +1,719 @@
+-- *****************************************************************
+-- EPS-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-EPS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamEpsMib MODULE-IDENTITY
+    LAST-UPDATED "201711270000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private Linear EPS (G.8031) MIB"
+    REVISION    "201711270000Z"
+    DESCRIPTION
+        "Editorial"
+    REVISION    "201705220000Z"
+    DESCRIPTION
+        "Removed definition of unused OID ...EpsControl"
+    REVISION    "201511050000Z"
+    DESCRIPTION
+        "Domain configuration added at the end of configuration table"
+    REVISION    "201509220000Z"
+    DESCRIPTION
+        "Domain configuration added."
+    REVISION    "201411050000Z"
+    DESCRIPTION
+        "Remove the vtss_appl_eps_domain_t type and the domain from
+         vtss_appl_eps_create_param_t"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 45 }
+
+
+GAMEpsArchitecture ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The EPS protection architecture."
+    SYNTAX      INTEGER { onePlusOne(0), oneForOne(1) }
+
+GAMEpsCommand ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "protection group command."
+    SYNTAX      INTEGER { none(0), clear(1), lockOut(2),
+                          forcedSwitch(3), manualSwitchProtection(4),
+                          manualSwitchWorking(5), exercise(6),
+                          localFreeze(7), localLockOut(8) }
+
+GAMEpsDefectState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Flow defect state."
+    SYNTAX      INTEGER { ok(0), sd(1), sf(2) }
+
+GAMEpsDirectional ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The EPS 1+1 directional."
+    SYNTAX      INTEGER { uniDirectional(0), biDirectional(1) }
+
+GAMEpsDomain ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The EPS protection domain."
+    SYNTAX      INTEGER { port(0), evc(1), mplsTunnel(2), mplsPw(3) }
+
+GAMEpsProtectionState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "protection group state."
+    SYNTAX      INTEGER { disabled(0), noRequestWorking(1),
+                          noRequestProtecting(2), lockOut(3),
+                          forcedSwitch(4), signalFailWorking(5),
+                          signalFailProtecting(6),
+                          manualSwitchWorking(7),
+                          manualSwitchProtecting(8), waitToRestore(9),
+                          exerciseWorking(10), exerciseProtecting(11),
+                          reverseRequestWorking(12),
+                          reverseRequestProtecting(13),
+                          doNotRevert(14) }
+
+GAMEpsRequest ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "APS request/state."
+    SYNTAX      INTEGER { nr(0), dnr(1), rr(2), exer(3), wtr(4),
+                          msW(5), msP(6), sd(7), sfW(8), fs(9),
+                          sfP(10), lo(11) }
+
+gamEpsMibObjects OBJECT IDENTIFIER
+    ::= { gamEpsMib 1 }
+
+gamEpsCapabilities OBJECT IDENTIFIER
+    ::= { gamEpsMibObjects 1 }
+
+gamEpsCapabilitiesInstanceMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of created EPS instances"
+    ::= { gamEpsCapabilities 1 }
+
+gamEpsCapabilitiesWtrMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum WTR timer value"
+    ::= { gamEpsCapabilities 2 }
+
+gamEpsCapabilitiesHoldOffOff OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Hold Off timer OFF value"
+    ::= { gamEpsCapabilities 3 }
+
+gamEpsCapabilitiesHoldOffMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum Hold Off timer value"
+    ::= { gamEpsCapabilities 4 }
+
+gamEpsCapabilitiesMepMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum MEP relation instance value"
+    ::= { gamEpsCapabilities 5 }
+
+gamEpsCapabilitiesMepInvalid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Invalid MEP indication. This is returned when EPS has no MEP relations"
+    ::= { gamEpsCapabilities 6 }
+
+gamEpsConfig OBJECT IDENTIFIER
+    ::= { gamEpsMibObjects 2 }
+
+gamEpsConfigInstanceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMEpsConfigInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of created EPS instance parameters."
+    ::= { gamEpsConfig 1 }
+
+gamEpsConfigInstanceEntry OBJECT-TYPE
+    SYNTAX      GAMEpsConfigInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a created EPS instance parameters. No parameters can be changed
+         after create."
+    INDEX       { gamEpsConfigInstanceId }
+    ::= { gamEpsConfigInstanceTable 1 }
+
+GAMEpsConfigInstanceEntry ::= SEQUENCE {
+    gamEpsConfigInstanceId              Integer32,
+    gamEpsConfigInstanceArchitecture    GAMEpsArchitecture,
+    gamEpsConfigInstanceWorkingFlow     GAMInterfaceIndex,
+    gamEpsConfigInstanceProtectingFlow  GAMInterfaceIndex,
+    gamEpsConfigInstanceDomain          GAMEpsDomain,
+    gamEpsConfigInstanceAction          GAMRowEditorState
+}
+
+gamEpsConfigInstanceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The EPS instance ID"
+    ::= { gamEpsConfigInstanceEntry 1 }
+
+gamEpsConfigInstanceArchitecture OBJECT-TYPE
+    SYNTAX      GAMEpsArchitecture
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The protection architecture. Cannot be changed after creation."
+    ::= { gamEpsConfigInstanceEntry 2 }
+
+gamEpsConfigInstanceWorkingFlow OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The working flow. Cannot be changed after creation."
+    ::= { gamEpsConfigInstanceEntry 3 }
+
+gamEpsConfigInstanceProtectingFlow OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The protecting flow. Cannot be changed after creation."
+    ::= { gamEpsConfigInstanceEntry 4 }
+
+gamEpsConfigInstanceDomain OBJECT-TYPE
+    SYNTAX      GAMEpsDomain
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The protection domain. Cannot be changed after creation."
+    ::= { gamEpsConfigInstanceEntry 5 }
+
+gamEpsConfigInstanceAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamEpsConfigInstanceEntry 100 }
+
+gamEpsConfigInstanceRowEditor OBJECT IDENTIFIER
+    ::= { gamEpsConfig 2 }
+
+gamEpsConfigInstanceRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The EPS instance ID"
+    ::= { gamEpsConfigInstanceRowEditor 1 }
+
+gamEpsConfigInstanceRowEditorArchitecture OBJECT-TYPE
+    SYNTAX      GAMEpsArchitecture
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The protection architecture. Cannot be changed after creation."
+    ::= { gamEpsConfigInstanceRowEditor 2 }
+
+gamEpsConfigInstanceRowEditorWorkingFlow OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The working flow. Cannot be changed after creation."
+    ::= { gamEpsConfigInstanceRowEditor 3 }
+
+gamEpsConfigInstanceRowEditorProtectingFlow OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The protecting flow. Cannot be changed after creation."
+    ::= { gamEpsConfigInstanceRowEditor 4 }
+
+gamEpsConfigInstanceRowEditorDomain OBJECT-TYPE
+    SYNTAX      GAMEpsDomain
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The protection domain. Cannot be changed after creation."
+    ::= { gamEpsConfigInstanceRowEditor 5 }
+
+gamEpsConfigInstanceRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamEpsConfigInstanceRowEditor 100 }
+
+gamEpsConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMEpsConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of created EPS instance configuration parameters. When
+         an EPS instance is created in the 'InstanceTable', an entry is
+         automatically created here with default value."
+    ::= { gamEpsConfig 3 }
+
+gamEpsConfigEntry OBJECT-TYPE
+    SYNTAX      GAMEpsConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a created EPS instance configuration parameters"
+    INDEX       { gamEpsConfigId }
+    ::= { gamEpsConfigTable 1 }
+
+GAMEpsConfigEntry ::= SEQUENCE {
+    gamEpsConfigId            Integer32,
+    gamEpsConfigDirectional   GAMEpsDirectional,
+    gamEpsConfigApsEnable     TruthValue,
+    gamEpsConfigRevertive     TruthValue,
+    gamEpsConfigRestoreTimer  Unsigned32,
+    gamEpsConfigHoldOffTimer  Unsigned32
+}
+
+gamEpsConfigId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The EPS instance ID"
+    ::= { gamEpsConfigEntry 1 }
+
+gamEpsConfigDirectional OBJECT-TYPE
+    SYNTAX      GAMEpsDirectional
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Protection is uni or bi directional. Only for 1+1."
+    ::= { gamEpsConfigEntry 2 }
+
+gamEpsConfigApsEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "APS can be enabled or disabled. Only for 1+1."
+    ::= { gamEpsConfigEntry 3 }
+
+gamEpsConfigRevertive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Revertive operation can enabled or disabled."
+    ::= { gamEpsConfigEntry 4 }
+
+gamEpsConfigRestoreTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Wait to restore timer in seconds - max. 720 - min. 1."
+    ::= { gamEpsConfigEntry 5 }
+
+gamEpsConfigHoldOffTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Hold off timer in 100 ms - max. 100 - 0 means no hold off"
+    ::= { gamEpsConfigEntry 6 }
+
+gamEpsConfigMepTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMEpsConfigMepEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of created EPS instance MEP configuration parameters.
+         When an EPS instance is created in the 'InstanceTable', an entry is
+         automatically created here with default value 100 - meaning no MEP
+         instance related."
+    ::= { gamEpsConfig 4 }
+
+gamEpsConfigMepEntry OBJECT-TYPE
+    SYNTAX      GAMEpsConfigMepEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a created EPS instance MEP configuration parameters."
+    INDEX       { gamEpsConfigMepId }
+    ::= { gamEpsConfigMepTable 1 }
+
+GAMEpsConfigMepEntry ::= SEQUENCE {
+    gamEpsConfigMepId             Integer32,
+    gamEpsConfigMepWorkingMep     Unsigned32,
+    gamEpsConfigMepProtectingMep  Unsigned32,
+    gamEpsConfigMepApsMep         Unsigned32
+}
+
+gamEpsConfigMepId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The EPS instance ID"
+    ::= { gamEpsConfigMepEntry 1 }
+
+gamEpsConfigMepWorkingMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Working SF MEP reference - max. VTSS_APPL_MEP_INSTANCE_MAX-1 - min. 0.
+         During get VTSS_APPL_MEP_INSTANCE_MAX indicate no reference"
+    ::= { gamEpsConfigMepEntry 2 }
+
+gamEpsConfigMepProtectingMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Protecting SF MEP reference - max. VTSS_APPL_MEP_INSTANCE_MAX-1 - min.
+         0. During get VTSS_APPL_MEP_INSTANCE_MAX indicate no reference"
+    ::= { gamEpsConfigMepEntry 3 }
+
+gamEpsConfigMepApsMep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "APS MEP reference - max. VTSS_APPL_MEP_INSTANCE_MAX-1 - min. 0. During
+         get VTSS_APPL_MEP_INSTANCE_MAX indicate no reference"
+    ::= { gamEpsConfigMepEntry 4 }
+
+gamEpsConfigCommandTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMEpsConfigCommandEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of created EPS instance command. When an EPS instance
+         is created in the 'InstanceTable', an entry is automatically created
+         here with 'no command'."
+    ::= { gamEpsConfig 5 }
+
+gamEpsConfigCommandEntry OBJECT-TYPE
+    SYNTAX      GAMEpsConfigCommandEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a created EPS instance command"
+    INDEX       { gamEpsConfigCommandId }
+    ::= { gamEpsConfigCommandTable 1 }
+
+GAMEpsConfigCommandEntry ::= SEQUENCE {
+    gamEpsConfigCommandId       Integer32,
+    gamEpsConfigCommandCommand  GAMEpsCommand
+}
+
+gamEpsConfigCommandId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The EPS instance ID"
+    ::= { gamEpsConfigCommandEntry 1 }
+
+gamEpsConfigCommandCommand OBJECT-TYPE
+    SYNTAX      GAMEpsCommand
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "protection group command"
+    ::= { gamEpsConfigCommandEntry 2 }
+
+gamEpsStatus OBJECT IDENTIFIER
+    ::= { gamEpsMibObjects 3 }
+
+gamEpsStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMEpsStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of created EPS instance status."
+    ::= { gamEpsStatus 1 }
+
+gamEpsStatusEntry OBJECT-TYPE
+    SYNTAX      GAMEpsStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a created EPS instance status."
+    INDEX       { gamEpsStatusId }
+    ::= { gamEpsStatusTable 1 }
+
+GAMEpsStatusEntry ::= SEQUENCE {
+    gamEpsStatusId                      Integer32,
+    gamEpsStatusProtectionState         GAMEpsProtectionState,
+    gamEpsStatusWorkingState            GAMEpsDefectState,
+    gamEpsStatusProtectingState         GAMEpsDefectState,
+    gamEpsStatusTransmittedApsRequest   GAMEpsRequest,
+    gamEpsStatusTransmittedApsReSignal  Unsigned32,
+    gamEpsStatusTransmittedApsBrSignal  Unsigned32,
+    gamEpsStatusReceivedApsRequest      GAMEpsRequest,
+    gamEpsStatusReceivedApsReSignal     Unsigned32,
+    gamEpsStatusReceivedApsBrSignal     Unsigned32,
+    gamEpsStatusDfopPm                  TruthValue,
+    gamEpsStatusDfopCm                  TruthValue,
+    gamEpsStatusDfopNr                  TruthValue,
+    gamEpsStatusDfopNoAps               TruthValue
+}
+
+gamEpsStatusId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The EPS instance ID"
+    ::= { gamEpsStatusEntry 1 }
+
+gamEpsStatusProtectionState OBJECT-TYPE
+    SYNTAX      GAMEpsProtectionState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Protection state according to to G.8031 Annex A"
+    ::= { gamEpsStatusEntry 2 }
+
+gamEpsStatusWorkingState OBJECT-TYPE
+    SYNTAX      GAMEpsDefectState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Working flow defect state"
+    ::= { gamEpsStatusEntry 3 }
+
+gamEpsStatusProtectingState OBJECT-TYPE
+    SYNTAX      GAMEpsDefectState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Protecting flow defect state"
+    ::= { gamEpsStatusEntry 4 }
+
+gamEpsStatusTransmittedApsRequest OBJECT-TYPE
+    SYNTAX      GAMEpsRequest
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted APS request"
+    ::= { gamEpsStatusEntry 5 }
+
+gamEpsStatusTransmittedApsReSignal OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted APS requested signal"
+    ::= { gamEpsStatusEntry 6 }
+
+gamEpsStatusTransmittedApsBrSignal OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted APS bridged signal"
+    ::= { gamEpsStatusEntry 7 }
+
+gamEpsStatusReceivedApsRequest OBJECT-TYPE
+    SYNTAX      GAMEpsRequest
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received APS request"
+    ::= { gamEpsStatusEntry 8 }
+
+gamEpsStatusReceivedApsReSignal OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received APS requested signal"
+    ::= { gamEpsStatusEntry 9 }
+
+gamEpsStatusReceivedApsBrSignal OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received APS bridged signal"
+    ::= { gamEpsStatusEntry 10 }
+
+gamEpsStatusDfopPm OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "FOP Protection type Mismatch - unexpected B bit"
+    ::= { gamEpsStatusEntry 11 }
+
+gamEpsStatusDfopCm OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "FOP Configuration Mismatch - APS received on working"
+    ::= { gamEpsStatusEntry 12 }
+
+gamEpsStatusDfopNr OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "FOP Not expected Request - receiving request is not the expected
+         (transmitted)"
+    ::= { gamEpsStatusEntry 13 }
+
+gamEpsStatusDfopNoAps OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "FOP No APS received"
+    ::= { gamEpsStatusEntry 14 }
+
+gamEpsMibConformance OBJECT IDENTIFIER
+    ::= { gamEpsMib 2 }
+
+gamEpsMibCompliances OBJECT IDENTIFIER
+    ::= { gamEpsMibConformance 1 }
+
+gamEpsMibGroups OBJECT IDENTIFIER
+    ::= { gamEpsMibConformance 2 }
+
+gamEpsCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamEpsCapabilitiesInstanceMax,
+                  gamEpsCapabilitiesWtrMax,
+                  gamEpsCapabilitiesHoldOffOff,
+                  gamEpsCapabilitiesHoldOffMax,
+                  gamEpsCapabilitiesMepMax,
+                  gamEpsCapabilitiesMepInvalid }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamEpsMibGroups 1 }
+
+gamEpsConfigInstanceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamEpsConfigInstanceId,
+                  gamEpsConfigInstanceArchitecture,
+                  gamEpsConfigInstanceWorkingFlow,
+                  gamEpsConfigInstanceProtectingFlow,
+                  gamEpsConfigInstanceDomain,
+                  gamEpsConfigInstanceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamEpsMibGroups 2 }
+
+gamEpsConfigInstanceRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamEpsConfigInstanceRowEditorId,
+                  gamEpsConfigInstanceRowEditorArchitecture,
+                  gamEpsConfigInstanceRowEditorWorkingFlow,
+                  gamEpsConfigInstanceRowEditorProtectingFlow,
+                  gamEpsConfigInstanceRowEditorDomain,
+                  gamEpsConfigInstanceRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamEpsMibGroups 3 }
+
+gamEpsConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamEpsConfigId, gamEpsConfigDirectional,
+                  gamEpsConfigApsEnable, gamEpsConfigRevertive,
+                  gamEpsConfigRestoreTimer, gamEpsConfigHoldOffTimer }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamEpsMibGroups 4 }
+
+gamEpsConfigMepTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamEpsConfigMepId, gamEpsConfigMepWorkingMep,
+                  gamEpsConfigMepProtectingMep, gamEpsConfigMepApsMep }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamEpsMibGroups 5 }
+
+gamEpsConfigCommandTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamEpsConfigCommandId, gamEpsConfigCommandCommand }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamEpsMibGroups 6 }
+
+gamEpsStatusTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamEpsStatusId, gamEpsStatusProtectionState,
+                  gamEpsStatusWorkingState,
+                  gamEpsStatusProtectingState,
+                  gamEpsStatusTransmittedApsRequest,
+                  gamEpsStatusTransmittedApsReSignal,
+                  gamEpsStatusTransmittedApsBrSignal,
+                  gamEpsStatusReceivedApsRequest,
+                  gamEpsStatusReceivedApsReSignal,
+                  gamEpsStatusReceivedApsBrSignal, gamEpsStatusDfopPm,
+                  gamEpsStatusDfopCm, gamEpsStatusDfopNr,
+                  gamEpsStatusDfopNoAps }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamEpsMibGroups 7 }
+
+gamEpsMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamEpsCapabilitiesInfoGroup,
+                       gamEpsConfigInstanceTableInfoGroup,
+                       gamEpsConfigInstanceRowEditorInfoGroup,
+                       gamEpsConfigTableInfoGroup,
+                       gamEpsConfigMepTableInfoGroup,
+                       gamEpsConfigCommandTableInfoGroup,
+                       gamEpsStatusTableInfoGroup }
+
+    ::= { gamEpsMibCompliances 1 }
+
+END

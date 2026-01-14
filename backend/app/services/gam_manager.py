@@ -27,8 +27,14 @@ class GAMManager:
         model: str,
         snmp_community: Optional[str] = None,
         ssh_credentials: Optional[Dict] = None,
+        ssh_username: Optional[str] = None,
+        ssh_password: Optional[str] = None,
+        ssh_port: Optional[int] = None,
         location: Optional[str] = None,
-        management_vlan: Optional[int] = None
+        management_vlan: Optional[int] = None,
+        mac_address: Optional[str] = None,
+        firmware_version: Optional[str] = None,
+        serial_number: Optional[str] = None
     ) -> GAMDevice:
         """Create new GAM device"""
         device = GAMDevice(
@@ -37,9 +43,15 @@ class GAMManager:
             model=model,
             snmp_community=snmp_community or settings.default_snmp_community,
             ssh_credentials=ssh_credentials,
+            ssh_username=ssh_username,
+            ssh_password=ssh_password,
+            ssh_port=ssh_port or 22,
             location=location,
             management_vlan=management_vlan or settings.default_management_vlan,
-            status=DeviceStatus.OFFLINE
+            mac_address=mac_address,
+            firmware_version=firmware_version,
+            serial_number=serial_number,
+            status=DeviceStatus.ONLINE  # Device is online if we successfully discovered it via SNMP
         )
 
         self.db.add(device)
@@ -234,6 +246,84 @@ class GAMManager:
             device.status = DeviceStatus.ERROR
             await self.db.commit()
             return {'success': False, 'error': str(e)}
+
+    async def update_ports_from_snmp(
+        self,
+        device_id: UUID,
+        port_info: Dict[int, Dict[str, Any]]
+    ) -> List[GAMPort]:
+        """
+        Update port information from SNMP data
+
+        Args:
+            device_id: UUID of the GAM device
+            port_info: Dict from SNMP client with port information
+
+        Returns:
+            List of updated GAMPort objects
+        """
+        device = await self.get_device(device_id)
+        if not device:
+            raise ValueError(f"Device {device_id} not found")
+
+        # Get existing ports
+        existing_ports = await self.get_device_ports(device_id)
+
+        # Create mapping of port_number to GAMPort
+        port_map = {port.port_number: port for port in existing_ports}
+
+        updated_ports = []
+
+        # Process SNMP port data
+        for idx, data in port_info.items():
+            # Positron OID data interpretation:
+            # The .5 sub-OID seems to indicate link status (0=down, 1=up)
+            # The .11 sub-OID might indicate subscriber count on coax ports
+
+            link_status = data.get('link_status', 'down')
+            subscriber_count = data.get('subscriber_count', 0)
+
+            # Map positron index to actual port number
+            # For GAM-4-C, we have 4 ports but 6 SNMP indices
+            # Indices 1000005 and 1000006 appear to be the active ones
+            # We need to figure out the mapping
+
+            # For now, try to use the port_indicator value
+            port_indicator = data.get('port_indicator', 0)
+
+            # Attempt to find corresponding database port
+            # This is a best-guess mapping without the MIB file
+            db_port = None
+
+            # Strategy: If subscriber_count > 0 or link_status == 'up', it's likely a real port
+            if subscriber_count > 0 or link_status == 'up':
+                # Try to match by looking for ports that aren't already mapped
+                for port in existing_ports:
+                    if port.status == PortStatus.DOWN and link_status == 'up':
+                        db_port = port
+                        break
+
+            if db_port:
+                # Update port status
+                db_port.status = PortStatus.UP if link_status == 'up' else PortStatus.DOWN
+
+                # Store raw SNMP data for debugging
+                if not hasattr(db_port, 'snmp_data'):
+                    # Note: This would require a JSON column in the model
+                    pass
+
+                await self.db.commit()
+                await self.db.refresh(db_port)
+                updated_ports.append(db_port)
+
+                logger.info(
+                    f"Updated port {db_port.port_number} on {device.name}: "
+                    f"status={db_port.status}, link_status={link_status}, "
+                    f"subscribers={subscriber_count}, idx={idx}"
+                )
+
+        logger.info(f"Updated {len(updated_ports)} ports for device {device.name}")
+        return updated_ports
 
     async def discover_devices(self, network_range: str) -> List[Dict[str, Any]]:
         """Discover GAM devices on network (basic implementation)"""

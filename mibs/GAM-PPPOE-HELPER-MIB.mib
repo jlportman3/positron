@@ -1,0 +1,398 @@
+-- *****************************************************************
+-- PPPOE-HELPER-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-PPPOE-HELPER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamPppoeHelperMib MODULE-IDENTITY
+    LAST-UPDATED "202002240000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the PPPOE helper MIB"
+    REVISION    "202002240000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 147 }
+
+
+GAMPppoeHelperForwardInformationPolicyType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the PPPOE forward information policy type."
+    SYNTAX      INTEGER { replace(0), keep(1), drop(2) }
+
+gamPppoeHelperMibObjects OBJECT IDENTIFIER
+    ::= { gamPppoeHelperMib 1 }
+
+gamPppoeHelperConfig OBJECT IDENTIFIER
+    ::= { gamPppoeHelperMibObjects 2 }
+
+gamPppoeHelperConfigForward OBJECT IDENTIFIER
+    ::= { gamPppoeHelperConfig 1 }
+
+gamPppoeHelperConfigForwardInformationMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the PPPOE forward information mode option operation. Possible
+         modes are - Enabled: Enable PPPOE forward information mode operation.
+         When PPPOE forward information mode operation is enabled, the agent
+         inserts specific information (option 82) into a PPPOE message when
+         forwarding to PPPOE server and removes it from a PPPOE message when
+         transferring to PPPOE client. It only works when PPPOE forward
+         operation mode is enabled. Disabled: Disable PPPOE forward information
+         mode operation."
+    ::= { gamPppoeHelperConfigForward 1 }
+
+gamPppoeHelperConfigForwardInformationPolicy OBJECT-TYPE
+    SYNTAX      GAMPppoeHelperForwardInformationPolicyType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the PPPOE forward information option policy. When PPPOE
+         forward information mode operation is enabled, if the agent receives a
+         PPPOE message that already contains forward agent information it will
+         enforce the policy. The 'Replace' policy is invalid when forward
+         information mode is disabled."
+    ::= { gamPppoeHelperConfigForward 2 }
+
+gamPppoeHelperConfigForwardInformationAccessNodeId OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the PPPOE forward information access node ID"
+    ::= { gamPppoeHelperConfigForward 3 }
+
+gamPppoeHelperConfigForwardInformationIndexOneBase OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates if the PPPOE forward information indices are generated
+         one-based"
+    ::= { gamPppoeHelperConfigForward 4 }
+
+gamPppoeHelperStatus OBJECT IDENTIFIER
+    ::= { gamPppoeHelperMibObjects 3 }
+
+gamPppoeHelperStatusForwardStatistics OBJECT IDENTIFIER
+    ::= { gamPppoeHelperStatus 1 }
+
+gamPppoeHelperStatusForwardStatisticsTransmitToServer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Server side, number of packets transmitted to server."
+    ::= { gamPppoeHelperStatusForwardStatistics 1 }
+
+gamPppoeHelperStatusForwardStatisticsServerTransmitError OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Server side, number of errors transmitting packets to server."
+    ::= { gamPppoeHelperStatusForwardStatistics 2 }
+
+gamPppoeHelperStatusForwardStatisticsReceiveFromServer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Server side, number of packets received from server."
+    ::= { gamPppoeHelperStatusForwardStatistics 3 }
+
+gamPppoeHelperStatusForwardStatisticsTransmitToClient OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client side, number of packets transmitted to client."
+    ::= { gamPppoeHelperStatusForwardStatistics 4 }
+
+gamPppoeHelperStatusForwardStatisticsClientTransmitError OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client side, number of errors transmitting packets to client."
+    ::= { gamPppoeHelperStatusForwardStatistics 5 }
+
+gamPppoeHelperStatusForwardStatisticsReceiveFromClient OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client side, number of packets received from client."
+    ::= { gamPppoeHelperStatusForwardStatistics 6 }
+
+gamPppoeHelperStatusForwardStatisticsClientReceiveAgentTag OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client side, number of packets received from client that contains agent
+         information tag."
+    ::= { gamPppoeHelperStatusForwardStatistics 7 }
+
+gamPppoeHelperStatusForwardStatisticsClientReplaceAgentTag OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client side, number of packets received from client that we replaced
+         agent information tag."
+    ::= { gamPppoeHelperStatusForwardStatistics 8 }
+
+gamPppoeHelperStatusForwardStatisticsClientKeepAgentTag OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client side, number of packets received from client that we kept agent
+         information tag."
+    ::= { gamPppoeHelperStatusForwardStatistics 9 }
+
+gamPppoeHelperStatusForwardStatisticsClientDropAgentTag OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client side, number of packets received from client that we dropped
+         agent information tag."
+    ::= { gamPppoeHelperStatusForwardStatistics 10 }
+
+gamPppoeHelperStatusForwardStatisticsClientAddAgentTag OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client side, number of packets received from client that we added agent
+         information tag."
+    ::= { gamPppoeHelperStatusForwardStatistics 11 }
+
+gamPppoeHelperStatusDetailedStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPppoeHelperStatusDetailedStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table list the detailed PPPoE discovery statistics."
+    ::= { gamPppoeHelperStatus 2 }
+
+gamPppoeHelperStatusDetailedStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMPppoeHelperStatusDetailedStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry contains the statistics for one port"
+    INDEX       { gamPppoeHelperStatusDetailedStatisticsIfIndex }
+    ::= { gamPppoeHelperStatusDetailedStatisticsTable 1 }
+
+GAMPppoeHelperStatusDetailedStatisticsEntry ::= SEQUENCE {
+    gamPppoeHelperStatusDetailedStatisticsIfIndex  GAMInterfaceIndex,
+    gamPppoeHelperStatusDetailedStatisticsPadiRx   Unsigned32,
+    gamPppoeHelperStatusDetailedStatisticsPadoRx   Unsigned32,
+    gamPppoeHelperStatusDetailedStatisticsPadrRx   Unsigned32,
+    gamPppoeHelperStatusDetailedStatisticsPadsRx   Unsigned32,
+    gamPppoeHelperStatusDetailedStatisticsPatdRx   Unsigned32,
+    gamPppoeHelperStatusDetailedStatisticsPadiTx   Unsigned32,
+    gamPppoeHelperStatusDetailedStatisticsPadoTx   Unsigned32,
+    gamPppoeHelperStatusDetailedStatisticsPadrTx   Unsigned32,
+    gamPppoeHelperStatusDetailedStatisticsPadsTx   Unsigned32,
+    gamPppoeHelperStatusDetailedStatisticsPatdTx   Unsigned32
+}
+
+gamPppoeHelperStatusDetailedStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamPppoeHelperStatusDetailedStatisticsEntry 1 }
+
+gamPppoeHelperStatusDetailedStatisticsPadiRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of initiation packets (PADI) received."
+    ::= { gamPppoeHelperStatusDetailedStatisticsEntry 2 }
+
+gamPppoeHelperStatusDetailedStatisticsPadoRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of offer packets (PADO) received."
+    ::= { gamPppoeHelperStatusDetailedStatisticsEntry 3 }
+
+gamPppoeHelperStatusDetailedStatisticsPadrRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of request packets (PADR) received."
+    ::= { gamPppoeHelperStatusDetailedStatisticsEntry 4 }
+
+gamPppoeHelperStatusDetailedStatisticsPadsRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of session-configmation packets (PADS) received."
+    ::= { gamPppoeHelperStatusDetailedStatisticsEntry 5 }
+
+gamPppoeHelperStatusDetailedStatisticsPatdRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of termination packets (PADT) received."
+    ::= { gamPppoeHelperStatusDetailedStatisticsEntry 6 }
+
+gamPppoeHelperStatusDetailedStatisticsPadiTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of initiation packets (PADI) transmitted."
+    ::= { gamPppoeHelperStatusDetailedStatisticsEntry 7 }
+
+gamPppoeHelperStatusDetailedStatisticsPadoTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of offer packets (PADO) transmitted."
+    ::= { gamPppoeHelperStatusDetailedStatisticsEntry 8 }
+
+gamPppoeHelperStatusDetailedStatisticsPadrTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of request packets (PADR) transmitted."
+    ::= { gamPppoeHelperStatusDetailedStatisticsEntry 9 }
+
+gamPppoeHelperStatusDetailedStatisticsPadsTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of session-configmation packets (PADS) transmitted."
+    ::= { gamPppoeHelperStatusDetailedStatisticsEntry 10 }
+
+gamPppoeHelperStatusDetailedStatisticsPatdTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of termination packets (PADT) transmitted."
+    ::= { gamPppoeHelperStatusDetailedStatisticsEntry 11 }
+
+gamPppoeHelperControl OBJECT IDENTIFIER
+    ::= { gamPppoeHelperMibObjects 4 }
+
+gamPppoeHelperControlStatistics OBJECT IDENTIFIER
+    ::= { gamPppoeHelperControl 1 }
+
+gamPppoeHelperControlStatisticsClearStatistics OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The action to clear statistics. Set to 'true' to clear the statistics.
+         This value will always read back as 'false'."
+    ::= { gamPppoeHelperControlStatistics 1 }
+
+gamPppoeHelperMibConformance OBJECT IDENTIFIER
+    ::= { gamPppoeHelperMib 2 }
+
+gamPppoeHelperMibCompliances OBJECT IDENTIFIER
+    ::= { gamPppoeHelperMibConformance 1 }
+
+gamPppoeHelperMibGroups OBJECT IDENTIFIER
+    ::= { gamPppoeHelperMibConformance 2 }
+
+gamPppoeHelperConfigForwardInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPppoeHelperConfigForwardInformationMode,
+                  gamPppoeHelperConfigForwardInformationPolicy,
+                  gamPppoeHelperConfigForwardInformationAccessNodeId,
+                  gamPppoeHelperConfigForwardInformationIndexOneBase }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPppoeHelperMibGroups 1 }
+
+gamPppoeHelperStatusForwardStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamPppoeHelperStatusForwardStatisticsTransmitToServer,
+                  gamPppoeHelperStatusForwardStatisticsServerTransmitError,
+                  gamPppoeHelperStatusForwardStatisticsReceiveFromServer,
+                  gamPppoeHelperStatusForwardStatisticsTransmitToClient,
+                  gamPppoeHelperStatusForwardStatisticsClientTransmitError,
+                  gamPppoeHelperStatusForwardStatisticsReceiveFromClient,
+                  gamPppoeHelperStatusForwardStatisticsClientReceiveAgentTag,
+                  gamPppoeHelperStatusForwardStatisticsClientReplaceAgentTag,
+                  gamPppoeHelperStatusForwardStatisticsClientKeepAgentTag,
+                  gamPppoeHelperStatusForwardStatisticsClientDropAgentTag,
+                  gamPppoeHelperStatusForwardStatisticsClientAddAgentTag }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPppoeHelperMibGroups 2 }
+
+gamPppoeHelperStatusDetailedStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPppoeHelperStatusDetailedStatisticsIfIndex,
+                  gamPppoeHelperStatusDetailedStatisticsPadiRx,
+                  gamPppoeHelperStatusDetailedStatisticsPadoRx,
+                  gamPppoeHelperStatusDetailedStatisticsPadrRx,
+                  gamPppoeHelperStatusDetailedStatisticsPadsRx,
+                  gamPppoeHelperStatusDetailedStatisticsPatdRx,
+                  gamPppoeHelperStatusDetailedStatisticsPadiTx,
+                  gamPppoeHelperStatusDetailedStatisticsPadoTx,
+                  gamPppoeHelperStatusDetailedStatisticsPadrTx,
+                  gamPppoeHelperStatusDetailedStatisticsPadsTx,
+                  gamPppoeHelperStatusDetailedStatisticsPatdTx }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPppoeHelperMibGroups 3 }
+
+gamPppoeHelperControlStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPppoeHelperControlStatisticsClearStatistics }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPppoeHelperMibGroups 4 }
+
+gamPppoeHelperMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamPppoeHelperConfigForwardInfoGroup,
+                       gamPppoeHelperStatusForwardStatisticsInfoGroup,
+                       gamPppoeHelperStatusDetailedStatisticsTableInfoGroup,
+                       gamPppoeHelperControlStatisticsInfoGroup }
+
+    ::= { gamPppoeHelperMibCompliances 1 }
+
+END

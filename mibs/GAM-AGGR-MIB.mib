@@ -1,0 +1,274 @@
+-- *****************************************************************
+-- AGGR-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-AGGR-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMPortList FROM GAM-TC
+    GAMPortStatusSpeed FROM GAM-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamAggrMib MODULE-IDENTITY
+    LAST-UPDATED "201707310000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private mib of aggregation management"
+    REVISION    "201707310000Z"
+    DESCRIPTION
+        "Added new aggregation modes: disabled, reserved, static, lacpActive,
+         lacpPassive"
+    REVISION    "201507070000Z"
+    DESCRIPTION
+        "Port speed is moved into the TC MIB"
+    REVISION    "201411180000Z"
+    DESCRIPTION
+        "Added aggregation group status table"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 19 }
+
+
+GAMAggregationMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The aggregation mode."
+    SYNTAX      INTEGER { disabled(0), reserved(1), static(2),
+                          lacpActive(3), lacpPassive(4) }
+
+gamAggrMibObjects OBJECT IDENTIFIER
+    ::= { gamAggrMib 1 }
+
+gamAggrConfig OBJECT IDENTIFIER
+    ::= { gamAggrMibObjects 2 }
+
+gamAggrConfigModeGlobals OBJECT IDENTIFIER
+    ::= { gamAggrConfig 1 }
+
+gamAggrConfigModeGlobalsSmacAddr OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to enable the use of the Source MAC address, or false to
+         disable. By default, Source MAC Address is enabled."
+    ::= { gamAggrConfigModeGlobals 1 }
+
+gamAggrConfigModeGlobalsDmacAddr OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to enable the use of the Destination MAC address, or false
+         to disable. By default, Destination MAC Address is disabled."
+    ::= { gamAggrConfigModeGlobals 2 }
+
+gamAggrConfigModeGlobalsSourceAndDestinationIpAddr OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to enable the use of the IP address, or false to disable.
+         By default, Destination MAC Address is enabled."
+    ::= { gamAggrConfigModeGlobals 3 }
+
+gamAggrConfigModeGlobalsTcpOrUdpSportAndDportNo OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to enable the use of the TCP/UDP Port Number, or false to
+         disable. By default, TCP/UDP Port Number is enabled."
+    ::= { gamAggrConfigModeGlobals 4 }
+
+gamAggrConfigGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAggrConfigGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The table is static Link Aggregation Group configuration table. The
+         index is Aggregration Group Identifier."
+    ::= { gamAggrConfig 2 }
+
+gamAggrConfigGroupEntry OBJECT-TYPE
+    SYNTAX      GAMAggrConfigGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamAggrConfigGroupAggrIndexNo }
+    ::= { gamAggrConfigGroupTable 1 }
+
+GAMAggrConfigGroupEntry ::= SEQUENCE {
+    gamAggrConfigGroupAggrIndexNo  GAMInterfaceIndex,
+    gamAggrConfigGroupPortMembers  GAMPortList,
+    gamAggrConfigGroupAggrMode     GAMAggregationMode
+}
+
+gamAggrConfigGroupAggrIndexNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Link Aggregation Group Identifier."
+    ::= { gamAggrConfigGroupEntry 1 }
+
+gamAggrConfigGroupPortMembers OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The bitmap type containing the port members' list for this aggregation
+         group."
+    ::= { gamAggrConfigGroupEntry 2 }
+
+gamAggrConfigGroupAggrMode OBJECT-TYPE
+    SYNTAX      GAMAggregationMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Aggregation group mode."
+    ::= { gamAggrConfigGroupEntry 3 }
+
+gamAggrStatus OBJECT IDENTIFIER
+    ::= { gamAggrMibObjects 3 }
+
+gamAggrStatusGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAggrStatusGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The table is Aggregation Group status table. The index is Aggregration
+         Group Identifier."
+    ::= { gamAggrStatus 3 }
+
+gamAggrStatusGroupEntry OBJECT-TYPE
+    SYNTAX      GAMAggrStatusGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamAggrStatusGroupAggrIndexNo }
+    ::= { gamAggrStatusGroupTable 1 }
+
+GAMAggrStatusGroupEntry ::= SEQUENCE {
+    gamAggrStatusGroupAggrIndexNo      GAMInterfaceIndex,
+    gamAggrStatusGroupConfiguredPorts  GAMPortList,
+    gamAggrStatusGroupAggregatedPorts  GAMPortList,
+    gamAggrStatusGroupSpeed            GAMPortStatusSpeed,
+    gamAggrStatusGroupAggrMode         GAMAggregationMode,
+    gamAggrStatusGroupType             GAMDisplayString
+}
+
+gamAggrStatusGroupAggrIndexNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Link Aggregation Group Identifier."
+    ::= { gamAggrStatusGroupEntry 1 }
+
+gamAggrStatusGroupConfiguredPorts OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Configured member ports of the aggregation Group."
+    ::= { gamAggrStatusGroupEntry 2 }
+
+gamAggrStatusGroupAggregatedPorts OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Aggregated member ports of the aggregation Group."
+    ::= { gamAggrStatusGroupEntry 3 }
+
+gamAggrStatusGroupSpeed OBJECT-TYPE
+    SYNTAX      GAMPortStatusSpeed
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Speed of the Aggregation Group."
+    ::= { gamAggrStatusGroupEntry 4 }
+
+gamAggrStatusGroupAggrMode OBJECT-TYPE
+    SYNTAX      GAMAggregationMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Aggregation group mode."
+    ::= { gamAggrStatusGroupEntry 5 }
+
+gamAggrStatusGroupType OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..14))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Type of the Aggregation Group."
+    ::= { gamAggrStatusGroupEntry 6 }
+
+gamAggrMibConformance OBJECT IDENTIFIER
+    ::= { gamAggrMib 2 }
+
+gamAggrMibCompliances OBJECT IDENTIFIER
+    ::= { gamAggrMibConformance 1 }
+
+gamAggrMibGroups OBJECT IDENTIFIER
+    ::= { gamAggrMibConformance 2 }
+
+gamAggrConfigModeGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAggrConfigModeGlobalsSmacAddr,
+                  gamAggrConfigModeGlobalsDmacAddr,
+                  gamAggrConfigModeGlobalsSourceAndDestinationIpAddr,
+                  gamAggrConfigModeGlobalsTcpOrUdpSportAndDportNo }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAggrMibGroups 1 }
+
+gamAggrConfigGroupTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAggrConfigGroupAggrIndexNo,
+                  gamAggrConfigGroupPortMembers,
+                  gamAggrConfigGroupAggrMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAggrMibGroups 2 }
+
+gamAggrStatusGroupTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAggrStatusGroupAggrIndexNo,
+                  gamAggrStatusGroupConfiguredPorts,
+                  gamAggrStatusGroupAggregatedPorts,
+                  gamAggrStatusGroupSpeed, gamAggrStatusGroupAggrMode,
+                  gamAggrStatusGroupType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAggrMibGroups 3 }
+
+gamAggrMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamAggrConfigModeGlobalsInfoGroup,
+                       gamAggrConfigGroupTableInfoGroup,
+                       gamAggrStatusGroupTableInfoGroup }
+
+    ::= { gamAggrMibCompliances 1 }
+
+END

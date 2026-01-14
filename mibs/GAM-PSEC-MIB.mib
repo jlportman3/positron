@@ -1,0 +1,992 @@
+-- *****************************************************************
+-- PSEC-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-PSEC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMPsecUserBitmaskType FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    GAMVlan FROM GAM-TC
+    GAMVlanOrZero FROM GAM-TC
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamPsecMib MODULE-IDENTITY
+    LAST-UPDATED "201610240000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "Private MIB for Port Security"
+    REVISION    "201610240000Z"
+    DESCRIPTION
+        "Restructured entire MIB in a non-backward-compatible way"
+    REVISION    "201606020000Z"
+    DESCRIPTION
+        "Support SNMP trap"
+    REVISION    "201412100000Z"
+    DESCRIPTION
+        "Remove user of DHCP snooping"
+    REVISION    "201412080000Z"
+    DESCRIPTION
+        "Add users in status port table"
+    REVISION    "201410130000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 66 }
+
+
+GAMPsecViolationMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The violation mode determines what should happen when a limit is
+         exceeded."
+    SYNTAX      INTEGER { protect(0), restrict(1), reserved(2) }
+
+gamPsecMibObjects OBJECT IDENTIFIER
+    ::= { gamPsecMib 1 }
+
+gamPsecCapabilities OBJECT IDENTIFIER
+    ::= { gamPsecMibObjects 1 }
+
+gamPsecCapabilitiesUsers OBJECT-TYPE
+    SYNTAX      GAMPsecUserBitmaskType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A bitmask indicating the internal modules (a.k.a. users) included in
+         this flavor of the application."
+    ::= { gamPsecCapabilities 1 }
+
+gamPsecCapabilitiesPoolSize OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of Port Security-controlled <VLAN, MAC> entries."
+    ::= { gamPsecCapabilities 2 }
+
+gamPsecCapabilitiesLimitMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum limit on number of <VLAN, MAC> entries a given interface
+         can be configured to."
+    ::= { gamPsecCapabilities 3 }
+
+gamPsecCapabilitiesLimitMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum limit on number of <VLAN, MAC> entries a given interface
+         can be configured to."
+    ::= { gamPsecCapabilities 4 }
+
+gamPsecCapabilitiesViolateLimitMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum number of violating <VLAN, MAC> entries a given interface
+         can be configured to."
+    ::= { gamPsecCapabilities 5 }
+
+gamPsecCapabilitiesViolateLimitMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of violating <VLAN, MAC> entries a given interface
+         can be configured to."
+    ::= { gamPsecCapabilities 6 }
+
+gamPsecCapabilitiesAgeTimeMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum allowed age time value."
+    ::= { gamPsecCapabilities 7 }
+
+gamPsecCapabilitiesAgeTimeMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum allowed age time value."
+    ::= { gamPsecCapabilities 8 }
+
+gamPsecCapabilitiesHoldTimeMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum allowed hold time value."
+    ::= { gamPsecCapabilities 9 }
+
+gamPsecCapabilitiesHoldTimeMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum allowed hold time value."
+    ::= { gamPsecCapabilities 10 }
+
+gamPsecConfig OBJECT IDENTIFIER
+    ::= { gamPsecMibObjects 2 }
+
+gamPsecConfigGlobals OBJECT IDENTIFIER
+    ::= { gamPsecConfig 1 }
+
+gamPsecConfigGlobalsMain OBJECT IDENTIFIER
+    ::= { gamPsecConfigGlobals 1 }
+
+gamPsecConfigGlobalsMainEnableAging OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When TRUE, learned, forwarding entries are subject to aging - FALSE if
+         not."
+    ::= { gamPsecConfigGlobalsMain 1 }
+
+gamPsecConfigGlobalsMainAgingPeriodSecs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If aging is enabled (with enableAging), this is the aging period in
+         seconds. Valid range is defined by capabilities' ageTimeMin and
+         ageTimeMax members."
+    ::= { gamPsecConfigGlobalsMain 2 }
+
+gamPsecConfigGlobalsMainHoldTimeSecs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Denies entries are held in a blocking state for this amount of time,
+         measured in seconds. Valid range is defined by capabilities'
+         holdTimeMin and holdTimeMax members."
+    ::= { gamPsecConfigGlobalsMain 3 }
+
+gamPsecConfigInterfaces OBJECT IDENTIFIER
+    ::= { gamPsecConfig 2 }
+
+gamPsecConfigInterfacesTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPsecConfigInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of per-interface configuration."
+    ::= { gamPsecConfigInterfaces 1 }
+
+gamPsecConfigInterfacesEntry OBJECT-TYPE
+    SYNTAX      GAMPsecConfigInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the port-security configuration for one interface."
+    INDEX       { gamPsecConfigInterfacesIfIndex }
+    ::= { gamPsecConfigInterfacesTable 1 }
+
+GAMPsecConfigInterfacesEntry ::= SEQUENCE {
+    gamPsecConfigInterfacesIfIndex        GAMInterfaceIndex,
+    gamPsecConfigInterfacesEnabled        TruthValue,
+    gamPsecConfigInterfacesLimit          Unsigned32,
+    gamPsecConfigInterfacesViolateLimit   Unsigned32,
+    gamPsecConfigInterfacesViolationMode  GAMPsecViolationMode
+}
+
+gamPsecConfigInterfacesIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface index."
+    ::= { gamPsecConfigInterfacesEntry 1 }
+
+gamPsecConfigInterfacesEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether port-security is enabled for this interface. "
+    ::= { gamPsecConfigInterfacesEntry 2 }
+
+gamPsecConfigInterfacesLimit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of MAC addresses allowed on this interface. Valid range
+         is given by capabilities' limitMin and limitMax members."
+    ::= { gamPsecConfigInterfacesEntry 3 }
+
+gamPsecConfigInterfacesViolateLimit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of violating MAC addresses allowed on this interface.
+         This is only used when violationMode is 'restrict'. Valid range is
+         given by capabilities' violateLimitMin and violateLimitMax members."
+    ::= { gamPsecConfigInterfacesEntry 4 }
+
+gamPsecConfigInterfacesViolationMode OBJECT-TYPE
+    SYNTAX      GAMPsecViolationMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action to take if number of MAC addresses exceeds the limit. protect(0)
+         Do nothing, except disallowing further clients. restrict(1) Keep
+         recording the violating MAC addresses, which are kept until
+         holdTimeSecs expires. reserved(2) Reserved, not valid."
+    ::= { gamPsecConfigInterfacesEntry 5 }
+
+gamPsecStatus OBJECT IDENTIFIER
+    ::= { gamPsecMibObjects 3 }
+
+gamPsecStatusGlobals OBJECT IDENTIFIER
+    ::= { gamPsecStatus 1 }
+
+gamPsecStatusGlobalsMain OBJECT IDENTIFIER
+    ::= { gamPsecStatusGlobals 1 }
+
+gamPsecStatusGlobalsMainTotalMacCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of MAC addresses in the system managed by Port Security."
+    ::= { gamPsecStatusGlobalsMain 1 }
+
+gamPsecStatusGlobalsMainCurMacCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of currently unused MAC addresses in the system managed by Port
+         Security. The number of used MAC addresses can then be found by
+         subtracting curMacCnt from totalMacCnt."
+    ::= { gamPsecStatusGlobalsMain 2 }
+
+gamPsecStatusGlobalsNotification OBJECT IDENTIFIER
+    ::= { gamPsecStatusGlobals 2 }
+
+gamPsecStatusGlobalsNotificationPoolDepleted OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if Port Security has run out of free <VLAN, MAC>-entries, FALSE if
+         at least one is yet free."
+    ::= { gamPsecStatusGlobalsNotification 1 }
+
+gamPsecStatusInterfaces OBJECT IDENTIFIER
+    ::= { gamPsecStatus 2 }
+
+gamPsecStatusInterfacesTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPsecStatusInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of per-interface status."
+    ::= { gamPsecStatusInterfaces 1 }
+
+gamPsecStatusInterfacesEntry OBJECT-TYPE
+    SYNTAX      GAMPsecStatusInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the port-security status for one interface."
+    INDEX       { gamPsecStatusInterfacesIfIndex }
+    ::= { gamPsecStatusInterfacesTable 1 }
+
+GAMPsecStatusInterfacesEntry ::= SEQUENCE {
+    gamPsecStatusInterfacesIfIndex         GAMInterfaceIndex,
+    gamPsecStatusInterfacesUsers           GAMPsecUserBitmaskType,
+    gamPsecStatusInterfacesMacCount        Unsigned32,
+    gamPsecStatusInterfacesViolateCount    Unsigned32,
+    gamPsecStatusInterfacesLimitReached    TruthValue,
+    gamPsecStatusInterfacesSecLearning     TruthValue,
+    gamPsecStatusInterfacesCpuCopying      TruthValue,
+    gamPsecStatusInterfacesLinkIsUp        TruthValue,
+    gamPsecStatusInterfacesStpDiscarding   TruthValue,
+    gamPsecStatusInterfacesHwAddFailed     TruthValue,
+    gamPsecStatusInterfacesSwAddFailed     TruthValue,
+    gamPsecStatusInterfacesWhitelistCount  Unsigned32
+}
+
+gamPsecStatusInterfacesIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface index."
+    ::= { gamPsecStatusInterfacesEntry 1 }
+
+gamPsecStatusInterfacesUsers OBJECT-TYPE
+    SYNTAX      GAMPsecUserBitmaskType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Bitmask indicating the port-security users that are currently enabled
+         on this interface."
+    ::= { gamPsecStatusInterfacesEntry 2 }
+
+gamPsecStatusInterfacesMacCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of MAC addresses currently assigned to this interface. This
+         includes violateCount and whitelistCount."
+    ::= { gamPsecStatusInterfacesEntry 3 }
+
+gamPsecStatusInterfacesViolateCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current number of violating MAC addresses. Only counts when
+         violationMode is 'restrict'. This keeps track of the current number of
+         violating MAC addresses in the MAC table. These MAC addresses time out
+         (according to holdTimeSecs)"
+    ::= { gamPsecStatusInterfacesEntry 4 }
+
+gamPsecStatusInterfacesLimitReached OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if the limit is reached on the interface, FALSE otherwise."
+    ::= { gamPsecStatusInterfacesEntry 5 }
+
+gamPsecStatusInterfacesSecLearning OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if secure learning is enabled on the interface, FALSE otherwise.
+         Mainly for debugging."
+    ::= { gamPsecStatusInterfacesEntry 6 }
+
+gamPsecStatusInterfacesCpuCopying OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if CPU copying is enabled on the interface, FALSE otherwise.
+         Mainly for debugging."
+    ::= { gamPsecStatusInterfacesEntry 7 }
+
+gamPsecStatusInterfacesLinkIsUp OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if interface link is up, FALSE otherwise. Mainly for debugging."
+    ::= { gamPsecStatusInterfacesEntry 8 }
+
+gamPsecStatusInterfacesStpDiscarding OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if at least one STP MSTI instance is discarding on the interface,
+         FALSE otherwise. Mainly for debugging."
+    ::= { gamPsecStatusInterfacesEntry 9 }
+
+gamPsecStatusInterfacesHwAddFailed OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if H/W add of a MAC address failed on this interface, FALSE
+         otherwise. Mainly for debugging."
+    ::= { gamPsecStatusInterfacesEntry 10 }
+
+gamPsecStatusInterfacesSwAddFailed OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if S/W add of a MAC address failed on this interface, FALSE
+         otherwise. Mainly for debugging."
+    ::= { gamPsecStatusInterfacesEntry 11 }
+
+gamPsecStatusInterfacesWhitelistCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current number of whitelisted MAC addresses. This keeps track of the
+         current number of whitelisted MAC addresses in the MAC table. For PSEC
+         limit, those are MAC that are not counted toward limit. For other
+         modules, those are MAC that bypass security checks. Those are system or
+         otherwise trusted devices."
+    ::= { gamPsecStatusInterfacesEntry 21 }
+
+gamPsecStatusInterfacesNotificationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPsecStatusInterfacesNotificationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of per-interface notification status."
+    ::= { gamPsecStatusInterfaces 2 }
+
+gamPsecStatusInterfacesNotificationEntry OBJECT-TYPE
+    SYNTAX      GAMPsecStatusInterfacesNotificationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the port-security notification status for one
+         interface."
+    INDEX       { gamPsecStatusInterfacesNotificationIfIndex }
+    ::= { gamPsecStatusInterfacesNotificationTable 1 }
+
+GAMPsecStatusInterfacesNotificationEntry ::= SEQUENCE {
+    gamPsecStatusInterfacesNotificationIfIndex              GAMInterfaceIndex,
+    gamPsecStatusInterfacesNotificationTotalViolateCount    Unsigned32,
+    gamPsecStatusInterfacesNotificationLatestViolatingVlan  GAMVlanOrZero,
+    gamPsecStatusInterfacesNotificationLatestViolatingMac   MacAddress
+}
+
+gamPsecStatusInterfacesNotificationIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface index."
+    ::= { gamPsecStatusInterfacesNotificationEntry 1 }
+
+gamPsecStatusInterfacesNotificationTotalViolateCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of violating MAC addresses. Only counts when violationMode
+         is 'restrict'. This keeps on counting up, whereas violateCount counts
+         the actual number of violating MAC addresses"
+    ::= { gamPsecStatusInterfacesNotificationEntry 2 }
+
+gamPsecStatusInterfacesNotificationLatestViolatingVlan OBJECT-TYPE
+    SYNTAX      GAMVlanOrZero
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Holds the VLAN ID of the latest violating host. Used when violationMode
+         is 'restrict'. This field and latestViolatingMac are only valid if this
+         field is non-zero"
+    ::= { gamPsecStatusInterfacesNotificationEntry 4 }
+
+gamPsecStatusInterfacesNotificationLatestViolatingMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Holds the MAC address of the latest violating host. Used when
+         violationMode is 'restrict'."
+    ::= { gamPsecStatusInterfacesNotificationEntry 5 }
+
+gamPsecStatusInterfacesMacTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPsecStatusInterfacesMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of port-security controlled entries in the MAC table (forwarding
+         database)"
+    ::= { gamPsecStatusInterfaces 3 }
+
+gamPsecStatusInterfacesMacEntry OBJECT-TYPE
+    SYNTAX      GAMPsecStatusInterfacesMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the status for one MAC address"
+    INDEX       { gamPsecStatusInterfacesMacIfIndex,
+                  gamPsecStatusInterfacesMacVlanId,
+                  gamPsecStatusInterfacesMacMacAddress }
+    ::= { gamPsecStatusInterfacesMacTable 1 }
+
+GAMPsecStatusInterfacesMacEntry ::= SEQUENCE {
+    gamPsecStatusInterfacesMacIfIndex           GAMInterfaceIndex,
+    gamPsecStatusInterfacesMacVlanId            GAMVlan,
+    gamPsecStatusInterfacesMacMacAddress        MacAddress,
+    gamPsecStatusInterfacesMacPort              GAMInterfaceIndex,
+    gamPsecStatusInterfacesMacCreationTime      GAMDisplayString,
+    gamPsecStatusInterfacesMacChangedTime       GAMDisplayString,
+    gamPsecStatusInterfacesMacAgeHoldTime       Unsigned32,
+    gamPsecStatusInterfacesMacViolating         GAMUnsigned8,
+    gamPsecStatusInterfacesMacBlocked           GAMUnsigned8,
+    gamPsecStatusInterfacesMacKeptBlocked       GAMUnsigned8,
+    gamPsecStatusInterfacesMacCpuCopying        GAMUnsigned8,
+    gamPsecStatusInterfacesMacAgeFrameSeen      GAMUnsigned8,
+    gamPsecStatusInterfacesMacUsersForward      GAMPsecUserBitmaskType,
+    gamPsecStatusInterfacesMacUsersBlock        GAMPsecUserBitmaskType,
+    gamPsecStatusInterfacesMacUsersKeepBlocked  GAMPsecUserBitmaskType,
+    gamPsecStatusInterfacesMacUsersWhitelisted  GAMPsecUserBitmaskType,
+    gamPsecStatusInterfacesMacWhitelisted       GAMUnsigned8
+}
+
+gamPsecStatusInterfacesMacIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface index."
+    ::= { gamPsecStatusInterfacesMacEntry 1 }
+
+gamPsecStatusInterfacesMacVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VLAN ID used for indexing."
+    ::= { gamPsecStatusInterfacesMacEntry 2 }
+
+gamPsecStatusInterfacesMacMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The MAC address for which this entry applies."
+    ::= { gamPsecStatusInterfacesMacEntry 3 }
+
+gamPsecStatusInterfacesMacPort OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Port on which this MAC address is learned."
+    ::= { gamPsecStatusInterfacesMacEntry 4 }
+
+gamPsecStatusInterfacesMacCreationTime OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..24))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "MAC address was originally added at this time."
+    ::= { gamPsecStatusInterfacesMacEntry 5 }
+
+gamPsecStatusInterfacesMacChangedTime OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..24))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "MAC address was last changed at this time (due to e.g. aging)."
+    ::= { gamPsecStatusInterfacesMacEntry 6 }
+
+gamPsecStatusInterfacesMacAgeHoldTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Down-counter indicating time left of aging period or hold time measured
+         in seconds. 0 means that aging is disabled."
+    ::= { gamPsecStatusInterfacesMacEntry 7 }
+
+gamPsecStatusInterfacesMacViolating OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if this MAC address is violating the limit and therefore is
+         blocked. This can only be set when violationMode is set to 'restrict'.
+         Non-violating MAC addresses may be blocked or kept blocked if other
+         user modules are enabled on this interface. MAC addresses may be
+         blocked for other reasons."
+    ::= { gamPsecStatusInterfacesMacEntry 8 }
+
+gamPsecStatusInterfacesMacBlocked OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if this MAC address is blocked from forwarding. Such MAC addresses
+         are subject to hold-time timeout."
+    ::= { gamPsecStatusInterfacesMacEntry 9 }
+
+gamPsecStatusInterfacesMacKeptBlocked OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if this MAC address is kept blocked from forwarding. Only internal
+         user modules can set a MAC address to be kept blocking until further
+         notice. MAC addresses in this state are not subject to hold-time
+         expiration."
+    ::= { gamPsecStatusInterfacesMacEntry 10 }
+
+gamPsecStatusInterfacesMacCpuCopying OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if CPU copying is enabled for this MAC address due to aging.
+         Mainly used for debugging."
+    ::= { gamPsecStatusInterfacesMacEntry 11 }
+
+gamPsecStatusInterfacesMacAgeFrameSeen OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if an age frame was seen during aging of this MAC address. Mainly
+         used for debugging."
+    ::= { gamPsecStatusInterfacesMacEntry 12 }
+
+gamPsecStatusInterfacesMacUsersForward OBJECT-TYPE
+    SYNTAX      GAMPsecUserBitmaskType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Bitmask indicating the user modules that have marked this MAC address
+         as forwarding."
+    ::= { gamPsecStatusInterfacesMacEntry 13 }
+
+gamPsecStatusInterfacesMacUsersBlock OBJECT-TYPE
+    SYNTAX      GAMPsecUserBitmaskType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Bitmask indicating the user modules that have marked this MAC address
+         as blocking (wins over forward/whitelisted)."
+    ::= { gamPsecStatusInterfacesMacEntry 14 }
+
+gamPsecStatusInterfacesMacUsersKeepBlocked OBJECT-TYPE
+    SYNTAX      GAMPsecUserBitmaskType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Bitmask indicating the user modules that wish this MAC address to be
+         kept blocked (wins over block)."
+    ::= { gamPsecStatusInterfacesMacEntry 15 }
+
+gamPsecStatusInterfacesMacUsersWhitelisted OBJECT-TYPE
+    SYNTAX      GAMPsecUserBitmaskType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Bitmask indicating the user modules that wish this MAC address to be
+         whitelisted (same level as forward, see 'whitelisted' description)."
+    ::= { gamPsecStatusInterfacesMacEntry 23 }
+
+gamPsecStatusInterfacesMacWhitelisted OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if this MAC address is whitelisted. For PSEC limit, those are MAC
+         that are not counted toward limit. For other modules, those are MAC
+         that bypass security checks. Those are system or otherwise trusted
+         devices."
+    ::= { gamPsecStatusInterfacesMacEntry 33 }
+
+gamPsecControl OBJECT IDENTIFIER
+    ::= { gamPsecMibObjects 4 }
+
+gamPsecControlGlobals OBJECT IDENTIFIER
+    ::= { gamPsecControl 1 }
+
+gamPsecControlGlobalsMacClear OBJECT IDENTIFIER
+    ::= { gamPsecControlGlobals 1 }
+
+gamPsecControlGlobalsMacClearSpecificIfindex OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When TRUE, this structure's ifindex field is searched for matching MAC
+         addresses to remove. When FALSE, all ports are searched for MAC
+         addresses to remove."
+    ::= { gamPsecControlGlobalsMacClear 1 }
+
+gamPsecControlGlobalsMacClearIfindex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When specificIfindex is TRUE, this member holds the interface (must be
+         of type port) on which to search for MAC addresses to remove."
+    ::= { gamPsecControlGlobalsMacClear 2 }
+
+gamPsecControlGlobalsMacClearSpecificVlan OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When TRUE, this structure's vlanId field is searched for MAC addresses
+         to remove. When FALSE, all VLANs are searched for MAC addresses to
+         remove."
+    ::= { gamPsecControlGlobalsMacClear 3 }
+
+gamPsecControlGlobalsMacClearVlanId OBJECT-TYPE
+    SYNTAX      GAMVlanOrZero
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When specificVlan is TRUE, this member holds the VLAN ID on which to
+         search for MAC addresses to remove."
+    ::= { gamPsecControlGlobalsMacClear 4 }
+
+gamPsecControlGlobalsMacClearSpecificMac OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When TRUE, this structure's macAddress field holds the MAC address to
+         remove. When FALSE, all MAC addresses are searched for MAC addresses to
+         remove."
+    ::= { gamPsecControlGlobalsMacClear 5 }
+
+gamPsecControlGlobalsMacClearMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When specificMac is TRUE, this member holds the MAC address to remove."
+    ::= { gamPsecControlGlobalsMacClear 6 }
+
+gamPsecControlInterfaces OBJECT IDENTIFIER
+    ::= { gamPsecControl 2 }
+
+gamPsecTrap OBJECT IDENTIFIER
+    ::= { gamPsecMibObjects 6 }
+
+gamPsecTrapGlobals OBJECT IDENTIFIER
+    ::= { gamPsecTrap 1 }
+
+gamPsecTrapGlobalsMain NOTIFICATION-TYPE
+    OBJECTS     { gamPsecStatusGlobalsNotificationPoolDepleted }
+    STATUS      current
+    DESCRIPTION
+        "This trap signals that one or more of the objects included in the trap
+         has been updated."
+
+    ::= { gamPsecTrapGlobals 1 }
+
+gamPsecTrapInterfaces OBJECT IDENTIFIER
+    ::= { gamPsecTrap 2 }
+
+gamPsecTrapInterfacesAdd NOTIFICATION-TYPE
+    OBJECTS     { gamPsecStatusInterfacesNotificationIfIndex,
+                  gamPsecStatusInterfacesNotificationTotalViolateCount,
+                  gamPsecStatusInterfacesNotificationLatestViolatingVlan,
+                  gamPsecStatusInterfacesNotificationLatestViolatingMac }
+    STATUS      current
+    DESCRIPTION
+        "This trap signals that a row has been added. The index(es) and value(s)
+         of the row is included in the trap."
+
+    ::= { gamPsecTrapInterfaces 1 }
+
+gamPsecTrapInterfacesMod NOTIFICATION-TYPE
+    OBJECTS     { gamPsecStatusInterfacesNotificationIfIndex,
+                  gamPsecStatusInterfacesNotificationTotalViolateCount,
+                  gamPsecStatusInterfacesNotificationLatestViolatingVlan,
+                  gamPsecStatusInterfacesNotificationLatestViolatingMac }
+    STATUS      current
+    DESCRIPTION
+        "This trap signals that one or more of the objects included in the trap
+          has been updated."
+
+    ::= { gamPsecTrapInterfaces 2 }
+
+gamPsecTrapInterfacesDel NOTIFICATION-TYPE
+    OBJECTS     { gamPsecStatusInterfacesNotificationIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "This trap signals that a row has been deleted. The index(es) of the
+         row is included in the trap."
+
+    ::= { gamPsecTrapInterfaces 3 }
+
+gamPsecMibConformance OBJECT IDENTIFIER
+    ::= { gamPsecMib 2 }
+
+gamPsecMibCompliances OBJECT IDENTIFIER
+    ::= { gamPsecMibConformance 1 }
+
+gamPsecMibGroups OBJECT IDENTIFIER
+    ::= { gamPsecMibConformance 2 }
+
+gamPsecCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPsecCapabilitiesUsers,
+                  gamPsecCapabilitiesPoolSize,
+                  gamPsecCapabilitiesLimitMin,
+                  gamPsecCapabilitiesLimitMax,
+                  gamPsecCapabilitiesViolateLimitMin,
+                  gamPsecCapabilitiesViolateLimitMax,
+                  gamPsecCapabilitiesAgeTimeMin,
+                  gamPsecCapabilitiesAgeTimeMax,
+                  gamPsecCapabilitiesHoldTimeMin,
+                  gamPsecCapabilitiesHoldTimeMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPsecMibGroups 1 }
+
+gamPsecConfigGlobalsMainInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPsecConfigGlobalsMainEnableAging,
+                  gamPsecConfigGlobalsMainAgingPeriodSecs,
+                  gamPsecConfigGlobalsMainHoldTimeSecs }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPsecMibGroups 2 }
+
+gamPsecConfigInterfacesTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPsecConfigInterfacesIfIndex,
+                  gamPsecConfigInterfacesEnabled,
+                  gamPsecConfigInterfacesLimit,
+                  gamPsecConfigInterfacesViolateLimit,
+                  gamPsecConfigInterfacesViolationMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPsecMibGroups 3 }
+
+gamPsecStatusGlobalsMainInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPsecStatusGlobalsMainTotalMacCnt,
+                  gamPsecStatusGlobalsMainCurMacCnt }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPsecMibGroups 4 }
+
+gamPsecStatusGlobalsNotificationInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPsecStatusGlobalsNotificationPoolDepleted }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPsecMibGroups 5 }
+
+gamPsecStatusInterfacesTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPsecStatusInterfacesIfIndex,
+                  gamPsecStatusInterfacesUsers,
+                  gamPsecStatusInterfacesMacCount,
+                  gamPsecStatusInterfacesViolateCount,
+                  gamPsecStatusInterfacesLimitReached,
+                  gamPsecStatusInterfacesSecLearning,
+                  gamPsecStatusInterfacesCpuCopying,
+                  gamPsecStatusInterfacesLinkIsUp,
+                  gamPsecStatusInterfacesStpDiscarding,
+                  gamPsecStatusInterfacesHwAddFailed,
+                  gamPsecStatusInterfacesSwAddFailed,
+                  gamPsecStatusInterfacesWhitelistCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPsecMibGroups 6 }
+
+gamPsecStatusInterfacesNotificationTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPsecStatusInterfacesNotificationIfIndex,
+                  gamPsecStatusInterfacesNotificationTotalViolateCount,
+                  gamPsecStatusInterfacesNotificationLatestViolatingVlan,
+                  gamPsecStatusInterfacesNotificationLatestViolatingMac }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPsecMibGroups 7 }
+
+gamPsecStatusInterfacesMacTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPsecStatusInterfacesMacIfIndex,
+                  gamPsecStatusInterfacesMacVlanId,
+                  gamPsecStatusInterfacesMacMacAddress,
+                  gamPsecStatusInterfacesMacPort,
+                  gamPsecStatusInterfacesMacCreationTime,
+                  gamPsecStatusInterfacesMacChangedTime,
+                  gamPsecStatusInterfacesMacAgeHoldTime,
+                  gamPsecStatusInterfacesMacViolating,
+                  gamPsecStatusInterfacesMacBlocked,
+                  gamPsecStatusInterfacesMacKeptBlocked,
+                  gamPsecStatusInterfacesMacCpuCopying,
+                  gamPsecStatusInterfacesMacAgeFrameSeen,
+                  gamPsecStatusInterfacesMacUsersForward,
+                  gamPsecStatusInterfacesMacUsersBlock,
+                  gamPsecStatusInterfacesMacUsersKeepBlocked,
+                  gamPsecStatusInterfacesMacUsersWhitelisted,
+                  gamPsecStatusInterfacesMacWhitelisted }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPsecMibGroups 8 }
+
+gamPsecControlGlobalsMacClearInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPsecControlGlobalsMacClearSpecificIfindex,
+                  gamPsecControlGlobalsMacClearIfindex,
+                  gamPsecControlGlobalsMacClearSpecificVlan,
+                  gamPsecControlGlobalsMacClearVlanId,
+                  gamPsecControlGlobalsMacClearSpecificMac,
+                  gamPsecControlGlobalsMacClearMacAddress }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPsecMibGroups 9 }
+
+gamPsecTrapGlobalsMainInfoGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { gamPsecTrapGlobalsMain }
+    STATUS      current
+    DESCRIPTION
+        "Information group containing a trap."
+    ::= { gamPsecMibGroups 10 }
+
+gamPsecTrapInterfacesAddInfoGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { gamPsecTrapInterfacesAdd }
+    STATUS      current
+    DESCRIPTION
+        "Information group containing a trap."
+    ::= { gamPsecMibGroups 11 }
+
+gamPsecTrapInterfacesModInfoGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { gamPsecTrapInterfacesMod }
+    STATUS      current
+    DESCRIPTION
+        "Information group containing a trap."
+    ::= { gamPsecMibGroups 12 }
+
+gamPsecTrapInterfacesDelInfoGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { gamPsecTrapInterfacesDel }
+    STATUS      current
+    DESCRIPTION
+        "Information group containing a trap."
+    ::= { gamPsecMibGroups 13 }
+
+gamPsecMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamPsecCapabilitiesInfoGroup,
+                       gamPsecConfigGlobalsMainInfoGroup,
+                       gamPsecConfigInterfacesTableInfoGroup,
+                       gamPsecStatusGlobalsMainInfoGroup,
+                       gamPsecStatusGlobalsNotificationInfoGroup,
+                       gamPsecStatusInterfacesTableInfoGroup,
+                       gamPsecStatusInterfacesNotificationTableInfoGroup,
+                       gamPsecStatusInterfacesMacTableInfoGroup,
+                       gamPsecControlGlobalsMacClearInfoGroup,
+                       gamPsecTrapGlobalsMainInfoGroup,
+                       gamPsecTrapInterfacesAddInfoGroup,
+                       gamPsecTrapInterfacesModInfoGroup,
+                       gamPsecTrapInterfacesDelInfoGroup }
+
+    ::= { gamPsecMibCompliances 1 }
+
+END

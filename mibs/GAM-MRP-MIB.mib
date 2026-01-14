@@ -1,0 +1,205 @@
+-- *****************************************************************
+-- MRP-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-MRP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamMrpMib MODULE-IDENTITY
+    LAST-UPDATED "201510190000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "Private MRP MIB."
+    REVISION    "201510190000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 86 }
+
+
+gamMrpMibObjects OBJECT IDENTIFIER
+    ::= { gamMrpMib 1 }
+
+gamMrpCapabilities OBJECT IDENTIFIER
+    ::= { gamMrpMibObjects 1 }
+
+gamMrpCapabilitiesJoinTimeoutMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Minimum value of MRP Join timeout in centiseconds."
+    ::= { gamMrpCapabilities 1 }
+
+gamMrpCapabilitiesJoinTimeoutMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum value of MRP Join timeout in centiseconds."
+    ::= { gamMrpCapabilities 2 }
+
+gamMrpCapabilitiesLeaveTimeoutMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Minimum value of MRP Leave timeout in centiseconds."
+    ::= { gamMrpCapabilities 3 }
+
+gamMrpCapabilitiesLeaveTimeoutMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum value of MRP Leave timeout in centiseconds."
+    ::= { gamMrpCapabilities 4 }
+
+gamMrpCapabilitiesLeaveAllTimeoutMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Minimum value of MRP LeaveAll timeout in centiseconds."
+    ::= { gamMrpCapabilities 5 }
+
+gamMrpCapabilitiesLeaveAllTimeoutMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum value of MRP LeaveAll timeout in centiseconds."
+    ::= { gamMrpCapabilities 6 }
+
+gamMrpConfig OBJECT IDENTIFIER
+    ::= { gamMrpMibObjects 2 }
+
+gamMrpConfigInterface OBJECT IDENTIFIER
+    ::= { gamMrpConfig 1 }
+
+gamMrpConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMrpConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the MRP interface configuration table. The number of interfaces
+         is the total number of ports available on the switch/stack. MRP timer
+         values and the state of the PeriodicTransmission STM can be configured
+         for each interface."
+    ::= { gamMrpConfigInterface 1 }
+
+gamMrpConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMMrpConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamMrpConfigInterfaceIfIndex }
+    ::= { gamMrpConfigInterfaceTable 1 }
+
+GAMMrpConfigInterfaceEntry ::= SEQUENCE {
+    gamMrpConfigInterfaceIfIndex               GAMInterfaceIndex,
+    gamMrpConfigInterfaceJoinTimeout           Integer32,
+    gamMrpConfigInterfaceLeaveTimeout          Integer32,
+    gamMrpConfigInterfaceLeaveAllTimeout       Integer32,
+    gamMrpConfigInterfacePeriodicTransmission  TruthValue
+}
+
+gamMrpConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Interface index number."
+    ::= { gamMrpConfigInterfaceEntry 1 }
+
+gamMrpConfigInterfaceJoinTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (1..20)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Join-timeout protocol parameter. Range [1, 20]cs."
+    ::= { gamMrpConfigInterfaceEntry 2 }
+
+gamMrpConfigInterfaceLeaveTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (60..300)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Leave-timeout protocol parameter. Range [60, 300]cs."
+    ::= { gamMrpConfigInterfaceEntry 3 }
+
+gamMrpConfigInterfaceLeaveAllTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (1000..5000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "LeaveAll-timeout protocol parameter. Range [1000, 5000] cs."
+    ::= { gamMrpConfigInterfaceEntry 4 }
+
+gamMrpConfigInterfacePeriodicTransmission OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "PeriodicTransmission state of MRP. TRUE - enable PeriodicTransmission,
+         FALSE - disable PeriodicTransmission."
+    ::= { gamMrpConfigInterfaceEntry 5 }
+
+gamMrpMibConformance OBJECT IDENTIFIER
+    ::= { gamMrpMib 2 }
+
+gamMrpMibCompliances OBJECT IDENTIFIER
+    ::= { gamMrpMibConformance 1 }
+
+gamMrpMibGroups OBJECT IDENTIFIER
+    ::= { gamMrpMibConformance 2 }
+
+gamMrpCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMrpCapabilitiesJoinTimeoutMin,
+                  gamMrpCapabilitiesJoinTimeoutMax,
+                  gamMrpCapabilitiesLeaveTimeoutMin,
+                  gamMrpCapabilitiesLeaveTimeoutMax,
+                  gamMrpCapabilitiesLeaveAllTimeoutMin,
+                  gamMrpCapabilitiesLeaveAllTimeoutMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMrpMibGroups 1 }
+
+gamMrpConfigInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMrpConfigInterfaceIfIndex,
+                  gamMrpConfigInterfaceJoinTimeout,
+                  gamMrpConfigInterfaceLeaveTimeout,
+                  gamMrpConfigInterfaceLeaveAllTimeout,
+                  gamMrpConfigInterfacePeriodicTransmission }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMrpMibGroups 2 }
+
+gamMrpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamMrpCapabilitiesInfoGroup,
+                       gamMrpConfigInterfaceTableInfoGroup }
+
+    ::= { gamMrpMibCompliances 1 }
+
+END

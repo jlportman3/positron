@@ -1,0 +1,1656 @@
+-- *****************************************************************
+-- DHCP-SERVER-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-DHCP-SERVER-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamDhcpServerMib MODULE-IDENTITY
+    LAST-UPDATED "201508240000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of DhcpServer"
+    REVISION    "201508240000Z"
+    DESCRIPTION
+        "revise fqdn as name"
+    REVISION    "201411270000Z"
+    DESCRIPTION
+        "revise descriptions by Palle"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 109 }
+
+
+GAMDhcpServerBindingEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of binding."
+    SYNTAX      INTEGER { none(0), automatic(1), manual(2),
+                          expired(3) }
+
+GAMDhcpServerBindingStateEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the state of binding."
+    SYNTAX      INTEGER { none(0), allocated(1), committed(2),
+                          expired(3) }
+
+GAMDhcpServerClientIdentifierEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of client identifier."
+    SYNTAX      INTEGER { none(0), name(1), mac(2) }
+
+GAMDhcpServerNetbiosNodeEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of NetBIOS node."
+    SYNTAX      INTEGER { nodeNone(0), nodeB(1), nodeP(2), nodeM(3),
+                          nodeH(4) }
+
+GAMDhcpServerPoolEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of DHCP pool."
+    SYNTAX      INTEGER { none(0), network(1), host(2) }
+
+gamDhcpServerMibObjects OBJECT IDENTIFIER
+    ::= { gamDhcpServerMib 1 }
+
+gamDhcpServerConfig OBJECT IDENTIFIER
+    ::= { gamDhcpServerMibObjects 2 }
+
+gamDhcpServerConfigGlobals OBJECT IDENTIFIER
+    ::= { gamDhcpServerConfig 1 }
+
+gamDhcpServerConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global mode of DHCP server. true is to enable the functions of DHCP
+         server and false is to disable it."
+    ::= { gamDhcpServerConfigGlobals 1 }
+
+gamDhcpServerConfigVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcpServerConfigVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the table of DHCP server VLAN configuration. The index is VLAN
+         ID."
+    ::= { gamDhcpServerConfig 2 }
+
+gamDhcpServerConfigVlanEntry OBJECT-TYPE
+    SYNTAX      GAMDhcpServerConfigVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each VLAN has a set of parameters"
+    INDEX       { gamDhcpServerConfigVlanIfIndex }
+    ::= { gamDhcpServerConfigVlanTable 1 }
+
+GAMDhcpServerConfigVlanEntry ::= SEQUENCE {
+    gamDhcpServerConfigVlanIfIndex  GAMInterfaceIndex,
+    gamDhcpServerConfigVlanMode     TruthValue
+}
+
+gamDhcpServerConfigVlanIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of VLAN."
+    ::= { gamDhcpServerConfigVlanEntry 1 }
+
+gamDhcpServerConfigVlanMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "VLAN mode of DHCP server. true is to enable DHCP server per VLAN and
+         false is to disable it per VLAN."
+    ::= { gamDhcpServerConfigVlanEntry 2 }
+
+gamDhcpServerConfigExcludedTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcpServerConfigExcludedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The table is DHCP server excluded IP onfiguration table. The indexes
+         are low IP and high IP address."
+    ::= { gamDhcpServerConfig 3 }
+
+gamDhcpServerConfigExcludedEntry OBJECT-TYPE
+    SYNTAX      GAMDhcpServerConfigExcludedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamDhcpServerConfigExcludedLowIpAddress,
+                  gamDhcpServerConfigExcludedHighIpAddress }
+    ::= { gamDhcpServerConfigExcludedTable 1 }
+
+GAMDhcpServerConfigExcludedEntry ::= SEQUENCE {
+    gamDhcpServerConfigExcludedLowIpAddress   IpAddress,
+    gamDhcpServerConfigExcludedHighIpAddress  IpAddress,
+    gamDhcpServerConfigExcludedAction         GAMRowEditorState
+}
+
+gamDhcpServerConfigExcludedLowIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Low IP address."
+    ::= { gamDhcpServerConfigExcludedEntry 1 }
+
+gamDhcpServerConfigExcludedHighIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "High IP address."
+    ::= { gamDhcpServerConfigExcludedEntry 2 }
+
+gamDhcpServerConfigExcludedAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamDhcpServerConfigExcludedEntry 100 }
+
+gamDhcpServerConfigExcludedIpTableRowEditor OBJECT IDENTIFIER
+    ::= { gamDhcpServerConfig 4 }
+
+gamDhcpServerConfigExcludedIpTableRowEditorLowIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Low IP address."
+    ::= { gamDhcpServerConfigExcludedIpTableRowEditor 1 }
+
+gamDhcpServerConfigExcludedIpTableRowEditorHighIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "High IP address."
+    ::= { gamDhcpServerConfigExcludedIpTableRowEditor 2 }
+
+gamDhcpServerConfigExcludedIpTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamDhcpServerConfigExcludedIpTableRowEditor 100 }
+
+gamDhcpServerConfigPoolTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcpServerConfigPoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The table is DHCP server pool onfiguration table. The indexe is pool
+         name."
+    ::= { gamDhcpServerConfig 5 }
+
+gamDhcpServerConfigPoolEntry OBJECT-TYPE
+    SYNTAX      GAMDhcpServerConfigPoolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamDhcpServerConfigPoolPoolName }
+    ::= { gamDhcpServerConfigPoolTable 1 }
+
+GAMDhcpServerConfigPoolEntry ::= SEQUENCE {
+    gamDhcpServerConfigPoolPoolName               GAMDisplayString,
+    gamDhcpServerConfigPoolPoolType               GAMDhcpServerPoolEnum,
+    gamDhcpServerConfigPoolIpv4Address            IpAddress,
+    gamDhcpServerConfigPoolSubnetMask             IpAddress,
+    gamDhcpServerConfigPoolSubnetBroadcast        IpAddress,
+    gamDhcpServerConfigPoolLeaseDay               Unsigned32,
+    gamDhcpServerConfigPoolLeaseHour              Unsigned32,
+    gamDhcpServerConfigPoolLeaseMinute            Unsigned32,
+    gamDhcpServerConfigPoolDomainName             GAMDisplayString,
+    gamDhcpServerConfigPoolDefaultRouter1         IpAddress,
+    gamDhcpServerConfigPoolDefaultRouter2         IpAddress,
+    gamDhcpServerConfigPoolDefaultRouter3         IpAddress,
+    gamDhcpServerConfigPoolDefaultRouter4         IpAddress,
+    gamDhcpServerConfigPoolDnsServer1             IpAddress,
+    gamDhcpServerConfigPoolDnsServer2             IpAddress,
+    gamDhcpServerConfigPoolDnsServer3             IpAddress,
+    gamDhcpServerConfigPoolDnsServer4             IpAddress,
+    gamDhcpServerConfigPoolNtpServer1             IpAddress,
+    gamDhcpServerConfigPoolNtpServer2             IpAddress,
+    gamDhcpServerConfigPoolNtpServer3             IpAddress,
+    gamDhcpServerConfigPoolNtpServer4             IpAddress,
+    gamDhcpServerConfigPoolNetbiosNodeType        GAMDhcpServerNetbiosNodeEnum,
+    gamDhcpServerConfigPoolNetbiosScope           GAMDisplayString,
+    gamDhcpServerConfigPoolNetbiosNameServer1     IpAddress,
+    gamDhcpServerConfigPoolNetbiosNameServer2     IpAddress,
+    gamDhcpServerConfigPoolNetbiosNameServer3     IpAddress,
+    gamDhcpServerConfigPoolNetbiosNameServer4     IpAddress,
+    gamDhcpServerConfigPoolNisDomainName          GAMDisplayString,
+    gamDhcpServerConfigPoolNisServer1             IpAddress,
+    gamDhcpServerConfigPoolNisServer2             IpAddress,
+    gamDhcpServerConfigPoolNisServer3             IpAddress,
+    gamDhcpServerConfigPoolNisServer4             IpAddress,
+    gamDhcpServerConfigPoolClientIdentifierType   GAMDhcpServerClientIdentifierEnum,
+    gamDhcpServerConfigPoolClientIdentifierName   GAMDisplayString,
+    gamDhcpServerConfigPoolClientIdentifierMac    MacAddress,
+    gamDhcpServerConfigPoolClientHardwareAddress  MacAddress,
+    gamDhcpServerConfigPoolClientName             GAMDisplayString,
+    gamDhcpServerConfigPoolVendorClassId1         GAMDisplayString,
+    gamDhcpServerConfigPoolVendorSpecificInfo1    GAMDisplayString,
+    gamDhcpServerConfigPoolVendorClassId2         GAMDisplayString,
+    gamDhcpServerConfigPoolVendorSpecificInfo2    GAMDisplayString,
+    gamDhcpServerConfigPoolVendorClassId3         GAMDisplayString,
+    gamDhcpServerConfigPoolVendorSpecificInfo3    GAMDisplayString,
+    gamDhcpServerConfigPoolVendorClassId4         GAMDisplayString,
+    gamDhcpServerConfigPoolVendorSpecificInfo4    GAMDisplayString,
+    gamDhcpServerConfigPoolAction                 GAMRowEditorState
+}
+
+gamDhcpServerConfigPoolPoolName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of DHCP pool."
+    ::= { gamDhcpServerConfigPoolEntry 1 }
+
+gamDhcpServerConfigPoolPoolType OBJECT-TYPE
+    SYNTAX      GAMDhcpServerPoolEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of pool. none(0) means the pool type is not defined yet.
+         network(1) means the pool defines a pool of IP addresses to service
+         more than one DHCP client. host(2) means the pool services for a
+         specific DHCP client identified by client identifier or hardware
+         address."
+    ::= { gamDhcpServerConfigPoolEntry 2 }
+
+gamDhcpServerConfigPoolIpv4Address OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Network number of the subnet. If the pool type is of network, the IP
+         address can be any general IP address. If the pool type is of host, the
+         IP address must be a unicast IP address."
+    ::= { gamDhcpServerConfigPoolEntry 3 }
+
+gamDhcpServerConfigPoolSubnetMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Subnet Mask. DHCP option 1. Specify subnet mask of the DHCP address
+         pool, excluding 0.0.0.0 and 255.255.255.255."
+    ::= { gamDhcpServerConfigPoolEntry 4 }
+
+gamDhcpServerConfigPoolSubnetBroadcast OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Broadcast IP address in the subnet. DHCP option 28. Specify the
+         broadcast address in use on the client's subnet."
+    ::= { gamDhcpServerConfigPoolEntry 5 }
+
+gamDhcpServerConfigPoolLeaseDay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of days of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-365. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { gamDhcpServerConfigPoolEntry 6 }
+
+gamDhcpServerConfigPoolLeaseHour OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of hours of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-23. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { gamDhcpServerConfigPoolEntry 7 }
+
+gamDhcpServerConfigPoolLeaseMinute OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of minutes of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-59. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { gamDhcpServerConfigPoolEntry 8 }
+
+gamDhcpServerConfigPoolDomainName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Domain name. DHCP option 15. Specify domain name that client should use
+         when resolving hostname via DNS."
+    ::= { gamDhcpServerConfigPoolEntry 9 }
+
+gamDhcpServerConfigPoolDefaultRouter1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Default router 1."
+    ::= { gamDhcpServerConfigPoolEntry 10 }
+
+gamDhcpServerConfigPoolDefaultRouter2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Default router 2."
+    ::= { gamDhcpServerConfigPoolEntry 11 }
+
+gamDhcpServerConfigPoolDefaultRouter3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Default router 3."
+    ::= { gamDhcpServerConfigPoolEntry 12 }
+
+gamDhcpServerConfigPoolDefaultRouter4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Default router 4."
+    ::= { gamDhcpServerConfigPoolEntry 13 }
+
+gamDhcpServerConfigPoolDnsServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "DNS server 1."
+    ::= { gamDhcpServerConfigPoolEntry 14 }
+
+gamDhcpServerConfigPoolDnsServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "DNS server 2."
+    ::= { gamDhcpServerConfigPoolEntry 15 }
+
+gamDhcpServerConfigPoolDnsServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "DNS server 3."
+    ::= { gamDhcpServerConfigPoolEntry 16 }
+
+gamDhcpServerConfigPoolDnsServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "DNS server 4."
+    ::= { gamDhcpServerConfigPoolEntry 17 }
+
+gamDhcpServerConfigPoolNtpServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NTP server 1."
+    ::= { gamDhcpServerConfigPoolEntry 18 }
+
+gamDhcpServerConfigPoolNtpServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NTP server 2."
+    ::= { gamDhcpServerConfigPoolEntry 19 }
+
+gamDhcpServerConfigPoolNtpServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NTP server 3."
+    ::= { gamDhcpServerConfigPoolEntry 20 }
+
+gamDhcpServerConfigPoolNtpServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NTP server 4."
+    ::= { gamDhcpServerConfigPoolEntry 21 }
+
+gamDhcpServerConfigPoolNetbiosNodeType OBJECT-TYPE
+    SYNTAX      GAMDhcpServerNetbiosNodeEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of NetBIOS node. DHCP option 46. Specify NetBIOS node type option
+         to allow Netbios over TCP/IP clients which are configurable to be
+         configured as described in RFC 1001/1002. nodeNone(0) means the node
+         type is not defined yet. nodeB(1) means the node type is type of B.
+         nodeP(2) means the node type is type of P. nodeM(3) means the node type
+         is type of M. nodeH(4) means the node type is type of H."
+    ::= { gamDhcpServerConfigPoolEntry 22 }
+
+gamDhcpServerConfigPoolNetbiosScope OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NetBIOS scope. DHCP option 47. Specify the NetBIOS over TCP/IP scope
+         parameter for the client as specified in RFC 1001/1002."
+    ::= { gamDhcpServerConfigPoolEntry 23 }
+
+gamDhcpServerConfigPoolNetbiosNameServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NetBIOS name server 1."
+    ::= { gamDhcpServerConfigPoolEntry 24 }
+
+gamDhcpServerConfigPoolNetbiosNameServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NetBIOS name server 2."
+    ::= { gamDhcpServerConfigPoolEntry 25 }
+
+gamDhcpServerConfigPoolNetbiosNameServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NetBIOS name server 3."
+    ::= { gamDhcpServerConfigPoolEntry 26 }
+
+gamDhcpServerConfigPoolNetbiosNameServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NetBIOS name server 4."
+    ::= { gamDhcpServerConfigPoolEntry 27 }
+
+gamDhcpServerConfigPoolNisDomainName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NIS Domain Name. DHCP option 40. Specify the name of the client's NIS
+         domain."
+    ::= { gamDhcpServerConfigPoolEntry 28 }
+
+gamDhcpServerConfigPoolNisServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NIS server 1."
+    ::= { gamDhcpServerConfigPoolEntry 29 }
+
+gamDhcpServerConfigPoolNisServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NIS server 2."
+    ::= { gamDhcpServerConfigPoolEntry 30 }
+
+gamDhcpServerConfigPoolNisServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NIS server 3."
+    ::= { gamDhcpServerConfigPoolEntry 31 }
+
+gamDhcpServerConfigPoolNisServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NIS server 4."
+    ::= { gamDhcpServerConfigPoolEntry 32 }
+
+gamDhcpServerConfigPoolClientIdentifierType OBJECT-TYPE
+    SYNTAX      GAMDhcpServerClientIdentifierEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of client identifier. DHCP option 61. Specify client's unique
+         identifier to be used when the pool is the type of host. none(0) means
+         the client identifier type is not defined yet. name(1) means the client
+         identifier type is other than hardware. mac(2) means the client
+         identifier type is type of MAC address."
+    ::= { gamDhcpServerConfigPoolEntry 33 }
+
+gamDhcpServerConfigPoolClientIdentifierName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Client identifier which type is other than hardware. DHCP option 61.
+         Specify client's unique identifier to be used when the pool is the type
+         of host. This takes effect only if ClientIdentifierType is defined
+         name(1)."
+    ::= { gamDhcpServerConfigPoolEntry 34 }
+
+gamDhcpServerConfigPoolClientIdentifierMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Client's MAC address. DHCP option 61. Specify client's unique
+         identifier to be used when the pool is the type of host. This takes
+         effect only if ClientIdentifierType is defined as mac(2)."
+    ::= { gamDhcpServerConfigPoolEntry 35 }
+
+gamDhcpServerConfigPoolClientHardwareAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Client's hardware address. Specify client's hardware(MAC) address to be
+         used when the pool is the type of host."
+    ::= { gamDhcpServerConfigPoolEntry 36 }
+
+gamDhcpServerConfigPoolClientName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Client name. DHCP option 12. Specify the name of client to be used when
+         the pool is the type of host."
+    ::= { gamDhcpServerConfigPoolEntry 37 }
+
+gamDhcpServerConfigPoolVendorClassId1 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { gamDhcpServerConfigPoolEntry 38 }
+
+gamDhcpServerConfigPoolVendorSpecificInfo1 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { gamDhcpServerConfigPoolEntry 39 }
+
+gamDhcpServerConfigPoolVendorClassId2 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { gamDhcpServerConfigPoolEntry 40 }
+
+gamDhcpServerConfigPoolVendorSpecificInfo2 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { gamDhcpServerConfigPoolEntry 41 }
+
+gamDhcpServerConfigPoolVendorClassId3 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { gamDhcpServerConfigPoolEntry 42 }
+
+gamDhcpServerConfigPoolVendorSpecificInfo3 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { gamDhcpServerConfigPoolEntry 43 }
+
+gamDhcpServerConfigPoolVendorClassId4 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { gamDhcpServerConfigPoolEntry 44 }
+
+gamDhcpServerConfigPoolVendorSpecificInfo4 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { gamDhcpServerConfigPoolEntry 45 }
+
+gamDhcpServerConfigPoolAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamDhcpServerConfigPoolEntry 100 }
+
+gamDhcpServerConfigPoolTableRowEditor OBJECT IDENTIFIER
+    ::= { gamDhcpServerConfig 6 }
+
+gamDhcpServerConfigPoolTableRowEditorPoolName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Name of DHCP pool."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 1 }
+
+gamDhcpServerConfigPoolTableRowEditorPoolType OBJECT-TYPE
+    SYNTAX      GAMDhcpServerPoolEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of pool. none(0) means the pool type is not defined yet.
+         network(1) means the pool defines a pool of IP addresses to service
+         more than one DHCP client. host(2) means the pool services for a
+         specific DHCP client identified by client identifier or hardware
+         address."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 2 }
+
+gamDhcpServerConfigPoolTableRowEditorIpv4Address OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Network number of the subnet. If the pool type is of network, the IP
+         address can be any general IP address. If the pool type is of host, the
+         IP address must be a unicast IP address."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 3 }
+
+gamDhcpServerConfigPoolTableRowEditorSubnetMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Subnet Mask. DHCP option 1. Specify subnet mask of the DHCP address
+         pool, excluding 0.0.0.0 and 255.255.255.255."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 4 }
+
+gamDhcpServerConfigPoolTableRowEditorSubnetBroadcast OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Broadcast IP address in the subnet. DHCP option 28. Specify the
+         broadcast address in use on the client's subnet."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 5 }
+
+gamDhcpServerConfigPoolTableRowEditorLeaseDay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of days of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-365. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 6 }
+
+gamDhcpServerConfigPoolTableRowEditorLeaseHour OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of hours of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-23. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 7 }
+
+gamDhcpServerConfigPoolTableRowEditorLeaseMinute OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of minutes of lease time. DHCP option 51, 58 and 59. The value
+         range is 0-59. Specify lease time that allows the client to request a
+         lease time for the IP address. If all of LeaseDay, LeaseHour and
+         LeaseMinute are 0's, then it means the lease time is infinite."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 8 }
+
+gamDhcpServerConfigPoolTableRowEditorDomainName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Domain name. DHCP option 15. Specify domain name that client should use
+         when resolving hostname via DNS."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 9 }
+
+gamDhcpServerConfigPoolTableRowEditorDefaultRouter1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Default router 1."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 10 }
+
+gamDhcpServerConfigPoolTableRowEditorDefaultRouter2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Default router 2."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 11 }
+
+gamDhcpServerConfigPoolTableRowEditorDefaultRouter3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Default router 3."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 12 }
+
+gamDhcpServerConfigPoolTableRowEditorDefaultRouter4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Default router 4."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 13 }
+
+gamDhcpServerConfigPoolTableRowEditorDnsServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "DNS server 1."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 14 }
+
+gamDhcpServerConfigPoolTableRowEditorDnsServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "DNS server 2."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 15 }
+
+gamDhcpServerConfigPoolTableRowEditorDnsServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "DNS server 3."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 16 }
+
+gamDhcpServerConfigPoolTableRowEditorDnsServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "DNS server 4."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 17 }
+
+gamDhcpServerConfigPoolTableRowEditorNtpServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NTP server 1."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 18 }
+
+gamDhcpServerConfigPoolTableRowEditorNtpServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NTP server 2."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 19 }
+
+gamDhcpServerConfigPoolTableRowEditorNtpServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NTP server 3."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 20 }
+
+gamDhcpServerConfigPoolTableRowEditorNtpServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NTP server 4."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 21 }
+
+gamDhcpServerConfigPoolTableRowEditorNetbiosNodeType OBJECT-TYPE
+    SYNTAX      GAMDhcpServerNetbiosNodeEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of NetBIOS node. DHCP option 46. Specify NetBIOS node type option
+         to allow Netbios over TCP/IP clients which are configurable to be
+         configured as described in RFC 1001/1002. nodeNone(0) means the node
+         type is not defined yet. nodeB(1) means the node type is type of B.
+         nodeP(2) means the node type is type of P. nodeM(3) means the node type
+         is type of M. nodeH(4) means the node type is type of H."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 22 }
+
+gamDhcpServerConfigPoolTableRowEditorNetbiosScope OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NetBIOS scope. DHCP option 47. Specify the NetBIOS over TCP/IP scope
+         parameter for the client as specified in RFC 1001/1002."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 23 }
+
+gamDhcpServerConfigPoolTableRowEditorNetbiosNameServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NetBIOS name server 1."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 24 }
+
+gamDhcpServerConfigPoolTableRowEditorNetbiosNameServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NetBIOS name server 2."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 25 }
+
+gamDhcpServerConfigPoolTableRowEditorNetbiosNameServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NetBIOS name server 3."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 26 }
+
+gamDhcpServerConfigPoolTableRowEditorNetbiosNameServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NetBIOS name server 4."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 27 }
+
+gamDhcpServerConfigPoolTableRowEditorNisDomainName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NIS Domain Name. DHCP option 40. Specify the name of the client's NIS
+         domain."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 28 }
+
+gamDhcpServerConfigPoolTableRowEditorNisServer1 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NIS server 1."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 29 }
+
+gamDhcpServerConfigPoolTableRowEditorNisServer2 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NIS server 2."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 30 }
+
+gamDhcpServerConfigPoolTableRowEditorNisServer3 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NIS server 3."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 31 }
+
+gamDhcpServerConfigPoolTableRowEditorNisServer4 OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "NIS server 4."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 32 }
+
+gamDhcpServerConfigPoolTableRowEditorClientIdentifierType OBJECT-TYPE
+    SYNTAX      GAMDhcpServerClientIdentifierEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of client identifier. DHCP option 61. Specify client's unique
+         identifier to be used when the pool is the type of host. none(0) means
+         the client identifier type is not defined yet. name(1) means the client
+         identifier type is other than hardware. mac(2) means the client
+         identifier type is type of MAC address."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 33 }
+
+gamDhcpServerConfigPoolTableRowEditorClientIdentifierName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Client identifier which type is other than hardware. DHCP option 61.
+         Specify client's unique identifier to be used when the pool is the type
+         of host. This takes effect only if ClientIdentifierType is defined
+         name(1)."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 34 }
+
+gamDhcpServerConfigPoolTableRowEditorClientIdentifierMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Client's MAC address. DHCP option 61. Specify client's unique
+         identifier to be used when the pool is the type of host. This takes
+         effect only if ClientIdentifierType is defined as mac(2)."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 35 }
+
+gamDhcpServerConfigPoolTableRowEditorClientHardwareAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Client's hardware address. Specify client's hardware(MAC) address to be
+         used when the pool is the type of host."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 36 }
+
+gamDhcpServerConfigPoolTableRowEditorClientName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Client name. DHCP option 12. Specify the name of client to be used when
+         the pool is the type of host."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 37 }
+
+gamDhcpServerConfigPoolTableRowEditorVendorClassId1 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 38 }
+
+gamDhcpServerConfigPoolTableRowEditorVendorSpecificInfo1 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 39 }
+
+gamDhcpServerConfigPoolTableRowEditorVendorClassId2 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 40 }
+
+gamDhcpServerConfigPoolTableRowEditorVendorSpecificInfo2 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 41 }
+
+gamDhcpServerConfigPoolTableRowEditorVendorClassId3 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 42 }
+
+gamDhcpServerConfigPoolTableRowEditorVendorSpecificInfo3 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 43 }
+
+gamDhcpServerConfigPoolTableRowEditorVendorClassId4 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Class Identifier. DHCP option 60. Specify to be used by DHCP
+         client to optionally identify the vendor type and configuration of a
+         DHCP client. DHCP server will deliver the corresponding option 43
+         specific information to the client that sends option 60 vendor class
+         identifier."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 44 }
+
+gamDhcpServerConfigPoolTableRowEditorVendorSpecificInfo4 OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..66))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vendor Specific Information. DHCP option 43. Specify vendor specific
+         information corresponding to option 60 vendor class identifier.
+         Therefore, the corresponding vendor class identifier must be defined
+         before this specific information."
+    ::= { gamDhcpServerConfigPoolTableRowEditor 45 }
+
+gamDhcpServerConfigPoolTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamDhcpServerConfigPoolTableRowEditor 100 }
+
+gamDhcpServerStatus OBJECT IDENTIFIER
+    ::= { gamDhcpServerMibObjects 3 }
+
+gamDhcpServerStatusDeclinedTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcpServerStatusDeclinedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of IP addresses declined by DHCP client."
+    ::= { gamDhcpServerStatus 1 }
+
+gamDhcpServerStatusDeclinedEntry OBJECT-TYPE
+    SYNTAX      GAMDhcpServerStatusDeclinedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a declined IP address."
+    INDEX       { gamDhcpServerStatusDeclinedEntryNo }
+    ::= { gamDhcpServerStatusDeclinedTable 1 }
+
+GAMDhcpServerStatusDeclinedEntry ::= SEQUENCE {
+    gamDhcpServerStatusDeclinedEntryNo      Integer32,
+    gamDhcpServerStatusDeclinedIpv4Address  IpAddress
+}
+
+gamDhcpServerStatusDeclinedEntryNo OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The number of entry. The number starts from 1."
+    ::= { gamDhcpServerStatusDeclinedEntry 1 }
+
+gamDhcpServerStatusDeclinedIpv4Address OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "IPv4 address declined by DHCP client."
+    ::= { gamDhcpServerStatusDeclinedEntry 2 }
+
+gamDhcpServerStatusStatistics OBJECT IDENTIFIER
+    ::= { gamDhcpServerStatus 2 }
+
+gamDhcpServerStatusStatisticsDiscoverCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of DHCP DISCOVER messages received."
+    ::= { gamDhcpServerStatusStatistics 1 }
+
+gamDhcpServerStatusStatisticsOfferCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of DHCP OFFER messages sent."
+    ::= { gamDhcpServerStatusStatistics 2 }
+
+gamDhcpServerStatusStatisticsRequestCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of DHCP REQUEST messages received."
+    ::= { gamDhcpServerStatusStatistics 3 }
+
+gamDhcpServerStatusStatisticsAckCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of DHCP ACK messages sent."
+    ::= { gamDhcpServerStatusStatistics 4 }
+
+gamDhcpServerStatusStatisticsNakCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of DHCP NAK messages sent."
+    ::= { gamDhcpServerStatusStatistics 5 }
+
+gamDhcpServerStatusStatisticsDeclineCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of DHCP DECLINE messages received."
+    ::= { gamDhcpServerStatusStatistics 6 }
+
+gamDhcpServerStatusStatisticsReleaseCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of DHCP RELEASE messages received."
+    ::= { gamDhcpServerStatusStatistics 7 }
+
+gamDhcpServerStatusStatisticsInformCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of DHCP INFORM messages received."
+    ::= { gamDhcpServerStatusStatistics 8 }
+
+gamDhcpServerStatusBindingTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcpServerStatusBindingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of binding data."
+    ::= { gamDhcpServerStatus 3 }
+
+gamDhcpServerStatusBindingEntry OBJECT-TYPE
+    SYNTAX      GAMDhcpServerStatusBindingEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has the binding data."
+    INDEX       { gamDhcpServerStatusBindingIpAddress }
+    ::= { gamDhcpServerStatusBindingTable 1 }
+
+GAMDhcpServerStatusBindingEntry ::= SEQUENCE {
+    gamDhcpServerStatusBindingIpAddress             IpAddress,
+    gamDhcpServerStatusBindingState                 GAMDhcpServerBindingStateEnum,
+    gamDhcpServerStatusBindingType                  GAMDhcpServerBindingEnum,
+    gamDhcpServerStatusBindingPoolName              GAMDisplayString,
+    gamDhcpServerStatusBindingServerId              IpAddress,
+    gamDhcpServerStatusBindingVlanId                GAMUnsigned16,
+    gamDhcpServerStatusBindingSubnetMask            IpAddress,
+    gamDhcpServerStatusBindingClientIdentifierType  GAMDhcpServerClientIdentifierEnum,
+    gamDhcpServerStatusBindingClientIdentifierName  GAMDisplayString,
+    gamDhcpServerStatusBindingClientIdentifierMac   MacAddress,
+    gamDhcpServerStatusBindingMacAddress            MacAddress,
+    gamDhcpServerStatusBindingLease                 GAMDisplayString,
+    gamDhcpServerStatusBindingTimeToExpire          GAMDisplayString
+}
+
+gamDhcpServerStatusBindingIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "IP address."
+    ::= { gamDhcpServerStatusBindingEntry 1 }
+
+gamDhcpServerStatusBindingState OBJECT-TYPE
+    SYNTAX      GAMDhcpServerBindingStateEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "State of binding. none(0) means the binding is not in use. allocated(1)
+         means the binding is allocated to the new DHCP client who send
+         DHCPDISCOVER. committed(2) means the binding is committed as the DHCP
+         process is completed successfully. expired(3) means the lease of the
+         binding expired."
+    ::= { gamDhcpServerStatusBindingEntry 2 }
+
+gamDhcpServerStatusBindingType OBJECT-TYPE
+    SYNTAX      GAMDhcpServerBindingEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Type of binding. none(0) means the binding is not in use. automatic(1)
+         means the binding is mapped to network-type pool. manual(2) means the
+         binding is mapped to host-type pool. expired(3) means the lease of the
+         binding expired."
+    ::= { gamDhcpServerStatusBindingEntry 3 }
+
+gamDhcpServerStatusBindingPoolName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Name of the pool that creates the binding."
+    ::= { gamDhcpServerStatusBindingEntry 4 }
+
+gamDhcpServerStatusBindingServerId OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "IP address of the DHCP server to service the binding."
+    ::= { gamDhcpServerStatusBindingEntry 5 }
+
+gamDhcpServerStatusBindingVlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The VLAN where the binding works on."
+    ::= { gamDhcpServerStatusBindingEntry 6 }
+
+gamDhcpServerStatusBindingSubnetMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Subnet mask of the DHCP client."
+    ::= { gamDhcpServerStatusBindingEntry 7 }
+
+gamDhcpServerStatusBindingClientIdentifierType OBJECT-TYPE
+    SYNTAX      GAMDhcpServerClientIdentifierEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Type of client identifier. DHCP option 61. Specify client's unique
+         identifier to be used when the pool is the type of host. none(0) means
+         the client identifier type is not defined yet. name(1) means the client
+         identifier type is other than hardware. mac(2) means the client
+         identifier type is type of MAC address."
+    ::= { gamDhcpServerStatusBindingEntry 8 }
+
+gamDhcpServerStatusBindingClientIdentifierName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client identifier which type is other than hardware. DHCP option 61."
+    ::= { gamDhcpServerStatusBindingEntry 9 }
+
+gamDhcpServerStatusBindingClientIdentifierMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Client's MAC address. DHCP option 61."
+    ::= { gamDhcpServerStatusBindingEntry 10 }
+
+gamDhcpServerStatusBindingMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "MAC address of the DHCP client."
+    ::= { gamDhcpServerStatusBindingEntry 11 }
+
+gamDhcpServerStatusBindingLease OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Lease time of the binding."
+    ::= { gamDhcpServerStatusBindingEntry 12 }
+
+gamDhcpServerStatusBindingTimeToExpire OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "remaining time to expire."
+    ::= { gamDhcpServerStatusBindingEntry 13 }
+
+gamDhcpServerControl OBJECT IDENTIFIER
+    ::= { gamDhcpServerMibObjects 4 }
+
+gamDhcpServerControlStatistics OBJECT IDENTIFIER
+    ::= { gamDhcpServerControl 1 }
+
+gamDhcpServerControlStatisticsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Clear all statistics."
+    ::= { gamDhcpServerControlStatistics 1 }
+
+gamDhcpServerControlBinding OBJECT IDENTIFIER
+    ::= { gamDhcpServerControl 2 }
+
+gamDhcpServerControlBindingClearByIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Clear binding with the IP address. If 0.0.0.0 then do nothing."
+    ::= { gamDhcpServerControlBinding 1 }
+
+gamDhcpServerControlBindingClearByType OBJECT-TYPE
+    SYNTAX      GAMDhcpServerBindingEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Clear binding by binding type. If none(0) then do nothing."
+    ::= { gamDhcpServerControlBinding 2 }
+
+gamDhcpServerMibConformance OBJECT IDENTIFIER
+    ::= { gamDhcpServerMib 2 }
+
+gamDhcpServerMibCompliances OBJECT IDENTIFIER
+    ::= { gamDhcpServerMibConformance 1 }
+
+gamDhcpServerMibGroups OBJECT IDENTIFIER
+    ::= { gamDhcpServerMibConformance 2 }
+
+gamDhcpServerConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpServerConfigGlobalsMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpServerMibGroups 1 }
+
+gamDhcpServerConfigVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpServerConfigVlanIfIndex,
+                  gamDhcpServerConfigVlanMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpServerMibGroups 2 }
+
+gamDhcpServerConfigExcludedTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpServerConfigExcludedLowIpAddress,
+                  gamDhcpServerConfigExcludedHighIpAddress,
+                  gamDhcpServerConfigExcludedAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpServerMibGroups 3 }
+
+gamDhcpServerConfigExcludedIpTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamDhcpServerConfigExcludedIpTableRowEditorLowIpAddress,
+                  gamDhcpServerConfigExcludedIpTableRowEditorHighIpAddress,
+                  gamDhcpServerConfigExcludedIpTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpServerMibGroups 4 }
+
+gamDhcpServerConfigPoolTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpServerConfigPoolPoolName,
+                  gamDhcpServerConfigPoolPoolType,
+                  gamDhcpServerConfigPoolIpv4Address,
+                  gamDhcpServerConfigPoolSubnetMask,
+                  gamDhcpServerConfigPoolSubnetBroadcast,
+                  gamDhcpServerConfigPoolLeaseDay,
+                  gamDhcpServerConfigPoolLeaseHour,
+                  gamDhcpServerConfigPoolLeaseMinute,
+                  gamDhcpServerConfigPoolDomainName,
+                  gamDhcpServerConfigPoolDefaultRouter1,
+                  gamDhcpServerConfigPoolDefaultRouter2,
+                  gamDhcpServerConfigPoolDefaultRouter3,
+                  gamDhcpServerConfigPoolDefaultRouter4,
+                  gamDhcpServerConfigPoolDnsServer1,
+                  gamDhcpServerConfigPoolDnsServer2,
+                  gamDhcpServerConfigPoolDnsServer3,
+                  gamDhcpServerConfigPoolDnsServer4,
+                  gamDhcpServerConfigPoolNtpServer1,
+                  gamDhcpServerConfigPoolNtpServer2,
+                  gamDhcpServerConfigPoolNtpServer3,
+                  gamDhcpServerConfigPoolNtpServer4,
+                  gamDhcpServerConfigPoolNetbiosNodeType,
+                  gamDhcpServerConfigPoolNetbiosScope,
+                  gamDhcpServerConfigPoolNetbiosNameServer1,
+                  gamDhcpServerConfigPoolNetbiosNameServer2,
+                  gamDhcpServerConfigPoolNetbiosNameServer3,
+                  gamDhcpServerConfigPoolNetbiosNameServer4,
+                  gamDhcpServerConfigPoolNisDomainName,
+                  gamDhcpServerConfigPoolNisServer1,
+                  gamDhcpServerConfigPoolNisServer2,
+                  gamDhcpServerConfigPoolNisServer3,
+                  gamDhcpServerConfigPoolNisServer4,
+                  gamDhcpServerConfigPoolClientIdentifierType,
+                  gamDhcpServerConfigPoolClientIdentifierName,
+                  gamDhcpServerConfigPoolClientIdentifierMac,
+                  gamDhcpServerConfigPoolClientHardwareAddress,
+                  gamDhcpServerConfigPoolClientName,
+                  gamDhcpServerConfigPoolVendorClassId1,
+                  gamDhcpServerConfigPoolVendorSpecificInfo1,
+                  gamDhcpServerConfigPoolVendorClassId2,
+                  gamDhcpServerConfigPoolVendorSpecificInfo2,
+                  gamDhcpServerConfigPoolVendorClassId3,
+                  gamDhcpServerConfigPoolVendorSpecificInfo3,
+                  gamDhcpServerConfigPoolVendorClassId4,
+                  gamDhcpServerConfigPoolVendorSpecificInfo4,
+                  gamDhcpServerConfigPoolAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpServerMibGroups 5 }
+
+gamDhcpServerConfigPoolTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpServerConfigPoolTableRowEditorPoolName,
+                  gamDhcpServerConfigPoolTableRowEditorPoolType,
+                  gamDhcpServerConfigPoolTableRowEditorIpv4Address,
+                  gamDhcpServerConfigPoolTableRowEditorSubnetMask,
+                  gamDhcpServerConfigPoolTableRowEditorSubnetBroadcast,
+                  gamDhcpServerConfigPoolTableRowEditorLeaseDay,
+                  gamDhcpServerConfigPoolTableRowEditorLeaseHour,
+                  gamDhcpServerConfigPoolTableRowEditorLeaseMinute,
+                  gamDhcpServerConfigPoolTableRowEditorDomainName,
+                  gamDhcpServerConfigPoolTableRowEditorDefaultRouter1,
+                  gamDhcpServerConfigPoolTableRowEditorDefaultRouter2,
+                  gamDhcpServerConfigPoolTableRowEditorDefaultRouter3,
+                  gamDhcpServerConfigPoolTableRowEditorDefaultRouter4,
+                  gamDhcpServerConfigPoolTableRowEditorDnsServer1,
+                  gamDhcpServerConfigPoolTableRowEditorDnsServer2,
+                  gamDhcpServerConfigPoolTableRowEditorDnsServer3,
+                  gamDhcpServerConfigPoolTableRowEditorDnsServer4,
+                  gamDhcpServerConfigPoolTableRowEditorNtpServer1,
+                  gamDhcpServerConfigPoolTableRowEditorNtpServer2,
+                  gamDhcpServerConfigPoolTableRowEditorNtpServer3,
+                  gamDhcpServerConfigPoolTableRowEditorNtpServer4,
+                  gamDhcpServerConfigPoolTableRowEditorNetbiosNodeType,
+                  gamDhcpServerConfigPoolTableRowEditorNetbiosScope,
+                  gamDhcpServerConfigPoolTableRowEditorNetbiosNameServer1,
+                  gamDhcpServerConfigPoolTableRowEditorNetbiosNameServer2,
+                  gamDhcpServerConfigPoolTableRowEditorNetbiosNameServer3,
+                  gamDhcpServerConfigPoolTableRowEditorNetbiosNameServer4,
+                  gamDhcpServerConfigPoolTableRowEditorNisDomainName,
+                  gamDhcpServerConfigPoolTableRowEditorNisServer1,
+                  gamDhcpServerConfigPoolTableRowEditorNisServer2,
+                  gamDhcpServerConfigPoolTableRowEditorNisServer3,
+                  gamDhcpServerConfigPoolTableRowEditorNisServer4,
+                  gamDhcpServerConfigPoolTableRowEditorClientIdentifierType,
+                  gamDhcpServerConfigPoolTableRowEditorClientIdentifierName,
+                  gamDhcpServerConfigPoolTableRowEditorClientIdentifierMac,
+                  gamDhcpServerConfigPoolTableRowEditorClientHardwareAddress,
+                  gamDhcpServerConfigPoolTableRowEditorClientName,
+                  gamDhcpServerConfigPoolTableRowEditorVendorClassId1,
+                  gamDhcpServerConfigPoolTableRowEditorVendorSpecificInfo1,
+                  gamDhcpServerConfigPoolTableRowEditorVendorClassId2,
+                  gamDhcpServerConfigPoolTableRowEditorVendorSpecificInfo2,
+                  gamDhcpServerConfigPoolTableRowEditorVendorClassId3,
+                  gamDhcpServerConfigPoolTableRowEditorVendorSpecificInfo3,
+                  gamDhcpServerConfigPoolTableRowEditorVendorClassId4,
+                  gamDhcpServerConfigPoolTableRowEditorVendorSpecificInfo4,
+                  gamDhcpServerConfigPoolTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpServerMibGroups 6 }
+
+gamDhcpServerStatusDeclinedTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpServerStatusDeclinedEntryNo,
+                  gamDhcpServerStatusDeclinedIpv4Address }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpServerMibGroups 7 }
+
+gamDhcpServerStatusStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpServerStatusStatisticsDiscoverCnt,
+                  gamDhcpServerStatusStatisticsOfferCnt,
+                  gamDhcpServerStatusStatisticsRequestCnt,
+                  gamDhcpServerStatusStatisticsAckCnt,
+                  gamDhcpServerStatusStatisticsNakCnt,
+                  gamDhcpServerStatusStatisticsDeclineCnt,
+                  gamDhcpServerStatusStatisticsReleaseCnt,
+                  gamDhcpServerStatusStatisticsInformCnt }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpServerMibGroups 8 }
+
+gamDhcpServerStatusBindingTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpServerStatusBindingIpAddress,
+                  gamDhcpServerStatusBindingState,
+                  gamDhcpServerStatusBindingType,
+                  gamDhcpServerStatusBindingPoolName,
+                  gamDhcpServerStatusBindingServerId,
+                  gamDhcpServerStatusBindingVlanId,
+                  gamDhcpServerStatusBindingSubnetMask,
+                  gamDhcpServerStatusBindingClientIdentifierType,
+                  gamDhcpServerStatusBindingClientIdentifierName,
+                  gamDhcpServerStatusBindingClientIdentifierMac,
+                  gamDhcpServerStatusBindingMacAddress,
+                  gamDhcpServerStatusBindingLease,
+                  gamDhcpServerStatusBindingTimeToExpire }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpServerMibGroups 9 }
+
+gamDhcpServerControlStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpServerControlStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpServerMibGroups 10 }
+
+gamDhcpServerControlBindingInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpServerControlBindingClearByIp,
+                  gamDhcpServerControlBindingClearByType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpServerMibGroups 11 }
+
+gamDhcpServerMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamDhcpServerConfigGlobalsInfoGroup,
+                       gamDhcpServerConfigVlanTableInfoGroup,
+                       gamDhcpServerConfigExcludedTableInfoGroup,
+                       gamDhcpServerConfigExcludedIpTableRowEditorInfoGroup,
+                       gamDhcpServerConfigPoolTableInfoGroup,
+                       gamDhcpServerConfigPoolTableRowEditorInfoGroup,
+                       gamDhcpServerStatusDeclinedTableInfoGroup,
+                       gamDhcpServerStatusStatisticsInfoGroup,
+                       gamDhcpServerStatusBindingTableInfoGroup,
+                       gamDhcpServerControlStatisticsInfoGroup,
+                       gamDhcpServerControlBindingInfoGroup }
+
+    ::= { gamDhcpServerMibCompliances 1 }
+
+END

@@ -1,0 +1,1356 @@
+-- *****************************************************************
+-- MSTP-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-MSTP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    GAMVlanListQuarter FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamMstpMib MODULE-IDENTITY
+    LAST-UPDATED "201511130000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the 802.1Q-2005 MSTP MIB"
+    REVISION    "201511130000Z"
+    DESCRIPTION
+        "Add TCN counters"
+    REVISION    "201511040000Z"
+    DESCRIPTION
+        "Added msti config table with msti value as the iteration key"
+    REVISION    "201509290000Z"
+    DESCRIPTION
+        "Added range information for bridge parameters"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 20 }
+
+
+GAMMstpForceVersion ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration control the STP protocol variant to run."
+    SYNTAX      INTEGER { stp(0), rstp(2), mstp(3) }
+
+GAMMstpPoint2Point ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration describe the values of adminPointToPointMAC and
+         operPointToPointMAC parameters. (Full duplex port administrative and
+         operational status.) See 6.4.3 of IEEE Std 802.1D."
+    SYNTAX      INTEGER { forceTrue(0), forceFalse(1), auto(2) }
+
+GAMMstpPortState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration describe the forwarding state of an interface."
+    SYNTAX      INTEGER { disabled(0), discarding(1), learning(2),
+                          forwarding(3) }
+
+gamMstpMibObjects OBJECT IDENTIFIER
+    ::= { gamMstpMib 1 }
+
+gamMstpConfig OBJECT IDENTIFIER
+    ::= { gamMstpMibObjects 2 }
+
+gamMstpConfigBridgeParams OBJECT IDENTIFIER
+    ::= { gamMstpConfig 1 }
+
+gamMstpConfigBridgeParamsBridgeMaxAge OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Bridge Max Age, IEEE-802.1D-2004 sect 13.23.4"
+    ::= { gamMstpConfigBridgeParams 1 }
+
+gamMstpConfigBridgeParamsBridgeHelloTime OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..2)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Bridge Hello Time, 13.25.7 of IEEE-802.1Q-2005. Fixed value of two
+         seconds by the standard, but this implementation allow a compatibility
+         range from 1 to 2 seconds, in stipulated in 802.1Q-2005"
+    ::= { gamMstpConfigBridgeParams 2 }
+
+gamMstpConfigBridgeParamsBridgeForwardDelay OBJECT-TYPE
+    SYNTAX      Unsigned32 (4..30)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Bridge Forward Delay, IEEE-802.1D-2004 sect 17.20"
+    ::= { gamMstpConfigBridgeParams 3 }
+
+gamMstpConfigBridgeParamsForceVersion OBJECT-TYPE
+    SYNTAX      GAMMstpForceVersion
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "value of the Force Protocol Version parameter - 13.6.2 of
+         IEEE-802.1Q-2005"
+    ::= { gamMstpConfigBridgeParams 4 }
+
+gamMstpConfigBridgeParamsTxHoldCount OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..10)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "TxHoldCount - 17.13.12 of IEEE Std 802.1D"
+    ::= { gamMstpConfigBridgeParams 5 }
+
+gamMstpConfigBridgeParamsMaxHops OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (6..40)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "MaxHops - 13.22.1 of IEEE-802.1Q-2005"
+    ::= { gamMstpConfigBridgeParams 6 }
+
+gamMstpConfigBridgeParamsBpduFiltering OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "BPDU filtering for edge ports. Control whether a port explicitly
+         configured as Edge will transmit and receive BPDUs"
+    ::= { gamMstpConfigBridgeParams 7 }
+
+gamMstpConfigBridgeParamsBpduGuard OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "BPDU guard for edge ports. Control whether a port explicitly configured
+         as Edge will disable itself upon reception of a BPDU. The port will
+         enter the error-disabled state, and will be removed from the active
+         topology. "
+    ::= { gamMstpConfigBridgeParams 8 }
+
+gamMstpConfigBridgeParamsErrorRecoveryDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The number of seconds until a STP inconsistent port is recovered. Valid
+         values are zero (recovery disabled) or between 30 and 86400 (24 hours)"
+    ::= { gamMstpConfigBridgeParams 9 }
+
+gamMstpConfigMstiParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMstpConfigMstiParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of the bridge instance (MSTIs) parameters"
+    ::= { gamMstpConfig 2 }
+
+gamMstpConfigMstiParamEntry OBJECT-TYPE
+    SYNTAX      GAMMstpConfigMstiParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each MSTI has a set of parameters"
+    INDEX       { gamMstpConfigMstiParamInstance }
+    ::= { gamMstpConfigMstiParamTable 1 }
+
+GAMMstpConfigMstiParamEntry ::= SEQUENCE {
+    gamMstpConfigMstiParamInstance  Integer32,
+    gamMstpConfigMstiParamPriority  GAMUnsigned8
+}
+
+gamMstpConfigMstiParamInstance OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Bridge instance number. The CIST = 0, MSTI1 = 1, etc"
+    ::= { gamMstpConfigMstiParamEntry 1 }
+
+gamMstpConfigMstiParamPriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Bridge Priority"
+    ::= { gamMstpConfigMstiParamEntry 2 }
+
+gamMstpConfigMstiConfig OBJECT IDENTIFIER
+    ::= { gamMstpConfig 3 }
+
+gamMstpConfigMstiConfigId OBJECT IDENTIFIER
+    ::= { gamMstpConfigMstiConfig 1 }
+
+gamMstpConfigMstiConfigIdName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The configuration name"
+    ::= { gamMstpConfigMstiConfigId 1 }
+
+gamMstpConfigMstiConfigIdRevision OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The configuration revision"
+    ::= { gamMstpConfigMstiConfigId 2 }
+
+gamMstpConfigMstiConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMstpConfigMstiConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the 802.1Q - 8.9 MST Configuration table
+         
+         For the purposes of calculating the Configuration Digest, the MST
+         Configuration Table is considered to contain 4096 consecutive single
+         octet elements, where each element of the table (with the exception of
+         the first and last) contains an MSTID value."
+    ::= { gamMstpConfigMstiConfig 2 }
+
+gamMstpConfigMstiConfigEntry OBJECT-TYPE
+    SYNTAX      GAMMstpConfigMstiConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The first element of the table contains the value 0, the second element
+         the MSTID value corresponding to VID 1, the third element the MSTID
+         value corresponding to VID 2, and so on, with the next to last element
+         of the table containing the MSTID value corresponding to VID 4094, and
+         the last element containing the value 0."
+    INDEX       { gamMstpConfigMstiConfigVid }
+    ::= { gamMstpConfigMstiConfigTable 1 }
+
+GAMMstpConfigMstiConfigEntry ::= SEQUENCE {
+    gamMstpConfigMstiConfigVid    Integer32,
+    gamMstpConfigMstiConfigMstid  GAMUnsigned8
+}
+
+gamMstpConfigMstiConfigVid OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Vlan id"
+    ::= { gamMstpConfigMstiConfigEntry 1 }
+
+gamMstpConfigMstiConfigMstid OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The MSTID value associated with the vlan id"
+    ::= { gamMstpConfigMstiConfigEntry 2 }
+
+gamMstpConfigMstiConfigVlanBitmapTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMstpConfigMstiConfigVlanBitmapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the 802.1Q - 8.9 MST Configuration table
+         
+         For the purposes of calculating the Configuration Digest, the MST
+         Configuration Table is considered to contain 8 consecutive single octet
+         elements, where each element of the table contains an vlan bitmap
+         (vlans that have the MSTI value specified are set to one)."
+    ::= { gamMstpConfigMstiConfig 3 }
+
+gamMstpConfigMstiConfigVlanBitmapEntry OBJECT-TYPE
+    SYNTAX      GAMMstpConfigMstiConfigVlanBitmapEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The first element of the table contains vlan bitmap corresponding to
+         MSTI 0, the second element contains vlan bitmap corresponding to MSTI 1
+         until the 7th element. MSTI range is 0-7."
+    INDEX       { gamMstpConfigMstiConfigVlanBitmapMstiValue }
+    ::= { gamMstpConfigMstiConfigVlanBitmapTable 1 }
+
+GAMMstpConfigMstiConfigVlanBitmapEntry ::= SEQUENCE {
+    gamMstpConfigMstiConfigVlanBitmapMstiValue          Integer32,
+    gamMstpConfigMstiConfigVlanBitmapAccessVlans0To1K   GAMVlanListQuarter,
+    gamMstpConfigMstiConfigVlanBitmapAccessVlans1KTo2K  GAMVlanListQuarter,
+    gamMstpConfigMstiConfigVlanBitmapAccessVlans2KTo3K  GAMVlanListQuarter,
+    gamMstpConfigMstiConfigVlanBitmapAccessVlans3KTo4K  GAMVlanListQuarter
+}
+
+gamMstpConfigMstiConfigVlanBitmapMstiValue OBJECT-TYPE
+    SYNTAX      Integer32 (0..7)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "MSTI value."
+    ::= { gamMstpConfigMstiConfigVlanBitmapEntry 1 }
+
+gamMstpConfigMstiConfigVlanBitmapAccessVlans0To1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating the enabled access VLANs."
+    ::= { gamMstpConfigMstiConfigVlanBitmapEntry 2 }
+
+gamMstpConfigMstiConfigVlanBitmapAccessVlans1KTo2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating the enabled access VLANs."
+    ::= { gamMstpConfigMstiConfigVlanBitmapEntry 3 }
+
+gamMstpConfigMstiConfigVlanBitmapAccessVlans2KTo3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating the enabled access VLANs."
+    ::= { gamMstpConfigMstiConfigVlanBitmapEntry 4 }
+
+gamMstpConfigMstiConfigVlanBitmapAccessVlans3KTo4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Last quarter of bit-array indicating the enabled access VLANs."
+    ::= { gamMstpConfigMstiConfigVlanBitmapEntry 5 }
+
+gamMstpConfigCistInterfaceParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMstpConfigCistInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of the CIST physical interface parameters"
+    ::= { gamMstpConfig 4 }
+
+gamMstpConfigCistInterfaceParamEntry OBJECT-TYPE
+    SYNTAX      GAMMstpConfigCistInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each CIST physical interface has a set of parameters"
+    INDEX       { gamMstpConfigCistInterfaceParamInterfaceNo }
+    ::= { gamMstpConfigCistInterfaceParamTable 1 }
+
+GAMMstpConfigCistInterfaceParamEntry ::= SEQUENCE {
+    gamMstpConfigCistInterfaceParamInterfaceNo           GAMInterfaceIndex,
+    gamMstpConfigCistInterfaceParamEnable                TruthValue,
+    gamMstpConfigCistInterfaceParamAdminEdgePort         TruthValue,
+    gamMstpConfigCistInterfaceParamAdminAutoEdgePort     TruthValue,
+    gamMstpConfigCistInterfaceParamAdminPointToPointMAC  GAMMstpPoint2Point,
+    gamMstpConfigCistInterfaceParamRestrictedRole        TruthValue,
+    gamMstpConfigCistInterfaceParamRestrictedTcn         TruthValue,
+    gamMstpConfigCistInterfaceParamBpduGuard             TruthValue
+}
+
+gamMstpConfigCistInterfaceParamInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamMstpConfigCistInterfaceParamEntry 1 }
+
+gamMstpConfigCistInterfaceParamEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Control whether port is controlled by xSTP. If disabled, the port
+         forwarding state follow the MAC state"
+    ::= { gamMstpConfigCistInterfaceParamEntry 2 }
+
+gamMstpConfigCistInterfaceParamAdminEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "adminEdgePort parameter - 18.3.3 of IEEE Std 802.1D"
+    ::= { gamMstpConfigCistInterfaceParamEntry 3 }
+
+gamMstpConfigCistInterfaceParamAdminAutoEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "adminAutoEdgePort parameter - 17.13.3 of IEEE Std 802.1D"
+    ::= { gamMstpConfigCistInterfaceParamEntry 4 }
+
+gamMstpConfigCistInterfaceParamAdminPointToPointMAC OBJECT-TYPE
+    SYNTAX      GAMMstpPoint2Point
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "adminPointToPointMAC parameter - 6.4.3 of IEEE Std 802.1D"
+    ::= { gamMstpConfigCistInterfaceParamEntry 5 }
+
+gamMstpConfigCistInterfaceParamRestrictedRole OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "restrictedRole parameter - 13.25.14 of IEEE Std 802.1Q-2005"
+    ::= { gamMstpConfigCistInterfaceParamEntry 6 }
+
+gamMstpConfigCistInterfaceParamRestrictedTcn OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "restrictedRole parameter - 13.25.15 of IEEE Std 802.1Q-2005"
+    ::= { gamMstpConfigCistInterfaceParamEntry 7 }
+
+gamMstpConfigCistInterfaceParamBpduGuard OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If enabled, causes the port to disable itself upon receiving valid
+         BPDU's. Contrary to the similar bridge setting, the port Edge status
+         does not effect this setting. A port entering error-disabled state due
+         to this setting is subject to the bridge ErrorRecoveryDelay setting as
+         well"
+    ::= { gamMstpConfigCistInterfaceParamEntry 8 }
+
+gamMstpConfigAggrParams OBJECT IDENTIFIER
+    ::= { gamMstpConfig 5 }
+
+gamMstpConfigAggrParamsEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Control whether port is controlled by xSTP. If disabled, the port
+         forwarding state follow the MAC state"
+    ::= { gamMstpConfigAggrParams 1 }
+
+gamMstpConfigAggrParamsAdminEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "adminEdgePort parameter - 18.3.3 of IEEE Std 802.1D"
+    ::= { gamMstpConfigAggrParams 2 }
+
+gamMstpConfigAggrParamsAdminAutoEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "adminAutoEdgePort parameter - 17.13.3 of IEEE Std 802.1D"
+    ::= { gamMstpConfigAggrParams 3 }
+
+gamMstpConfigAggrParamsAdminPointToPointMAC OBJECT-TYPE
+    SYNTAX      GAMMstpPoint2Point
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "adminPointToPointMAC parameter - 6.4.3 of IEEE Std 802.1D"
+    ::= { gamMstpConfigAggrParams 4 }
+
+gamMstpConfigAggrParamsRestrictedRole OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "restrictedRole parameter - 13.25.14 of IEEE Std 802.1Q-2005"
+    ::= { gamMstpConfigAggrParams 5 }
+
+gamMstpConfigAggrParamsRestrictedTcn OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "restrictedRole parameter - 13.25.15 of IEEE Std 802.1Q-2005"
+    ::= { gamMstpConfigAggrParams 6 }
+
+gamMstpConfigAggrParamsBpduGuard OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If enabled, causes the port to disable itself upon receiving valid
+         BPDU's. Contrary to the similar bridge setting, the port Edge status
+         does not effect this setting. A port entering error-disabled state due
+         to this setting is subject to the bridge ErrorRecoveryDelay setting as
+         well"
+    ::= { gamMstpConfigAggrParams 7 }
+
+gamMstpConfigMstiInterfaceParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMstpConfigMstiInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of the MSTI interface parameters"
+    ::= { gamMstpConfig 6 }
+
+gamMstpConfigMstiInterfaceParamEntry OBJECT-TYPE
+    SYNTAX      GAMMstpConfigMstiInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each MSTI interface has a set of parameters"
+    INDEX       { gamMstpConfigMstiInterfaceParamInterfaceNo,
+                  gamMstpConfigMstiInterfaceParamInstance }
+    ::= { gamMstpConfigMstiInterfaceParamTable 1 }
+
+GAMMstpConfigMstiInterfaceParamEntry ::= SEQUENCE {
+    gamMstpConfigMstiInterfaceParamInterfaceNo        GAMInterfaceIndex,
+    gamMstpConfigMstiInterfaceParamInstance           Integer32,
+    gamMstpConfigMstiInterfaceParamAdminPathCost      Unsigned32,
+    gamMstpConfigMstiInterfaceParamAdminPortPriority  GAMUnsigned8
+}
+
+gamMstpConfigMstiInterfaceParamInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamMstpConfigMstiInterfaceParamEntry 1 }
+
+gamMstpConfigMstiInterfaceParamInstance OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Bridge instance number. The CIST = 0, MSTI1 = 1, etc"
+    ::= { gamMstpConfigMstiInterfaceParamEntry 2 }
+
+gamMstpConfigMstiInterfaceParamAdminPathCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Path Cost - 13.37.1 of 802.1Q-2005"
+    ::= { gamMstpConfigMstiInterfaceParamEntry 3 }
+
+gamMstpConfigMstiInterfaceParamAdminPortPriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "priority field for the Port Identifier - 13.24.12 of 802.1Q-2005"
+    ::= { gamMstpConfigMstiInterfaceParamEntry 4 }
+
+gamMstpConfigMstiAggrParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMstpConfigMstiAggrParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of the MSTI aggregations parameters"
+    ::= { gamMstpConfig 7 }
+
+gamMstpConfigMstiAggrParamEntry OBJECT-TYPE
+    SYNTAX      GAMMstpConfigMstiAggrParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The aggregations for each MSTI has a set of parameters"
+    INDEX       { gamMstpConfigMstiAggrParamInstance }
+    ::= { gamMstpConfigMstiAggrParamTable 1 }
+
+GAMMstpConfigMstiAggrParamEntry ::= SEQUENCE {
+    gamMstpConfigMstiAggrParamInstance           Integer32,
+    gamMstpConfigMstiAggrParamAdminPathCost      Unsigned32,
+    gamMstpConfigMstiAggrParamAdminPortPriority  GAMUnsigned8
+}
+
+gamMstpConfigMstiAggrParamInstance OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Bridge instance number. The CIST = 0, MSTI1 = 1, etc"
+    ::= { gamMstpConfigMstiAggrParamEntry 1 }
+
+gamMstpConfigMstiAggrParamAdminPathCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Path Cost - 13.37.1 of 802.1Q-2005"
+    ::= { gamMstpConfigMstiAggrParamEntry 3 }
+
+gamMstpConfigMstiAggrParamAdminPortPriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "priority field for the Port Identifier - 13.24.12 of 802.1Q-2005"
+    ::= { gamMstpConfigMstiAggrParamEntry 4 }
+
+gamMstpStatus OBJECT IDENTIFIER
+    ::= { gamMstpMibObjects 3 }
+
+gamMstpStatusBridgeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMstpStatusBridgeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represent the status of the bridge instances"
+    ::= { gamMstpStatus 1 }
+
+gamMstpStatusBridgeEntry OBJECT-TYPE
+    SYNTAX      GAMMstpStatusBridgeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A MSTP Bridge instance set of status objects"
+    INDEX       { gamMstpStatusBridgeInstance }
+    ::= { gamMstpStatusBridgeTable 1 }
+
+GAMMstpStatusBridgeEntry ::= SEQUENCE {
+    gamMstpStatusBridgeInstance                 Integer32,
+    gamMstpStatusBridgeBridgeId                 OCTET STRING,
+    gamMstpStatusBridgeTimeSinceTopologyChange  Unsigned32,
+    gamMstpStatusBridgeTopologyChangeCount      Unsigned32,
+    gamMstpStatusBridgeTopologyChange           TruthValue,
+    gamMstpStatusBridgeDesignatedRoot           OCTET STRING,
+    gamMstpStatusBridgeRootPathCost             Unsigned32,
+    gamMstpStatusBridgeRootPort                 Unsigned32,
+    gamMstpStatusBridgeMaxAge                   Unsigned32,
+    gamMstpStatusBridgeForwardDelay             Unsigned32,
+    gamMstpStatusBridgeBridgeMaxAge             Unsigned32,
+    gamMstpStatusBridgeBridgeHelloTime          Unsigned32,
+    gamMstpStatusBridgeBridgeForwardDelay       Unsigned32,
+    gamMstpStatusBridgeTxHoldCount              Unsigned32,
+    gamMstpStatusBridgeForceVersion             GAMMstpForceVersion,
+    gamMstpStatusBridgeCistRegionalRoot         OCTET STRING,
+    gamMstpStatusBridgeCistInternalPathCost     Unsigned32,
+    gamMstpStatusBridgeMaxHops                  GAMUnsigned8
+}
+
+gamMstpStatusBridgeInstance OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Bridge instance number. The CIST = 0, MSTI1 = 1, etc"
+    ::= { gamMstpStatusBridgeEntry 1 }
+
+gamMstpStatusBridgeBridgeId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Bridge Identifier of this bridge"
+    ::= { gamMstpStatusBridgeEntry 2 }
+
+gamMstpStatusBridgeTimeSinceTopologyChange OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The count in seconds of the time elapsed since the Topology Change flag
+         was last True"
+    ::= { gamMstpStatusBridgeEntry 3 }
+
+gamMstpStatusBridgeTopologyChangeCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The count of the times the Topology Change flag parameter for the
+         Bridge has been set since the Bridge was powered on or initialized"
+    ::= { gamMstpStatusBridgeEntry 4 }
+
+gamMstpStatusBridgeTopologyChange OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Topology Change Flag current status"
+    ::= { gamMstpStatusBridgeEntry 5 }
+
+gamMstpStatusBridgeDesignatedRoot OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Designated Root Bridge"
+    ::= { gamMstpStatusBridgeEntry 6 }
+
+gamMstpStatusBridgeRootPathCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Root Path Cost"
+    ::= { gamMstpStatusBridgeEntry 7 }
+
+gamMstpStatusBridgeRootPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Root Port"
+    ::= { gamMstpStatusBridgeEntry 8 }
+
+gamMstpStatusBridgeMaxAge OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Max Age, IEEE-802.1D-2004 sect 13.23.7"
+    ::= { gamMstpStatusBridgeEntry 9 }
+
+gamMstpStatusBridgeForwardDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Forward Delay, IEEE-802.1D-2004 sect 13.23.7"
+    ::= { gamMstpStatusBridgeEntry 10 }
+
+gamMstpStatusBridgeBridgeMaxAge OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Bridge Max Age, IEEE-802.1D-2004 sect 13.23.4"
+    ::= { gamMstpStatusBridgeEntry 11 }
+
+gamMstpStatusBridgeBridgeHelloTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Bridge Hello Time, IEEE-802.1D-2004 sect 13.23.4"
+    ::= { gamMstpStatusBridgeEntry 12 }
+
+gamMstpStatusBridgeBridgeForwardDelay OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Bridge Forward Delay, IEEE-802.1D-2004 sect 13.23.4"
+    ::= { gamMstpStatusBridgeEntry 13 }
+
+gamMstpStatusBridgeTxHoldCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Hold Time / Transmission Limit, IEEE-802.1D-2004 sect 13.22"
+    ::= { gamMstpStatusBridgeEntry 14 }
+
+gamMstpStatusBridgeForceVersion OBJECT-TYPE
+    SYNTAX      GAMMstpForceVersion
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Value of the Force Protocol Version parameter - IEEE-802.1D-2004 sect
+         17.16.1"
+    ::= { gamMstpStatusBridgeEntry 15 }
+
+gamMstpStatusBridgeCistRegionalRoot OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "CIST Regional Root Identifier (13.16.4)"
+    ::= { gamMstpStatusBridgeEntry 16 }
+
+gamMstpStatusBridgeCistInternalPathCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "CIST Path Cost"
+    ::= { gamMstpStatusBridgeEntry 17 }
+
+gamMstpStatusBridgeMaxHops OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "MaxHops (13.22.1)"
+    ::= { gamMstpStatusBridgeEntry 18 }
+
+gamMstpStatusInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMstpStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represent the status of the interface instances"
+    ::= { gamMstpStatus 2 }
+
+gamMstpStatusInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMMstpStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A MSTP interface instance set of status objects"
+    INDEX       { gamMstpStatusInterfaceInterfaceNo,
+                  gamMstpStatusInterfaceInstance }
+    ::= { gamMstpStatusInterfaceTable 1 }
+
+GAMMstpStatusInterfaceEntry ::= SEQUENCE {
+    gamMstpStatusInterfaceInterfaceNo           GAMInterfaceIndex,
+    gamMstpStatusInterfaceInstance              Integer32,
+    gamMstpStatusInterfaceEnabled               TruthValue,
+    gamMstpStatusInterfaceActive                TruthValue,
+    gamMstpStatusInterfaceParentPort            Unsigned32,
+    gamMstpStatusInterfaceUpTime                Unsigned32,
+    gamMstpStatusInterfacePortState             GAMMstpPortState,
+    gamMstpStatusInterfacePortId                OCTET STRING,
+    gamMstpStatusInterfacePathCost              Unsigned32,
+    gamMstpStatusInterfaceDesignatedRoot        OCTET STRING,
+    gamMstpStatusInterfaceDesignatedCost        Unsigned32,
+    gamMstpStatusInterfaceDesignatedBridge      OCTET STRING,
+    gamMstpStatusInterfaceDesignatedPort        OCTET STRING,
+    gamMstpStatusInterfaceTcAck                 TruthValue,
+    gamMstpStatusInterfaceHelloTime             Unsigned32,
+    gamMstpStatusInterfaceAdminEdgePort         TruthValue,
+    gamMstpStatusInterfaceOperEdgePort          TruthValue,
+    gamMstpStatusInterfaceAutoEdgePort          TruthValue,
+    gamMstpStatusInterfaceMacOperational        TruthValue,
+    gamMstpStatusInterfaceAdminPointToPointMAC  GAMMstpPoint2Point,
+    gamMstpStatusInterfaceOperPointToPointMAC   TruthValue,
+    gamMstpStatusInterfaceRestrictedRole        TruthValue,
+    gamMstpStatusInterfaceRestrictedTcn         TruthValue,
+    gamMstpStatusInterfacePortRole              GAMDisplayString,
+    gamMstpStatusInterfaceDisputed              TruthValue
+}
+
+gamMstpStatusInterfaceInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamMstpStatusInterfaceEntry 1 }
+
+gamMstpStatusInterfaceInstance OBJECT-TYPE
+    SYNTAX      Integer32 (0..255)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Bridge instance number. The CIST = 0, MSTI1 = 1, etc"
+    ::= { gamMstpStatusInterfaceEntry 2 }
+
+gamMstpStatusInterfaceEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Whether port is controlled by xSTP"
+    ::= { gamMstpStatusInterfaceEntry 3 }
+
+gamMstpStatusInterfaceActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Whether port is active"
+    ::= { gamMstpStatusInterfaceEntry 4 }
+
+gamMstpStatusInterfaceParentPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Parent port if physical port is aggregated. (Otherwise 0xffff)"
+    ::= { gamMstpStatusInterfaceEntry 5 }
+
+gamMstpStatusInterfaceUpTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "seconds of the time elapsed since the Port was last reset or
+         initialized"
+    ::= { gamMstpStatusInterfaceEntry 6 }
+
+gamMstpStatusInterfacePortState OBJECT-TYPE
+    SYNTAX      GAMMstpPortState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current state of the Port"
+    ::= { gamMstpStatusInterfaceEntry 7 }
+
+gamMstpStatusInterfacePortId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(2))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Unique Port identifier comprising two parts, the Port Number and the
+         Port Priority field"
+    ::= { gamMstpStatusInterfaceEntry 8 }
+
+gamMstpStatusInterfacePathCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Path Cost (17.16.5 of IEEE Std 802.1D)"
+    ::= { gamMstpStatusInterfaceEntry 9 }
+
+gamMstpStatusInterfaceDesignatedRoot OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Designated Root"
+    ::= { gamMstpStatusInterfaceEntry 10 }
+
+gamMstpStatusInterfaceDesignatedCost OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Designated Cost"
+    ::= { gamMstpStatusInterfaceEntry 11 }
+
+gamMstpStatusInterfaceDesignatedBridge OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Designated Bridge"
+    ::= { gamMstpStatusInterfaceEntry 12 }
+
+gamMstpStatusInterfaceDesignatedPort OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(2))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Designated Port"
+    ::= { gamMstpStatusInterfaceEntry 13 }
+
+gamMstpStatusInterfaceTcAck OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Topology Change Acknowledge"
+    ::= { gamMstpStatusInterfaceEntry 14 }
+
+gamMstpStatusInterfaceHelloTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Hello Time"
+    ::= { gamMstpStatusInterfaceEntry 15 }
+
+gamMstpStatusInterfaceAdminEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "adminEdgePort (18.3.3 of IEEE Std 802.1D)"
+    ::= { gamMstpStatusInterfaceEntry 16 }
+
+gamMstpStatusInterfaceOperEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "operEdgePort (18.3.4 of IEEE Std 802.1D)"
+    ::= { gamMstpStatusInterfaceEntry 17 }
+
+gamMstpStatusInterfaceAutoEdgePort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "autoEdgePort (17.13.3 of IEEE Std 802.1D)"
+    ::= { gamMstpStatusInterfaceEntry 18 }
+
+gamMstpStatusInterfaceMacOperational OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current state of the MAC Operational parameter (6.4.2 of IEEE Std
+         802.1D,)"
+    ::= { gamMstpStatusInterfaceEntry 19 }
+
+gamMstpStatusInterfaceAdminPointToPointMAC OBJECT-TYPE
+    SYNTAX      GAMMstpPoint2Point
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current state of the adminPointToPointMAC parameter (6.4.3 of IEEE Std
+         802.1D)"
+    ::= { gamMstpStatusInterfaceEntry 20 }
+
+gamMstpStatusInterfaceOperPointToPointMAC OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current state of the operPointToPointMAC parameter (6.4.3 of IEEE Std
+         802.1D)"
+    ::= { gamMstpStatusInterfaceEntry 21 }
+
+gamMstpStatusInterfaceRestrictedRole OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current state of the restrictedRole parameter for the Port (13.25.14)"
+    ::= { gamMstpStatusInterfaceEntry 22 }
+
+gamMstpStatusInterfaceRestrictedTcn OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current state of the restrictedTcn parameter for the Port (13.25.15)"
+    ::= { gamMstpStatusInterfaceEntry 23 }
+
+gamMstpStatusInterfacePortRole OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..15))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current Port Role"
+    ::= { gamMstpStatusInterfaceEntry 24 }
+
+gamMstpStatusInterfaceDisputed OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current value of the disputed variable for the CIST Port"
+    ::= { gamMstpStatusInterfaceEntry 25 }
+
+gamMstpStatusInterfaceStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMstpStatusInterfaceStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represent the statistics of the CIST interfaces"
+    ::= { gamMstpStatus 3 }
+
+gamMstpStatusInterfaceStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMMstpStatusInterfaceStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "A CIST interface set of statistics"
+    INDEX       { gamMstpStatusInterfaceStatisticsInterfaceNo }
+    ::= { gamMstpStatusInterfaceStatisticsTable 1 }
+
+GAMMstpStatusInterfaceStatisticsEntry ::= SEQUENCE {
+    gamMstpStatusInterfaceStatisticsInterfaceNo            GAMInterfaceIndex,
+    gamMstpStatusInterfaceStatisticsStpFrameXmits          Unsigned32,
+    gamMstpStatusInterfaceStatisticsStpFrameReceived       Unsigned32,
+    gamMstpStatusInterfaceStatisticsRstpFrameXmits         Unsigned32,
+    gamMstpStatusInterfaceStatisticsRstpFrameReceived      Unsigned32,
+    gamMstpStatusInterfaceStatisticsMstpFrameXmits         Unsigned32,
+    gamMstpStatusInterfaceStatisticsMstpFrameReceived      Unsigned32,
+    gamMstpStatusInterfaceStatisticsUnknownFramesReceived  Unsigned32,
+    gamMstpStatusInterfaceStatisticsIllegalFrameReceived   Unsigned32,
+    gamMstpStatusInterfaceStatisticsTcnFrameXmits          Unsigned32,
+    gamMstpStatusInterfaceStatisticsTcnFrameReceived       Unsigned32
+}
+
+gamMstpStatusInterfaceStatisticsInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamMstpStatusInterfaceStatisticsEntry 1 }
+
+gamMstpStatusInterfaceStatisticsStpFrameXmits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of STP frames transmitted"
+    ::= { gamMstpStatusInterfaceStatisticsEntry 2 }
+
+gamMstpStatusInterfaceStatisticsStpFrameReceived OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of STP frames received"
+    ::= { gamMstpStatusInterfaceStatisticsEntry 3 }
+
+gamMstpStatusInterfaceStatisticsRstpFrameXmits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of RSTP frames transmitted"
+    ::= { gamMstpStatusInterfaceStatisticsEntry 4 }
+
+gamMstpStatusInterfaceStatisticsRstpFrameReceived OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of RSTP frames received"
+    ::= { gamMstpStatusInterfaceStatisticsEntry 5 }
+
+gamMstpStatusInterfaceStatisticsMstpFrameXmits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of MSTP frames transmitted"
+    ::= { gamMstpStatusInterfaceStatisticsEntry 6 }
+
+gamMstpStatusInterfaceStatisticsMstpFrameReceived OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of MSTP frames received"
+    ::= { gamMstpStatusInterfaceStatisticsEntry 7 }
+
+gamMstpStatusInterfaceStatisticsUnknownFramesReceived OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of unknown frames received and discarded in error"
+    ::= { gamMstpStatusInterfaceStatisticsEntry 8 }
+
+gamMstpStatusInterfaceStatisticsIllegalFrameReceived OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of illegal frames received and discarded in error"
+    ::= { gamMstpStatusInterfaceStatisticsEntry 9 }
+
+gamMstpStatusInterfaceStatisticsTcnFrameXmits OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of TCN frames transmitted"
+    ::= { gamMstpStatusInterfaceStatisticsEntry 10 }
+
+gamMstpStatusInterfaceStatisticsTcnFrameReceived OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of TCN frames received"
+    ::= { gamMstpStatusInterfaceStatisticsEntry 11 }
+
+gamMstpMibConformance OBJECT IDENTIFIER
+    ::= { gamMstpMib 2 }
+
+gamMstpMibCompliances OBJECT IDENTIFIER
+    ::= { gamMstpMibConformance 1 }
+
+gamMstpMibGroups OBJECT IDENTIFIER
+    ::= { gamMstpMibConformance 2 }
+
+gamMstpConfigBridgeParamsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpConfigBridgeParamsBridgeMaxAge,
+                  gamMstpConfigBridgeParamsBridgeHelloTime,
+                  gamMstpConfigBridgeParamsBridgeForwardDelay,
+                  gamMstpConfigBridgeParamsForceVersion,
+                  gamMstpConfigBridgeParamsTxHoldCount,
+                  gamMstpConfigBridgeParamsMaxHops,
+                  gamMstpConfigBridgeParamsBpduFiltering,
+                  gamMstpConfigBridgeParamsBpduGuard,
+                  gamMstpConfigBridgeParamsErrorRecoveryDelay }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 1 }
+
+gamMstpConfigMstiParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpConfigMstiParamInstance,
+                  gamMstpConfigMstiParamPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 2 }
+
+gamMstpConfigMstiConfigIdInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpConfigMstiConfigIdName,
+                  gamMstpConfigMstiConfigIdRevision }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 3 }
+
+gamMstpConfigMstiConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpConfigMstiConfigVid,
+                  gamMstpConfigMstiConfigMstid }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 4 }
+
+gamMstpConfigMstiConfigVlanBitmapTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpConfigMstiConfigVlanBitmapMstiValue,
+                  gamMstpConfigMstiConfigVlanBitmapAccessVlans0To1K,
+                  gamMstpConfigMstiConfigVlanBitmapAccessVlans1KTo2K,
+                  gamMstpConfigMstiConfigVlanBitmapAccessVlans2KTo3K,
+                  gamMstpConfigMstiConfigVlanBitmapAccessVlans3KTo4K }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 5 }
+
+gamMstpConfigCistInterfaceParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpConfigCistInterfaceParamInterfaceNo,
+                  gamMstpConfigCistInterfaceParamEnable,
+                  gamMstpConfigCistInterfaceParamAdminEdgePort,
+                  gamMstpConfigCistInterfaceParamAdminAutoEdgePort,
+                  gamMstpConfigCistInterfaceParamAdminPointToPointMAC,
+                  gamMstpConfigCistInterfaceParamRestrictedRole,
+                  gamMstpConfigCistInterfaceParamRestrictedTcn,
+                  gamMstpConfigCistInterfaceParamBpduGuard }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 6 }
+
+gamMstpConfigAggrParamsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpConfigAggrParamsEnable,
+                  gamMstpConfigAggrParamsAdminEdgePort,
+                  gamMstpConfigAggrParamsAdminAutoEdgePort,
+                  gamMstpConfigAggrParamsAdminPointToPointMAC,
+                  gamMstpConfigAggrParamsRestrictedRole,
+                  gamMstpConfigAggrParamsRestrictedTcn,
+                  gamMstpConfigAggrParamsBpduGuard }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 7 }
+
+gamMstpConfigMstiInterfaceParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpConfigMstiInterfaceParamInterfaceNo,
+                  gamMstpConfigMstiInterfaceParamInstance,
+                  gamMstpConfigMstiInterfaceParamAdminPathCost,
+                  gamMstpConfigMstiInterfaceParamAdminPortPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 8 }
+
+gamMstpConfigMstiAggrParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpConfigMstiAggrParamInstance,
+                  gamMstpConfigMstiAggrParamAdminPathCost,
+                  gamMstpConfigMstiAggrParamAdminPortPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 9 }
+
+gamMstpStatusBridgeTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpStatusBridgeInstance,
+                  gamMstpStatusBridgeBridgeId,
+                  gamMstpStatusBridgeTimeSinceTopologyChange,
+                  gamMstpStatusBridgeTopologyChangeCount,
+                  gamMstpStatusBridgeTopologyChange,
+                  gamMstpStatusBridgeDesignatedRoot,
+                  gamMstpStatusBridgeRootPathCost,
+                  gamMstpStatusBridgeRootPort,
+                  gamMstpStatusBridgeMaxAge,
+                  gamMstpStatusBridgeForwardDelay,
+                  gamMstpStatusBridgeBridgeMaxAge,
+                  gamMstpStatusBridgeBridgeHelloTime,
+                  gamMstpStatusBridgeBridgeForwardDelay,
+                  gamMstpStatusBridgeTxHoldCount,
+                  gamMstpStatusBridgeForceVersion,
+                  gamMstpStatusBridgeCistRegionalRoot,
+                  gamMstpStatusBridgeCistInternalPathCost,
+                  gamMstpStatusBridgeMaxHops }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 10 }
+
+gamMstpStatusInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpStatusInterfaceInterfaceNo,
+                  gamMstpStatusInterfaceInstance,
+                  gamMstpStatusInterfaceEnabled,
+                  gamMstpStatusInterfaceActive,
+                  gamMstpStatusInterfaceParentPort,
+                  gamMstpStatusInterfaceUpTime,
+                  gamMstpStatusInterfacePortState,
+                  gamMstpStatusInterfacePortId,
+                  gamMstpStatusInterfacePathCost,
+                  gamMstpStatusInterfaceDesignatedRoot,
+                  gamMstpStatusInterfaceDesignatedCost,
+                  gamMstpStatusInterfaceDesignatedBridge,
+                  gamMstpStatusInterfaceDesignatedPort,
+                  gamMstpStatusInterfaceTcAck,
+                  gamMstpStatusInterfaceHelloTime,
+                  gamMstpStatusInterfaceAdminEdgePort,
+                  gamMstpStatusInterfaceOperEdgePort,
+                  gamMstpStatusInterfaceAutoEdgePort,
+                  gamMstpStatusInterfaceMacOperational,
+                  gamMstpStatusInterfaceAdminPointToPointMAC,
+                  gamMstpStatusInterfaceOperPointToPointMAC,
+                  gamMstpStatusInterfaceRestrictedRole,
+                  gamMstpStatusInterfaceRestrictedTcn,
+                  gamMstpStatusInterfacePortRole,
+                  gamMstpStatusInterfaceDisputed }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 11 }
+
+gamMstpStatusInterfaceStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMstpStatusInterfaceStatisticsInterfaceNo,
+                  gamMstpStatusInterfaceStatisticsStpFrameXmits,
+                  gamMstpStatusInterfaceStatisticsStpFrameReceived,
+                  gamMstpStatusInterfaceStatisticsRstpFrameXmits,
+                  gamMstpStatusInterfaceStatisticsRstpFrameReceived,
+                  gamMstpStatusInterfaceStatisticsMstpFrameXmits,
+                  gamMstpStatusInterfaceStatisticsMstpFrameReceived,
+                  gamMstpStatusInterfaceStatisticsUnknownFramesReceived,
+                  gamMstpStatusInterfaceStatisticsIllegalFrameReceived,
+                  gamMstpStatusInterfaceStatisticsTcnFrameXmits,
+                  gamMstpStatusInterfaceStatisticsTcnFrameReceived }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMstpMibGroups 12 }
+
+gamMstpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamMstpConfigBridgeParamsInfoGroup,
+                       gamMstpConfigMstiParamTableInfoGroup,
+                       gamMstpConfigMstiConfigIdInfoGroup,
+                       gamMstpConfigMstiConfigTableInfoGroup,
+                       gamMstpConfigMstiConfigVlanBitmapTableInfoGroup,
+                       gamMstpConfigCistInterfaceParamTableInfoGroup,
+                       gamMstpConfigAggrParamsInfoGroup,
+                       gamMstpConfigMstiInterfaceParamTableInfoGroup,
+                       gamMstpConfigMstiAggrParamTableInfoGroup,
+                       gamMstpStatusBridgeTableInfoGroup,
+                       gamMstpStatusInterfaceTableInfoGroup,
+                       gamMstpStatusInterfaceStatisticsTableInfoGroup }
+
+    ::= { gamMstpMibCompliances 1 }
+
+END

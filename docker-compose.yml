@@ -65,7 +65,7 @@ services:
       - ./frontend:/app
       - /app/node_modules
     environment:
-      - VITE_API_URL=http://localhost:8003/api/v1
+      - VITE_API_URL=http://10.0.60.38:8003
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - positron_backend

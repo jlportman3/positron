@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, Text, ForeignKey, Enum
+from sqlalchemy import Column, String, Integer, DateTime, Boolean, Text, ForeignKey, Enum, Float
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -39,10 +39,19 @@ class GAMDevice(Base):
     location = Column(String(255), nullable=True)
     status = Column(Enum(DeviceStatus), default=DeviceStatus.OFFLINE, nullable=False)
     last_seen = Column(DateTime(timezone=True), nullable=True)
+
+    # Geographic coordinates for mapping
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    address = Column(String(500), nullable=True)
+    zone_id = Column(UUID(as_uuid=True), ForeignKey("zones.id"), nullable=True)
     
     # Connection settings
     snmp_community = Column(String(100), nullable=False, default="public")
-    ssh_credentials = Column(JSONB, nullable=True)  # Store encrypted credentials
+    ssh_credentials = Column(JSONB, nullable=True)  # Store encrypted credentials (legacy)
+    ssh_username = Column(String(100), nullable=True)  # SSH username for CLI access
+    ssh_password = Column(String(255), nullable=True)  # SSH password (should be encrypted in production)
+    ssh_port = Column(Integer, nullable=False, default=22)  # SSH port
     management_vlan = Column(Integer, nullable=False, default=4093)
     
     # Device info
@@ -66,10 +75,19 @@ class GAMDevice(Base):
     @property
     def port_count(self):
         """Get total number of ports based on model"""
-        if "12" in self.model:
-            return 12
-        elif "24" in self.model:
+        import re
+        # Extract number from model string (e.g., GAM-4-C -> 4, GAM-12-M -> 12)
+        match = re.search(r'GAM-(\d+)-', self.model, re.IGNORECASE)
+        if match:
+            return int(match.group(1))
+
+        # Fallback for older logic
+        if "24" in self.model:
             return 24
+        elif "12" in self.model:
+            return 12
+        elif "4" in self.model:
+            return 4
         return 0
 
     @property

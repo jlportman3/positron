@@ -1,0 +1,99 @@
+-- *****************************************************************
+-- HTTPS-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-HTTPS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamHttpsMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of HTTPS"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 47 }
+
+
+gamHttpsMibObjects OBJECT IDENTIFIER
+    ::= { gamHttpsMib 1 }
+
+gamHttpsConfig OBJECT IDENTIFIER
+    ::= { gamHttpsMibObjects 2 }
+
+gamHttpsConfigGlobals OBJECT IDENTIFIER
+    ::= { gamHttpsConfig 1 }
+
+gamHttpsConfigGlobalsHttpsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global mode of HTTPS. true is to enable the functions of HTTPS and
+         false is to disable it."
+    ::= { gamHttpsConfigGlobals 1 }
+
+gamHttpsConfigGlobalsRedirectToHttps OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The flag is to enable/disable the automatic redirection from HTTP to
+         HTTPS. true is to enable the redirection and false is to disable the
+         redirection."
+    ::= { gamHttpsConfigGlobals 2 }
+
+gamHttpsConfigGlobalsHttpMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global mode of HTTP. true is to enable the functions of HTTP and false
+         is to disable it. Setting this to false will effectively disable HTTP
+         port 80 (if RedirectToHttps is also false)."
+    ::= { gamHttpsConfigGlobals 3 }
+
+gamHttpsMibConformance OBJECT IDENTIFIER
+    ::= { gamHttpsMib 2 }
+
+gamHttpsMibCompliances OBJECT IDENTIFIER
+    ::= { gamHttpsMibConformance 1 }
+
+gamHttpsMibGroups OBJECT IDENTIFIER
+    ::= { gamHttpsMibConformance 2 }
+
+gamHttpsConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamHttpsConfigGlobalsHttpsMode,
+                  gamHttpsConfigGlobalsRedirectToHttps,
+                  gamHttpsConfigGlobalsHttpMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamHttpsMibGroups 1 }
+
+gamHttpsMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamHttpsConfigGlobalsInfoGroup }
+
+    ::= { gamHttpsMibCompliances 1 }
+
+END

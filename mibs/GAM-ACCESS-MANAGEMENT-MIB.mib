@@ -1,0 +1,663 @@
+-- *****************************************************************
+-- ACCESS-MANAGEMENT-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-ACCESS-MANAGEMENT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMRowEditorState FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamAccessManagementMib MODULE-IDENTITY
+    LAST-UPDATED "201705220000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the Access Management MIB"
+    REVISION    "201705220000Z"
+    DESCRIPTION
+        "Remove definition of unused OID ...AccessManagementStatus"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 51 }
+
+
+gamAccessManagementMibObjects OBJECT IDENTIFIER
+    ::= { gamAccessManagementMib 1 }
+
+gamAccessManagementConfig OBJECT IDENTIFIER
+    ::= { gamAccessManagementMibObjects 2 }
+
+gamAccessManagementConfigGlobals OBJECT IDENTIFIER
+    ::= { gamAccessManagementConfig 1 }
+
+gamAccessManagementConfigGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the Access Management global functionality."
+    ::= { gamAccessManagementConfigGlobals 1 }
+
+gamAccessManagementConfigIpv4Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAccessManagementConfigIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing Access Management per IPv4 basis"
+    ::= { gamAccessManagementConfig 2 }
+
+gamAccessManagementConfigIpv4Entry OBJECT-TYPE
+    SYNTAX      GAMAccessManagementConfigIpv4Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamAccessManagementConfigIpv4AccessIndex }
+    ::= { gamAccessManagementConfigIpv4Table 1 }
+
+GAMAccessManagementConfigIpv4Entry ::= SEQUENCE {
+    gamAccessManagementConfigIpv4AccessIndex     Integer32,
+    gamAccessManagementConfigIpv4VlanId          GAMUnsigned16,
+    gamAccessManagementConfigIpv4StartAddress    IpAddress,
+    gamAccessManagementConfigIpv4EndAddress      IpAddress,
+    gamAccessManagementConfigIpv4WebServices     TruthValue,
+    gamAccessManagementConfigIpv4SnmpServices    TruthValue,
+    gamAccessManagementConfigIpv4TelnetServices  TruthValue,
+    gamAccessManagementConfigIpv4Action          GAMRowEditorState
+}
+
+gamAccessManagementConfigIpv4AccessIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Index for Access Management IPv4/IPv6 table."
+    ::= { gamAccessManagementConfigIpv4Entry 1 }
+
+gamAccessManagementConfigIpv4VlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ID of specific VLAN interface that Access Management should take
+         effect for IPv4."
+    ::= { gamAccessManagementConfigIpv4Entry 2 }
+
+gamAccessManagementConfigIpv4StartAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The starting IPv4 address of the range that Access Management performs
+         checking."
+    ::= { gamAccessManagementConfigIpv4Entry 3 }
+
+gamAccessManagementConfigIpv4EndAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ending IPv4 address of the range that Access Management performs
+         checking."
+    ::= { gamAccessManagementConfigIpv4Entry 4 }
+
+gamAccessManagementConfigIpv4WebServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable HTTP and HTTPS functionality via Access Management. At
+         least one of WebServices/SnmpServices/TelnetServices has to be enabled
+         for a specific AccessIndex in Access Management IPv4 table."
+    ::= { gamAccessManagementConfigIpv4Entry 5 }
+
+gamAccessManagementConfigIpv4SnmpServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable SNMP functionality via Access Management. At least one
+         of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv4 table."
+    ::= { gamAccessManagementConfigIpv4Entry 6 }
+
+gamAccessManagementConfigIpv4TelnetServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable TELNET/SSH functionality via Access Management. At least
+         one of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv4 table."
+    ::= { gamAccessManagementConfigIpv4Entry 7 }
+
+gamAccessManagementConfigIpv4Action OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamAccessManagementConfigIpv4Entry 100 }
+
+gamAccessManagementConfigIpv4TableRowEditor OBJECT IDENTIFIER
+    ::= { gamAccessManagementConfig 3 }
+
+gamAccessManagementConfigIpv4TableRowEditorAccessIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Index for Access Management IPv4/IPv6 table."
+    ::= { gamAccessManagementConfigIpv4TableRowEditor 1 }
+
+gamAccessManagementConfigIpv4TableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ID of specific VLAN interface that Access Management should take
+         effect for IPv4."
+    ::= { gamAccessManagementConfigIpv4TableRowEditor 2 }
+
+gamAccessManagementConfigIpv4TableRowEditorStartAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The starting IPv4 address of the range that Access Management performs
+         checking."
+    ::= { gamAccessManagementConfigIpv4TableRowEditor 3 }
+
+gamAccessManagementConfigIpv4TableRowEditorEndAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ending IPv4 address of the range that Access Management performs
+         checking."
+    ::= { gamAccessManagementConfigIpv4TableRowEditor 4 }
+
+gamAccessManagementConfigIpv4TableRowEditorWebServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable HTTP and HTTPS functionality via Access Management. At
+         least one of WebServices/SnmpServices/TelnetServices has to be enabled
+         for a specific AccessIndex in Access Management IPv4 table."
+    ::= { gamAccessManagementConfigIpv4TableRowEditor 5 }
+
+gamAccessManagementConfigIpv4TableRowEditorSnmpServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable SNMP functionality via Access Management. At least one
+         of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv4 table."
+    ::= { gamAccessManagementConfigIpv4TableRowEditor 6 }
+
+gamAccessManagementConfigIpv4TableRowEditorTelnetServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable TELNET/SSH functionality via Access Management. At least
+         one of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv4 table."
+    ::= { gamAccessManagementConfigIpv4TableRowEditor 7 }
+
+gamAccessManagementConfigIpv4TableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamAccessManagementConfigIpv4TableRowEditor 100 }
+
+gamAccessManagementConfigIpv6Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAccessManagementConfigIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing Access Management per IPv6 basis"
+    ::= { gamAccessManagementConfig 4 }
+
+gamAccessManagementConfigIpv6Entry OBJECT-TYPE
+    SYNTAX      GAMAccessManagementConfigIpv6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamAccessManagementConfigIpv6AccessIndex }
+    ::= { gamAccessManagementConfigIpv6Table 1 }
+
+GAMAccessManagementConfigIpv6Entry ::= SEQUENCE {
+    gamAccessManagementConfigIpv6AccessIndex     Integer32,
+    gamAccessManagementConfigIpv6VlanId          GAMUnsigned16,
+    gamAccessManagementConfigIpv6StartAddress    InetAddressIPv6,
+    gamAccessManagementConfigIpv6EndAddress      InetAddressIPv6,
+    gamAccessManagementConfigIpv6WebServices     TruthValue,
+    gamAccessManagementConfigIpv6SnmpServices    TruthValue,
+    gamAccessManagementConfigIpv6TelnetServices  TruthValue,
+    gamAccessManagementConfigIpv6Action          GAMRowEditorState
+}
+
+gamAccessManagementConfigIpv6AccessIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Index for Access Management IPv4/IPv6 table."
+    ::= { gamAccessManagementConfigIpv6Entry 1 }
+
+gamAccessManagementConfigIpv6VlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ID of specific VLAN interface that Access Management should take
+         effect for IPv6."
+    ::= { gamAccessManagementConfigIpv6Entry 2 }
+
+gamAccessManagementConfigIpv6StartAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The starting IPv6 address of the range that Access Management performs
+         checking."
+    ::= { gamAccessManagementConfigIpv6Entry 3 }
+
+gamAccessManagementConfigIpv6EndAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ending IPv6 address of the range that Access Management performs
+         checking."
+    ::= { gamAccessManagementConfigIpv6Entry 4 }
+
+gamAccessManagementConfigIpv6WebServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable HTTP and HTTPS functionality via Access Management. At
+         least one of WebServices/SnmpServices/TelnetServices has to be enabled
+         for a specific AccessIndex in Access Management IPv6 table."
+    ::= { gamAccessManagementConfigIpv6Entry 5 }
+
+gamAccessManagementConfigIpv6SnmpServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable SNMP functionality via Access Management. At least one
+         of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv6 table."
+    ::= { gamAccessManagementConfigIpv6Entry 6 }
+
+gamAccessManagementConfigIpv6TelnetServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable TELNET/SSH functionality via Access Management. At least
+         one of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv6 table."
+    ::= { gamAccessManagementConfigIpv6Entry 7 }
+
+gamAccessManagementConfigIpv6Action OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamAccessManagementConfigIpv6Entry 100 }
+
+gamAccessManagementConfigIpv6TableRowEditor OBJECT IDENTIFIER
+    ::= { gamAccessManagementConfig 5 }
+
+gamAccessManagementConfigIpv6TableRowEditorAccessIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Index for Access Management IPv4/IPv6 table."
+    ::= { gamAccessManagementConfigIpv6TableRowEditor 1 }
+
+gamAccessManagementConfigIpv6TableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ID of specific VLAN interface that Access Management should take
+         effect for IPv6."
+    ::= { gamAccessManagementConfigIpv6TableRowEditor 2 }
+
+gamAccessManagementConfigIpv6TableRowEditorStartAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The starting IPv6 address of the range that Access Management performs
+         checking."
+    ::= { gamAccessManagementConfigIpv6TableRowEditor 3 }
+
+gamAccessManagementConfigIpv6TableRowEditorEndAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ending IPv6 address of the range that Access Management performs
+         checking."
+    ::= { gamAccessManagementConfigIpv6TableRowEditor 4 }
+
+gamAccessManagementConfigIpv6TableRowEditorWebServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable HTTP and HTTPS functionality via Access Management. At
+         least one of WebServices/SnmpServices/TelnetServices has to be enabled
+         for a specific AccessIndex in Access Management IPv6 table."
+    ::= { gamAccessManagementConfigIpv6TableRowEditor 5 }
+
+gamAccessManagementConfigIpv6TableRowEditorSnmpServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable SNMP functionality via Access Management. At least one
+         of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv6 table."
+    ::= { gamAccessManagementConfigIpv6TableRowEditor 6 }
+
+gamAccessManagementConfigIpv6TableRowEditorTelnetServices OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable TELNET/SSH functionality via Access Management. At least
+         one of WebServices/SnmpServices/TelnetServices has to be enabled for a
+         specific AccessIndex in Access Management IPv6 table."
+    ::= { gamAccessManagementConfigIpv6TableRowEditor 7 }
+
+gamAccessManagementConfigIpv6TableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamAccessManagementConfigIpv6TableRowEditor 100 }
+
+gamAccessManagementControl OBJECT IDENTIFIER
+    ::= { gamAccessManagementMibObjects 4 }
+
+gamAccessManagementControlStatistics OBJECT IDENTIFIER
+    ::= { gamAccessManagementControl 1 }
+
+gamAccessManagementControlStatisticsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "To trigger the control action (only) when TRUE."
+    ::= { gamAccessManagementControlStatistics 1 }
+
+gamAccessManagementStatistics OBJECT IDENTIFIER
+    ::= { gamAccessManagementMibObjects 5 }
+
+gamAccessManagementStatisticsHttpReceivedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received count of frames via HTTP."
+    ::= { gamAccessManagementStatistics 1 }
+
+gamAccessManagementStatisticsHttpAllowedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Permit count of frames via HTTP."
+    ::= { gamAccessManagementStatistics 2 }
+
+gamAccessManagementStatisticsHttpDiscardedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Drop count of frames via HTTP."
+    ::= { gamAccessManagementStatistics 3 }
+
+gamAccessManagementStatisticsHttpsReceivedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received count of frames via HTTPS."
+    ::= { gamAccessManagementStatistics 4 }
+
+gamAccessManagementStatisticsHttpsAllowedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Permit count of frames via HTTPS."
+    ::= { gamAccessManagementStatistics 5 }
+
+gamAccessManagementStatisticsHttpsDiscardedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Drop count of frames via HTTPS."
+    ::= { gamAccessManagementStatistics 6 }
+
+gamAccessManagementStatisticsSnmpReceivedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received count of frames via SNMP."
+    ::= { gamAccessManagementStatistics 7 }
+
+gamAccessManagementStatisticsSnmpAllowedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Permit count of frames via SNMP."
+    ::= { gamAccessManagementStatistics 8 }
+
+gamAccessManagementStatisticsSnmpDiscardedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Drop count of frames via SNMP."
+    ::= { gamAccessManagementStatistics 9 }
+
+gamAccessManagementStatisticsTelnetReceivedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received count of frames via TELNET."
+    ::= { gamAccessManagementStatistics 10 }
+
+gamAccessManagementStatisticsTelnetAllowedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Permit count of frames via TELNET."
+    ::= { gamAccessManagementStatistics 11 }
+
+gamAccessManagementStatisticsTelnetDiscardedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Drop count of frames via TELNET."
+    ::= { gamAccessManagementStatistics 12 }
+
+gamAccessManagementStatisticsSshReceivedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received count of frames via SSH."
+    ::= { gamAccessManagementStatistics 13 }
+
+gamAccessManagementStatisticsSshAllowedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Permit count of frames via SSH."
+    ::= { gamAccessManagementStatistics 14 }
+
+gamAccessManagementStatisticsSshDiscardedPkts OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Drop count of frames via SSH."
+    ::= { gamAccessManagementStatistics 15 }
+
+gamAccessManagementMibConformance OBJECT IDENTIFIER
+    ::= { gamAccessManagementMib 2 }
+
+gamAccessManagementMibCompliances OBJECT IDENTIFIER
+    ::= { gamAccessManagementMibConformance 1 }
+
+gamAccessManagementMibGroups OBJECT IDENTIFIER
+    ::= { gamAccessManagementMibConformance 2 }
+
+gamAccessManagementConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAccessManagementConfigGlobalsAdminState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAccessManagementMibGroups 1 }
+
+gamAccessManagementConfigIpv4TableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAccessManagementConfigIpv4AccessIndex,
+                  gamAccessManagementConfigIpv4VlanId,
+                  gamAccessManagementConfigIpv4StartAddress,
+                  gamAccessManagementConfigIpv4EndAddress,
+                  gamAccessManagementConfigIpv4WebServices,
+                  gamAccessManagementConfigIpv4SnmpServices,
+                  gamAccessManagementConfigIpv4TelnetServices,
+                  gamAccessManagementConfigIpv4Action }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAccessManagementMibGroups 2 }
+
+gamAccessManagementConfigIpv4TableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamAccessManagementConfigIpv4TableRowEditorAccessIndex,
+                  gamAccessManagementConfigIpv4TableRowEditorVlanId,
+                  gamAccessManagementConfigIpv4TableRowEditorStartAddress,
+                  gamAccessManagementConfigIpv4TableRowEditorEndAddress,
+                  gamAccessManagementConfigIpv4TableRowEditorWebServices,
+                  gamAccessManagementConfigIpv4TableRowEditorSnmpServices,
+                  gamAccessManagementConfigIpv4TableRowEditorTelnetServices,
+                  gamAccessManagementConfigIpv4TableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAccessManagementMibGroups 3 }
+
+gamAccessManagementConfigIpv6TableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAccessManagementConfigIpv6AccessIndex,
+                  gamAccessManagementConfigIpv6VlanId,
+                  gamAccessManagementConfigIpv6StartAddress,
+                  gamAccessManagementConfigIpv6EndAddress,
+                  gamAccessManagementConfigIpv6WebServices,
+                  gamAccessManagementConfigIpv6SnmpServices,
+                  gamAccessManagementConfigIpv6TelnetServices,
+                  gamAccessManagementConfigIpv6Action }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAccessManagementMibGroups 4 }
+
+gamAccessManagementConfigIpv6TableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamAccessManagementConfigIpv6TableRowEditorAccessIndex,
+                  gamAccessManagementConfigIpv6TableRowEditorVlanId,
+                  gamAccessManagementConfigIpv6TableRowEditorStartAddress,
+                  gamAccessManagementConfigIpv6TableRowEditorEndAddress,
+                  gamAccessManagementConfigIpv6TableRowEditorWebServices,
+                  gamAccessManagementConfigIpv6TableRowEditorSnmpServices,
+                  gamAccessManagementConfigIpv6TableRowEditorTelnetServices,
+                  gamAccessManagementConfigIpv6TableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAccessManagementMibGroups 5 }
+
+gamAccessManagementControlStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAccessManagementControlStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAccessManagementMibGroups 6 }
+
+gamAccessManagementStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAccessManagementStatisticsHttpReceivedPkts,
+                  gamAccessManagementStatisticsHttpAllowedPkts,
+                  gamAccessManagementStatisticsHttpDiscardedPkts,
+                  gamAccessManagementStatisticsHttpsReceivedPkts,
+                  gamAccessManagementStatisticsHttpsAllowedPkts,
+                  gamAccessManagementStatisticsHttpsDiscardedPkts,
+                  gamAccessManagementStatisticsSnmpReceivedPkts,
+                  gamAccessManagementStatisticsSnmpAllowedPkts,
+                  gamAccessManagementStatisticsSnmpDiscardedPkts,
+                  gamAccessManagementStatisticsTelnetReceivedPkts,
+                  gamAccessManagementStatisticsTelnetAllowedPkts,
+                  gamAccessManagementStatisticsTelnetDiscardedPkts,
+                  gamAccessManagementStatisticsSshReceivedPkts,
+                  gamAccessManagementStatisticsSshAllowedPkts,
+                  gamAccessManagementStatisticsSshDiscardedPkts }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAccessManagementMibGroups 7 }
+
+gamAccessManagementMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamAccessManagementConfigGlobalsInfoGroup,
+                       gamAccessManagementConfigIpv4TableInfoGroup,
+                       gamAccessManagementConfigIpv4TableRowEditorInfoGroup,
+                       gamAccessManagementConfigIpv6TableInfoGroup,
+                       gamAccessManagementConfigIpv6TableRowEditorInfoGroup,
+                       gamAccessManagementControlStatisticsInfoGroup,
+                       gamAccessManagementStatisticsInfoGroup }
+
+    ::= { gamAccessManagementMibCompliances 1 }
+
+END

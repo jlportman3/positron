@@ -1,0 +1,205 @@
+-- *****************************************************************
+-- PVLAN-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-PVLAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMPortList FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamPvlanMib MODULE-IDENTITY
+    LAST-UPDATED "201407160000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the Private VLAN MIB"
+    REVISION    "201407160000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 23 }
+
+
+gamPvlanMibObjects OBJECT IDENTIFIER
+    ::= { gamPvlanMib 1 }
+
+gamPvlanCapabilities OBJECT IDENTIFIER
+    ::= { gamPvlanMibObjects 1 }
+
+gamPvlanCapabilitiesHasVlanMembershipMgmt OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The capability to support PVLAN membership configuration by the device."
+    ::= { gamPvlanCapabilities 1 }
+
+gamPvlanCapabilitiesVlanIdMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum VLAN ID of PVLAN membership configuration supported by the
+         device."
+    ::= { gamPvlanCapabilities 2 }
+
+gamPvlanCapabilitiesVlanIdMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum VLAN ID of PVLAN membership configuration supported by the
+         device."
+    ::= { gamPvlanCapabilities 3 }
+
+gamPvlanConfig OBJECT IDENTIFIER
+    ::= { gamPvlanMibObjects 2 }
+
+gamPvlanConfigInterface OBJECT IDENTIFIER
+    ::= { gamPvlanConfig 1 }
+
+gamPvlanConfigInterfaceVlanMembershipTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPvlanConfigInterfaceVlanMembershipEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing Private VLAN VLAN membership entries."
+    ::= { gamPvlanConfigInterface 1 }
+
+gamPvlanConfigInterfaceVlanMembershipEntry OBJECT-TYPE
+    SYNTAX      GAMPvlanConfigInterfaceVlanMembershipEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamPvlanConfigInterfaceVlanMembershipPvlanIndex }
+    ::= { gamPvlanConfigInterfaceVlanMembershipTable 1 }
+
+GAMPvlanConfigInterfaceVlanMembershipEntry ::= SEQUENCE {
+    gamPvlanConfigInterfaceVlanMembershipPvlanIndex  Unsigned32,
+    gamPvlanConfigInterfaceVlanMembershipPortList    GAMPortList,
+    gamPvlanConfigInterfaceVlanMembershipAction      GAMRowEditorState
+}
+
+gamPvlanConfigInterfaceVlanMembershipPvlanIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Configuration index of the Private VLAN membership table."
+    ::= { gamPvlanConfigInterfaceVlanMembershipEntry 1 }
+
+gamPvlanConfigInterfaceVlanMembershipPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote the memberships of the specific Private VLAN
+         configuration."
+    ::= { gamPvlanConfigInterfaceVlanMembershipEntry 2 }
+
+gamPvlanConfigInterfaceVlanMembershipAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamPvlanConfigInterfaceVlanMembershipEntry 100 }
+
+gamPvlanConfigInterfacePortIsolatationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPvlanConfigInterfacePortIsolatationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing Private VLAN port isolation entries."
+    ::= { gamPvlanConfigInterface 3 }
+
+gamPvlanConfigInterfacePortIsolatationEntry OBJECT-TYPE
+    SYNTAX      GAMPvlanConfigInterfacePortIsolatationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamPvlanConfigInterfacePortIsolatationPortIndex }
+    ::= { gamPvlanConfigInterfacePortIsolatationTable 1 }
+
+GAMPvlanConfigInterfacePortIsolatationEntry ::= SEQUENCE {
+    gamPvlanConfigInterfacePortIsolatationPortIndex  GAMInterfaceIndex,
+    gamPvlanConfigInterfacePortIsolatationEnabled    TruthValue
+}
+
+gamPvlanConfigInterfacePortIsolatationPortIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the Private VLAN port isolation."
+    ::= { gamPvlanConfigInterfacePortIsolatationEntry 1 }
+
+gamPvlanConfigInterfacePortIsolatationEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the Private VLAN isolation functionality."
+    ::= { gamPvlanConfigInterfacePortIsolatationEntry 2 }
+
+gamPvlanMibConformance OBJECT IDENTIFIER
+    ::= { gamPvlanMib 2 }
+
+gamPvlanMibCompliances OBJECT IDENTIFIER
+    ::= { gamPvlanMibConformance 1 }
+
+gamPvlanMibGroups OBJECT IDENTIFIER
+    ::= { gamPvlanMibConformance 2 }
+
+gamPvlanCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPvlanCapabilitiesHasVlanMembershipMgmt,
+                  gamPvlanCapabilitiesVlanIdMax,
+                  gamPvlanCapabilitiesVlanIdMin }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPvlanMibGroups 1 }
+
+gamPvlanConfigInterfaceVlanMembershipTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPvlanConfigInterfaceVlanMembershipPvlanIndex,
+                  gamPvlanConfigInterfaceVlanMembershipPortList,
+                  gamPvlanConfigInterfaceVlanMembershipAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPvlanMibGroups 2 }
+
+gamPvlanConfigInterfacePortIsolatationTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPvlanConfigInterfacePortIsolatationPortIndex,
+                  gamPvlanConfigInterfacePortIsolatationEnabled }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPvlanMibGroups 3 }
+
+gamPvlanMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamPvlanCapabilitiesInfoGroup,
+                       gamPvlanConfigInterfaceVlanMembershipTableInfoGroup,
+                       gamPvlanConfigInterfacePortIsolatationTableInfoGroup }
+
+    ::= { gamPvlanMibCompliances 1 }
+
+END

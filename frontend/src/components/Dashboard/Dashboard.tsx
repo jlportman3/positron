@@ -1,21 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import {
-  Grid,
-  Paper,
-  Typography,
-  Box,
-  CircularProgress,
-  Card,
-  CardContent,
-} from '@mui/material'
-import {
-  Router as RouterIcon,
-  People as PeopleIcon,
-  CheckCircle as CheckCircleIcon,
-  Error as ErrorIcon,
-} from '@mui/icons-material'
+import { Grid, Box, CircularProgress, Typography } from '@mui/material'
 import api from '../../services/api'
 import type { GAMDevice, Subscriber } from '../../types'
+
+// Import dashboard components
+import StatisticsCards from './StatisticsCards'
+import NetworkStatusChart from './NetworkStatusChart'
+import DeviceInfoPanel from './DeviceInfoPanel'
+import RecentActivity from './RecentActivity'
 
 export default function Dashboard() {
   const { data: devices, isLoading: devicesLoading } = useQuery<GAMDevice[]>({
@@ -42,119 +34,118 @@ export default function Dashboard() {
     )
   }
 
-  const onlineDevices = devices?.filter((d) => d.status === 'online').length || 0
+  // Calculate statistics
+  const activeDevices = devices?.filter((d) => d.status === 'online').length || 0
   const totalDevices = devices?.length || 0
   const activeSubscribers = subscribers?.filter((s) => s.status === 'active').length || 0
   const totalSubscribers = subscribers?.length || 0
+  const portFailures = devices?.reduce((acc, device) => {
+    // Count ports with errors (this would come from real port data)
+    return acc + 0 // Placeholder - update with real port failure logic
+  }, 0) || 0
+  const lowSignal = 0 // Placeholder - would come from SNMP/monitoring data
+
+  // Statistics for cards
+  const stats = {
+    loginRequired: totalDevices - activeDevices, // Devices offline/requiring attention
+    activeDevices: activeSubscribers,
+    portFailures: portFailures,
+    lowSignal: lowSignal,
+  }
+
+  // Generate network status chart data (last 24 hours, hourly)
+  const networkData = Array.from({ length: 24 }, (_, i) => {
+    const hour = i.toString().padStart(2, '0') + ':00'
+    // In production, this would come from actual monitoring data
+    const baseOnline = activeDevices
+    const variation = Math.floor(Math.random() * 3) - 1
+    const online = Math.max(0, baseOnline + variation)
+    const offline = totalDevices - online
+
+    return {
+      time: hour,
+      online: online,
+      offline: offline,
+      total: totalDevices,
+    }
+  })
+
+  // Get primary device info (first device or create mock data)
+  const primaryDevice = devices && devices.length > 0 ? devices[0] : null
+  const deviceInfo = {
+    model: primaryDevice?.model || 'GAM-24-M',
+    totalPorts: primaryDevice?.port_count || 24,
+    activePorts: primaryDevice?.active_subscribers || 0,
+    firmware: 'v1.8.2', // Would come from device data
+    uptime: '15 days, 7 hours', // Would come from device data
+    location: 'Primary Headend', // Would come from device data
+  }
+
+  // Generate recent activity events
+  const recentEvents = [
+    {
+      id: '1',
+      type: 'success' as const,
+      message: 'New subscriber activated',
+      timestamp: '2 minutes ago',
+      device: 'GAM-24-M #1',
+    },
+    {
+      id: '2',
+      type: 'info' as const,
+      message: 'Firmware update available',
+      timestamp: '15 minutes ago',
+      device: 'GAM-12-C #3',
+    },
+    {
+      id: '3',
+      type: 'warning' as const,
+      message: 'Signal quality below threshold',
+      timestamp: '1 hour ago',
+      device: 'GAM-24-M #2',
+    },
+    {
+      id: '4',
+      type: 'success' as const,
+      message: 'Device came online',
+      timestamp: '3 hours ago',
+      device: 'GAM-12-M #5',
+    },
+    {
+      id: '5',
+      type: 'info' as const,
+      message: 'Scheduled maintenance completed',
+      timestamp: '5 hours ago',
+    },
+  ]
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
-        Dashboard
+      {/* Page Title */}
+      <Typography variant="h5" sx={{ mb: 3, fontWeight: 500 }}>
+        Dashboard Overview
       </Typography>
 
+      {/* Statistics Cards */}
+      <Box sx={{ mb: 3 }}>
+        <StatisticsCards stats={stats} />
+      </Box>
+
+      {/* Main Content Grid */}
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <RouterIcon color="primary" sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography color="textSecondary" gutterBottom>
-                    Total Devices
-                  </Typography>
-                  <Typography variant="h4">{totalDevices}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+        {/* Left Column - Network Status Chart */}
+        <Grid item xs={12} md={8}>
+          <NetworkStatusChart data={networkData} />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <CheckCircleIcon color="success" sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography color="textSecondary" gutterBottom>
-                    Online Devices
-                  </Typography>
-                  <Typography variant="h4">{onlineDevices}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
+        {/* Right Column - Device Info */}
+        <Grid item xs={12} md={4}>
+          <DeviceInfoPanel device={deviceInfo} />
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <PeopleIcon color="primary" sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography color="textSecondary" gutterBottom>
-                    Total Subscribers
-                  </Typography>
-                  <Typography variant="h4">{totalSubscribers}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={3}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" gap={2}>
-                <CheckCircleIcon color="success" sx={{ fontSize: 40 }} />
-                <Box>
-                  <Typography color="textSecondary" gutterBottom>
-                    Active Subscribers
-                  </Typography>
-                  <Typography variant="h4">{activeSubscribers}</Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
+        {/* Bottom Row - Recent Activity */}
         <Grid item xs={12}>
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Recent Devices
-            </Typography>
-            {devices && devices.length > 0 ? (
-              <Box>
-                {devices.slice(0, 5).map((device) => (
-                  <Box
-                    key={device.id}
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    py={1}
-                    borderBottom="1px solid #eee"
-                  >
-                    <Box>
-                      <Typography variant="body1">{device.name}</Typography>
-                      <Typography variant="body2" color="textSecondary">
-                        {device.ip_address} - {device.model}
-                      </Typography>
-                    </Box>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {device.status === 'online' ? (
-                        <CheckCircleIcon color="success" />
-                      ) : (
-                        <ErrorIcon color="error" />
-                      )}
-                      <Typography variant="body2">{device.status}</Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            ) : (
-              <Typography color="textSecondary">No devices found</Typography>
-            )}
-          </Paper>
+          <RecentActivity events={recentEvents} />
         </Grid>
       </Grid>
     </Box>

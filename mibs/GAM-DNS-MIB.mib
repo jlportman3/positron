@@ -1,0 +1,395 @@
+-- *****************************************************************
+-- DNS-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-DNS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMIpAddress FROM GAM-TC
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamDnsMib MODULE-IDENTITY
+    LAST-UPDATED "201411250000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the DNS MIB."
+    REVISION    "201411250000Z"
+    DESCRIPTION
+        "Support multiple DNS server settings and default domain name
+         configuration."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { gamMgmt 53 }
+
+
+GAMDnsConfigType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the configured DNS server type or default
+         domain name type."
+    SYNTAX      INTEGER { none(0), static(1), dhcpv4(2),
+                          dhcpv4Vlan(3), dhcpv6(4), dhcpv6Vlan(5) }
+
+gamDnsMibObjects OBJECT IDENTIFIER
+    ::= { gamDnsMib 1 }
+
+gamDnsCapabilities OBJECT IDENTIFIER
+    ::= { gamDnsMibObjects 1 }
+
+gamDnsCapabilitiesSupportDhcp4ConfigServer OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The capability to support setting DNS server from DHCPv4."
+    ::= { gamDnsCapabilities 1 }
+
+gamDnsCapabilitiesSupportDhcp6ConfigServer OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The capability to support setting DNS server from DHCPv6."
+    ::= { gamDnsCapabilities 2 }
+
+gamDnsCapabilitiesSupportDefaultDomainName OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The capability to support setting default domain name."
+    ::= { gamDnsCapabilities 3 }
+
+gamDnsCapabilitiesSupportDhcp4DomainName OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The capability to support setting default domain name from DHCPv4."
+    ::= { gamDnsCapabilities 4 }
+
+gamDnsCapabilitiesSupportDhcp6DomainName OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The capability to support setting default domain name from DHCPv6."
+    ::= { gamDnsCapabilities 5 }
+
+gamDnsConfig OBJECT IDENTIFIER
+    ::= { gamDnsMibObjects 2 }
+
+gamDnsConfigGlobals OBJECT IDENTIFIER
+    ::= { gamDnsConfig 1 }
+
+gamDnsConfigGlobalsProxy OBJECT IDENTIFIER
+    ::= { gamDnsConfigGlobals 1 }
+
+gamDnsConfigGlobalsProxyAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the DNS-Proxy feature."
+    ::= { gamDnsConfigGlobalsProxy 1 }
+
+gamDnsConfigGlobalsDefaultDomainName OBJECT IDENTIFIER
+    ::= { gamDnsConfigGlobals 2 }
+
+gamDnsConfigGlobalsDefaultDomainNameSetting OBJECT-TYPE
+    SYNTAX      GAMDnsConfigType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Default domain name administrative type. A default domain name is used
+         as the suffix of the given name in DNS lookup. none(0) means no default
+         domain name is used and thus no domain name suffix is appended in DNS
+         lookup. static(1) means the default domain name will be manually set.
+         dhcpv4(2) means default domain name will be determined by DHCPv4
+         discovery. dhcpv4Vlan(3) means default domain name will be determined
+         by DHCPv4 discovery on a specific IP VLAN interface. dhcpv6(4) means
+         default domain name will be determined by DHCPv6 discovery.
+         dhcpv6Vlan(5) means default domain name will be determined by DHCPv6
+         discovery on a specific IP VLAN interface."
+    ::= { gamDnsConfigGlobalsDefaultDomainName 1 }
+
+gamDnsConfigGlobalsDefaultDomainNameStaticName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The static default domain name. It will be a reference only when
+         DomainNameSetting is static(1)."
+    ::= { gamDnsConfigGlobalsDefaultDomainName 2 }
+
+gamDnsConfigGlobalsDefaultDomainNameDhcpIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ifIndex of specific VLAN interface that default domain name will be
+         retrieved from DHCP. It will be a reference only when DomainNameSetting
+         is either dhcpv4Vlan(3) or dhcpv6Vlan(5)."
+    ::= { gamDnsConfigGlobalsDefaultDomainName 3 }
+
+gamDnsConfigServers OBJECT IDENTIFIER
+    ::= { gamDnsConfig 2 }
+
+gamDnsConfigServersTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDnsConfigServersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing DNS server configuration."
+    ::= { gamDnsConfigServers 1 }
+
+gamDnsConfigServersEntry OBJECT-TYPE
+    SYNTAX      GAMDnsConfigServersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamDnsConfigServersPrecedence }
+    ::= { gamDnsConfigServersTable 1 }
+
+GAMDnsConfigServersEntry ::= SEQUENCE {
+    gamDnsConfigServersPrecedence       Unsigned32,
+    gamDnsConfigServersSetting          GAMDnsConfigType,
+    gamDnsConfigServersStaticIpAddress  GAMIpAddress,
+    gamDnsConfigServersStaticIfIndex    GAMInterfaceIndex
+}
+
+gamDnsConfigServersPrecedence OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..3)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Table index also represents the precedence in selecting target DNS
+         server: less index value means higher priority in round-robin
+         selection. Only one server is working at a time, that is when the
+         chosen server is active, system marks the designated server as target
+         and stops selection. When the active server becomes inactive, system
+         starts another round of selection starting from the next available
+         server setting."
+    ::= { gamDnsConfigServersEntry 1 }
+
+gamDnsConfigServersSetting OBJECT-TYPE
+    SYNTAX      GAMDnsConfigType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Per precedence DNS server administrative type. The DNS server setting
+         will be used in DNS lookup. none(0) denotes no DNS server is used and
+         thus domain name lookup always fails. static(1) denotes the DNS server
+         address will be manually set, in either IPv4 or IPv6 address form.
+         dhcpv4(2) denotes DNS server address will be determined by DHCPv4
+         discovery. dhcpv4Vlan(3) denotes DNS server address will be determined
+         by DHCPv4 discovery on a specifc IP VLAN interface. dhcpv6(4) denotes
+         DNS server address will be determined by DHCPv6 discovery.
+         dhcpv6Vlan(5) denotes DNS server address will be determined by DHCPv6
+         discovery on a specifc IP VLAN interface."
+    ::= { gamDnsConfigServersEntry 2 }
+
+gamDnsConfigServersStaticIpAddress OBJECT-TYPE
+    SYNTAX      GAMIpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The static DNS server address. It will be a reference only when Setting
+         is static(1)"
+    ::= { gamDnsConfigServersEntry 3 }
+
+gamDnsConfigServersStaticIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ifIndex of specific VLAN interface that DNS server address will be
+         retrieved from DHCP and where the server resides. It will be a
+         reference only when Setting is either dhcpv4Vlan(3) or dhcpv6Vlan(5)."
+    ::= { gamDnsConfigServersEntry 4 }
+
+gamDnsStatus OBJECT IDENTIFIER
+    ::= { gamDnsMibObjects 3 }
+
+gamDnsStatusGlobals OBJECT IDENTIFIER
+    ::= { gamDnsStatus 1 }
+
+gamDnsStatusGlobalsDefaultDomainName OBJECT IDENTIFIER
+    ::= { gamDnsStatusGlobals 1 }
+
+gamDnsStatusGlobalsDefaultDomainNameSuffix OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The suffix of the given domain name used in DNS lookup."
+    ::= { gamDnsStatusGlobalsDefaultDomainName 1 }
+
+gamDnsStatusServers OBJECT IDENTIFIER
+    ::= { gamDnsStatus 2 }
+
+gamDnsStatusServersTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDnsStatusServersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying DNS server information."
+    ::= { gamDnsStatusServers 1 }
+
+gamDnsStatusServersEntry OBJECT-TYPE
+    SYNTAX      GAMDnsStatusServersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamDnsStatusServersPrecedence }
+    ::= { gamDnsStatusServersTable 1 }
+
+GAMDnsStatusServersEntry ::= SEQUENCE {
+    gamDnsStatusServersPrecedence        Unsigned32,
+    gamDnsStatusServersConfiguredType    GAMDnsConfigType,
+    gamDnsStatusServersReferenceIfIndex  GAMInterfaceIndex,
+    gamDnsStatusServersIpAddress         GAMIpAddress
+}
+
+gamDnsStatusServersPrecedence OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..3)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Table index also represents the precedence in selecting target DNS
+         server: less index value means higher priority in round-robin
+         selection. Only one server is working at a time, that is when the
+         chosen server is active, system marks the designated server as target
+         and stops selection. When the active server becomes inactive, system
+         starts another round of selection starting from the next available
+         server setting."
+    ::= { gamDnsStatusServersEntry 1 }
+
+gamDnsStatusServersConfiguredType OBJECT-TYPE
+    SYNTAX      GAMDnsConfigType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Per precedence DNS server configured type.none(0) denotes no DNS server
+         is used and thus domain name lookup always fails. static(1) denotes the
+         DNS server address will be manually set, in either IPv4 or IPv6 address
+         form. dhcpv4(2) denotes DNS server address will be determined by DHCPv4
+         discovery. dhcpv4Vlan(3) denotes DNS server address will be determined
+         by DHCPv4 discovery on a specifc IP VLAN interface. dhcpv6(4) denotes
+         DNS server address will be determined by DHCPv6 discovery.
+         dhcpv6Vlan(5) denotes DNS server address will be determined by DHCPv6
+         discovery on a specifc IP VLAN interface."
+    ::= { gamDnsStatusServersEntry 2 }
+
+gamDnsStatusServersReferenceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ifIndex of specific VLAN interface that DNS server address will be
+         retrieved from DHCP and where the server resides. It will be a
+         reference only when Setting is either dhcpv4Vlan(3) or dhcpv6Vlan(5)."
+    ::= { gamDnsStatusServersEntry 3 }
+
+gamDnsStatusServersIpAddress OBJECT-TYPE
+    SYNTAX      GAMIpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The DNS server address that will be used for domain name lookup."
+    ::= { gamDnsStatusServersEntry 4 }
+
+gamDnsMibConformance OBJECT IDENTIFIER
+    ::= { gamDnsMib 2 }
+
+gamDnsMibCompliances OBJECT IDENTIFIER
+    ::= { gamDnsMibConformance 1 }
+
+gamDnsMibGroups OBJECT IDENTIFIER
+    ::= { gamDnsMibConformance 2 }
+
+gamDnsCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDnsCapabilitiesSupportDhcp4ConfigServer,
+                  gamDnsCapabilitiesSupportDhcp6ConfigServer,
+                  gamDnsCapabilitiesSupportDefaultDomainName,
+                  gamDnsCapabilitiesSupportDhcp4DomainName,
+                  gamDnsCapabilitiesSupportDhcp6DomainName }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDnsMibGroups 1 }
+
+gamDnsConfigGlobalsProxyInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDnsConfigGlobalsProxyAdminState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDnsMibGroups 2 }
+
+gamDnsConfigGlobalsDefaultDomainNameInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDnsConfigGlobalsDefaultDomainNameSetting,
+                  gamDnsConfigGlobalsDefaultDomainNameStaticName,
+                  gamDnsConfigGlobalsDefaultDomainNameDhcpIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDnsMibGroups 3 }
+
+gamDnsConfigServersTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDnsConfigServersPrecedence,
+                  gamDnsConfigServersSetting,
+                  gamDnsConfigServersStaticIpAddress,
+                  gamDnsConfigServersStaticIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDnsMibGroups 4 }
+
+gamDnsStatusGlobalsDefaultDomainNameInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDnsStatusGlobalsDefaultDomainNameSuffix }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDnsMibGroups 5 }
+
+gamDnsStatusServersTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDnsStatusServersPrecedence,
+                  gamDnsStatusServersConfiguredType,
+                  gamDnsStatusServersReferenceIfIndex,
+                  gamDnsStatusServersIpAddress }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDnsMibGroups 6 }
+
+gamDnsMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamDnsCapabilitiesInfoGroup,
+                       gamDnsConfigGlobalsProxyInfoGroup,
+                       gamDnsConfigGlobalsDefaultDomainNameInfoGroup,
+                       gamDnsConfigServersTableInfoGroup,
+                       gamDnsStatusGlobalsDefaultDomainNameInfoGroup,
+                       gamDnsStatusServersTableInfoGroup }
+
+    ::= { gamDnsMibCompliances 1 }
+
+END

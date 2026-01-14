@@ -1,0 +1,170 @@
+-- *****************************************************************
+-- GVRP-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-GVRP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamGvrpMib MODULE-IDENTITY
+    LAST-UPDATED "201703130000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "Private GVRP MIB."
+    REVISION    "201703130000Z"
+    DESCRIPTION
+        "Updated the description of GVRP Max VLANs parameter."
+    REVISION    "201510220000Z"
+    DESCRIPTION
+        "Fixed a typo and updated the description of GVRP Max VLANs value."
+    REVISION    "201411110000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 89 }
+
+
+gamGvrpMibObjects OBJECT IDENTIFIER
+    ::= { gamGvrpMib 1 }
+
+gamGvrpConfig OBJECT IDENTIFIER
+    ::= { gamGvrpMibObjects 2 }
+
+gamGvrpConfigGlobals OBJECT IDENTIFIER
+    ::= { gamGvrpConfig 1 }
+
+gamGvrpConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global enabling of GVRP protocol. TRUE - enable GVRP, FALSE - disable
+         GVRP."
+    ::= { gamGvrpConfigGlobals 1 }
+
+gamGvrpConfigGlobalsJoinTime OBJECT-TYPE
+    SYNTAX      Integer32 (1..20)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Join-time protocol parameter. Range [1,20] centi seconds."
+    ::= { gamGvrpConfigGlobals 2 }
+
+gamGvrpConfigGlobalsLeaveTime OBJECT-TYPE
+    SYNTAX      Integer32 (60..300)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Leave-time protocol parameter. Range [60,300] centi seconds."
+    ::= { gamGvrpConfigGlobals 3 }
+
+gamGvrpConfigGlobalsLeaveAllTime OBJECT-TYPE
+    SYNTAX      Integer32 (1000..5000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Leave-all-time protocol parameter. Range [1000,5000] centi seconds."
+    ::= { gamGvrpConfigGlobals 4 }
+
+gamGvrpConfigGlobalsMaxVlans OBJECT-TYPE
+    SYNTAX      Integer32 (1..4094)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of VLANs simultaneously supported by GVRP. Range is
+         [1,4094]. GVRP must be disabled in order to change this parameter."
+    ::= { gamGvrpConfigGlobals 5 }
+
+gamGvrpConfigInterface OBJECT IDENTIFIER
+    ::= { gamGvrpConfig 2 }
+
+gamGvrpConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGvrpConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of interface configuration"
+    ::= { gamGvrpConfigInterface 1 }
+
+gamGvrpConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMGvrpConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each interface has a set of parameters"
+    INDEX       { gamGvrpConfigInterfaceIfIndex }
+    ::= { gamGvrpConfigInterfaceTable 1 }
+
+GAMGvrpConfigInterfaceEntry ::= SEQUENCE {
+    gamGvrpConfigInterfaceIfIndex  GAMInterfaceIndex,
+    gamGvrpConfigInterfaceMode     TruthValue
+}
+
+gamGvrpConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The index of logical interface."
+    ::= { gamGvrpConfigInterfaceEntry 1 }
+
+gamGvrpConfigInterfaceMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Per-port mode of GVRP. TRUE - enable GVRP on the port, FALSE - disable
+         GVRP on the port."
+    ::= { gamGvrpConfigInterfaceEntry 2 }
+
+gamGvrpMibConformance OBJECT IDENTIFIER
+    ::= { gamGvrpMib 2 }
+
+gamGvrpMibCompliances OBJECT IDENTIFIER
+    ::= { gamGvrpMibConformance 1 }
+
+gamGvrpMibGroups OBJECT IDENTIFIER
+    ::= { gamGvrpMibConformance 2 }
+
+gamGvrpConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGvrpConfigGlobalsMode,
+                  gamGvrpConfigGlobalsJoinTime,
+                  gamGvrpConfigGlobalsLeaveTime,
+                  gamGvrpConfigGlobalsLeaveAllTime,
+                  gamGvrpConfigGlobalsMaxVlans }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGvrpMibGroups 1 }
+
+gamGvrpConfigInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGvrpConfigInterfaceIfIndex,
+                  gamGvrpConfigInterfaceMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGvrpMibGroups 2 }
+
+gamGvrpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamGvrpConfigGlobalsInfoGroup,
+                       gamGvrpConfigInterfaceTableInfoGroup }
+
+    ::= { gamGvrpMibCompliances 1 }
+
+END

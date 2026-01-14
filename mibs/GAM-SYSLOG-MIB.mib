@@ -1,0 +1,387 @@
+-- *****************************************************************
+-- SYSLOG-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-SYSLOG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInetAddress FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    DateAndTime FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamSyslogMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private MIB for Syslog"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 37 }
+
+
+GAMSyslogFacilityType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The syslog facility level."
+    SYNTAX      INTEGER { kern(0), user(1), mail(2), daemon(3),
+                          auth(4), syslog(5), lpr(6), news(7),
+                          uucp(8), cron(9), authpriv(10), ftp(11),
+                          ntp(12), audit(13), alert(14), clock(15),
+                          local0(16), local1(17), local2(18),
+                          local3(19), local4(20), local5(21),
+                          local6(22), local7(23) }
+
+GAMSyslogLevelType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The syslog severity level."
+    SYNTAX      INTEGER { error(3), warning(4), notice(5),
+                          informational(6), all(8) }
+
+gamSyslogMibObjects OBJECT IDENTIFIER
+    ::= { gamSyslogMib 1 }
+
+gamSyslogConfig OBJECT IDENTIFIER
+    ::= { gamSyslogMibObjects 2 }
+
+gamSyslogConfigServer OBJECT IDENTIFIER
+    ::= { gamSyslogConfig 1 }
+
+gamSyslogConfigServerMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the syslog server mode operation. When the mode operation is
+         enabled, the syslog message will send out to syslog server."
+    ::= { gamSyslogConfigServer 1 }
+
+gamSyslogConfigServerAddress OBJECT-TYPE
+    SYNTAX      GAMInetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The domain name of 1st syslog server."
+    ::= { gamSyslogConfigServer 2 }
+
+gamSyslogConfigServerLevel OBJECT-TYPE
+    SYNTAX      GAMSyslogLevelType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates what level of message will send to 1st syslog server. For
+         example, the error level will send the specific messages which severity
+         code is less or equal than error(3), the warning level will send the
+         specific messages which severity code is less or equal than warning(4),
+         the notice level will send the specific messages which severity code is
+         less or equal than notice(5), the informational level will send the
+         specific messages which severity code is less or equal than
+         informational(6) and the enumeration option of all(8) isn't used in
+         this case."
+    ::= { gamSyslogConfigServer 3 }
+
+gamSyslogConfigServerFacility OBJECT-TYPE
+    SYNTAX      GAMSyslogFacilityType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates what facility number that will be given to the messages sent
+         to the 1st syslog server."
+    ::= { gamSyslogConfigServer 4 }
+
+gamSyslogConfigServerAddress2 OBJECT-TYPE
+    SYNTAX      GAMInetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The domain name of 2nd syslog server (can be left blank if unused)."
+    ::= { gamSyslogConfigServer 12 }
+
+gamSyslogConfigServerLevel2 OBJECT-TYPE
+    SYNTAX      GAMSyslogLevelType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates what level of message will send to 2nd syslog server. For
+         example, the error level will send the specific messages which severity
+         code is less or equal than error(3), the warning level will send the
+         specific messages which severity code is less or equal than warning(4),
+         the notice level will send the specific messages which severity code is
+         less or equal than notice(5), the informational level will send the
+         specific messages which severity code is less or equal than
+         informational(6) and the enumeration option of all(8) isn't used in
+         this case."
+    ::= { gamSyslogConfigServer 13 }
+
+gamSyslogConfigServerFacility2 OBJECT-TYPE
+    SYNTAX      GAMSyslogFacilityType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates what facility number that will be given to the messages sent
+         to the 2nd syslog server."
+    ::= { gamSyslogConfigServer 14 }
+
+gamSyslogConfigServerAddress3 OBJECT-TYPE
+    SYNTAX      GAMInetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The domain name of 3rd syslog server (can be left blank if unused)."
+    ::= { gamSyslogConfigServer 22 }
+
+gamSyslogConfigServerLevel3 OBJECT-TYPE
+    SYNTAX      GAMSyslogLevelType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates what level of message will send to 3rd syslog server. For
+         example, the error level will send the specific messages which severity
+         code is less or equal than error(3), the warning level will send the
+         specific messages which severity code is less or equal than warning(4),
+         the notice level will send the specific messages which severity code is
+         less or equal than notice(5), the informational level will send the
+         specific messages which severity code is less or equal than
+         informational(6) and the enumeration option of all(8) isn't used in
+         this case."
+    ::= { gamSyslogConfigServer 23 }
+
+gamSyslogConfigServerFacility3 OBJECT-TYPE
+    SYNTAX      GAMSyslogFacilityType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates what facility number that will be given to the messages sent
+         to the 3rd syslog server."
+    ::= { gamSyslogConfigServer 24 }
+
+gamSyslogConfigServerAddress4 OBJECT-TYPE
+    SYNTAX      GAMInetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The domain name of 4th syslog server (can be left blank if unused)."
+    ::= { gamSyslogConfigServer 32 }
+
+gamSyslogConfigServerLevel4 OBJECT-TYPE
+    SYNTAX      GAMSyslogLevelType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates what level of message will send to 4th syslog server. For
+         example, the error level will send the specific messages which severity
+         code is less or equal than error(3), the warning level will send the
+         specific messages which severity code is less or equal than warning(4),
+         the notice level will send the specific messages which severity code is
+         less or equal than notice(5), the informational level will send the
+         specific messages which severity code is less or equal than
+         informational(6) and the enumeration option of all(8) isn't used in
+         this case."
+    ::= { gamSyslogConfigServer 33 }
+
+gamSyslogConfigServerFacility4 OBJECT-TYPE
+    SYNTAX      GAMSyslogFacilityType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates what facility number that will be given to the messages sent
+         to the 4th syslog server."
+    ::= { gamSyslogConfigServer 34 }
+
+gamSyslogStatus OBJECT IDENTIFIER
+    ::= { gamSyslogMibObjects 3 }
+
+gamSyslogStatusHistoryTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMSyslogStatusHistoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The syslog history table."
+    ::= { gamSyslogStatus 1 }
+
+gamSyslogStatusHistoryEntry OBJECT-TYPE
+    SYNTAX      GAMSyslogStatusHistoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains a set of parameters."
+    INDEX       { gamSyslogStatusHistorySwitchId,
+                  gamSyslogStatusHistoryMsgId }
+    ::= { gamSyslogStatusHistoryTable 1 }
+
+GAMSyslogStatusHistoryEntry ::= SEQUENCE {
+    gamSyslogStatusHistorySwitchId      Integer32,
+    gamSyslogStatusHistoryMsgId         Integer32,
+    gamSyslogStatusHistoryMsgLevel      GAMSyslogLevelType,
+    gamSyslogStatusHistoryMsgTimeStamp  DateAndTime,
+    gamSyslogStatusHistoryMsgText       GAMDisplayString
+}
+
+gamSyslogStatusHistorySwitchId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of switch. For non-stackable switch, the valid value
+         is limited to 1. "
+    ::= { gamSyslogStatusHistoryEntry 1 }
+
+gamSyslogStatusHistoryMsgId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of Syslog message."
+    ::= { gamSyslogStatusHistoryEntry 2 }
+
+gamSyslogStatusHistoryMsgLevel OBJECT-TYPE
+    SYNTAX      GAMSyslogLevelType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The severity level of the system log message. Note that enumeration
+         option of all(8) isn't used in this case."
+    ::= { gamSyslogStatusHistoryEntry 3 }
+
+gamSyslogStatusHistoryMsgTimeStamp OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The value of sysUpTime when this message was generated."
+    ::= { gamSyslogStatusHistoryEntry 4 }
+
+gamSyslogStatusHistoryMsgText OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..4000))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The detailed context of the system log message."
+    ::= { gamSyslogStatusHistoryEntry 5 }
+
+gamSyslogControl OBJECT IDENTIFIER
+    ::= { gamSyslogMibObjects 4 }
+
+gamSyslogControlHistoryTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMSyslogControlHistoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The syslog history clear table."
+    ::= { gamSyslogControl 1 }
+
+gamSyslogControlHistoryEntry OBJECT-TYPE
+    SYNTAX      GAMSyslogControlHistoryEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains a set of parameters."
+    INDEX       { gamSyslogControlHistorySwitchId,
+                  gamSyslogControlHistoryClearLevel }
+    ::= { gamSyslogControlHistoryTable 1 }
+
+GAMSyslogControlHistoryEntry ::= SEQUENCE {
+    gamSyslogControlHistorySwitchId    Integer32,
+    gamSyslogControlHistoryClearLevel  GAMSyslogLevelType,
+    gamSyslogControlHistoryClear       TruthValue
+}
+
+gamSyslogControlHistorySwitchId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of switch. For non-stackable switch, the valid value
+         is limited to 1. For stackable switch, value 0 means the action is
+         applied to all switches."
+    ::= { gamSyslogControlHistoryEntry 1 }
+
+gamSyslogControlHistoryClearLevel OBJECT-TYPE
+    SYNTAX      GAMSyslogLevelType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Indicates which level of message want to clear."
+    ::= { gamSyslogControlHistoryEntry 2 }
+
+gamSyslogControlHistoryClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Clear syslog history by setting to true."
+    ::= { gamSyslogControlHistoryEntry 3 }
+
+gamSyslogMibConformance OBJECT IDENTIFIER
+    ::= { gamSyslogMib 2 }
+
+gamSyslogMibCompliances OBJECT IDENTIFIER
+    ::= { gamSyslogMibConformance 1 }
+
+gamSyslogMibGroups OBJECT IDENTIFIER
+    ::= { gamSyslogMibConformance 2 }
+
+gamSyslogConfigServerInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSyslogConfigServerMode,
+                  gamSyslogConfigServerAddress,
+                  gamSyslogConfigServerLevel,
+                  gamSyslogConfigServerFacility,
+                  gamSyslogConfigServerAddress2,
+                  gamSyslogConfigServerLevel2,
+                  gamSyslogConfigServerFacility2,
+                  gamSyslogConfigServerAddress3,
+                  gamSyslogConfigServerLevel3,
+                  gamSyslogConfigServerFacility3,
+                  gamSyslogConfigServerAddress4,
+                  gamSyslogConfigServerLevel4,
+                  gamSyslogConfigServerFacility4 }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSyslogMibGroups 1 }
+
+gamSyslogStatusHistoryTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSyslogStatusHistorySwitchId,
+                  gamSyslogStatusHistoryMsgId,
+                  gamSyslogStatusHistoryMsgLevel,
+                  gamSyslogStatusHistoryMsgTimeStamp,
+                  gamSyslogStatusHistoryMsgText }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSyslogMibGroups 2 }
+
+gamSyslogControlHistoryTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSyslogControlHistorySwitchId,
+                  gamSyslogControlHistoryClearLevel,
+                  gamSyslogControlHistoryClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSyslogMibGroups 3 }
+
+gamSyslogMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamSyslogConfigServerInfoGroup,
+                       gamSyslogStatusHistoryTableInfoGroup,
+                       gamSyslogControlHistoryTableInfoGroup }
+
+    ::= { gamSyslogMibCompliances 1 }
+
+END

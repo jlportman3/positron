@@ -1,0 +1,554 @@
+-- *****************************************************************
+-- TT-LOOP-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-TT-LOOP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamTtLoopMib MODULE-IDENTITY
+    LAST-UPDATED "201711270000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private Traffic Test Loop MIB that can be used for RFC2544
+         and Y.1564 (remote end) testing"
+    REVISION    "201711270000Z"
+    DESCRIPTION
+        "Editorial."
+    REVISION    "201705160000Z"
+    DESCRIPTION
+        "Support for Latching Loopback function: Added
+         vtssTtLoopConfigLlInstanceTable and vtssTtLoopStatusLlInstanceTable."
+    REVISION    "201411140000Z"
+    DESCRIPTION
+        "Refactoring regarding Ifindex. Domain element is removed and flow
+         element is changed to be Ifindex containing domain"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 128 }
+
+
+GAMTtLoopInstanceAdminState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance Administrative State."
+    SYNTAX      INTEGER { adminDisabled(0), adminEnabled(1) }
+
+GAMTtLoopInstanceDirection ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance direction."
+    SYNTAX      INTEGER { facility(0), terminal(1) }
+
+GAMTtLoopInstanceOperState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance Operational State."
+    SYNTAX      INTEGER { operDown(0), operUp(1), operInact(2) }
+
+GAMTtLoopInstanceSubscriber ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance subscriber mode."
+    SYNTAX      INTEGER { none(0), all(1), untagged(2), vid(3) }
+
+GAMTtLoopInstanceType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The instance type."
+    SYNTAX      INTEGER { macLoop(0), oamLoop(1) }
+
+gamTtLoopMibObjects OBJECT IDENTIFIER
+    ::= { gamTtLoopMib 1 }
+
+gamTtLoopCapabilities OBJECT IDENTIFIER
+    ::= { gamTtLoopMibObjects 1 }
+
+gamTtLoopCapabilitiesInstanceMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Max number of TT_LOOP instance"
+    ::= { gamTtLoopCapabilities 1 }
+
+gamTtLoopCapabilitiesNameMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Max length of instance name"
+    ::= { gamTtLoopCapabilities 2 }
+
+gamTtLoopConfig OBJECT IDENTIFIER
+    ::= { gamTtLoopMibObjects 2 }
+
+gamTtLoopConfigInstanceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMTtLoopConfigInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of created instance configuration parameters"
+    ::= { gamTtLoopConfig 1 }
+
+gamTtLoopConfigInstanceEntry OBJECT-TYPE
+    SYNTAX      GAMTtLoopConfigInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a created instance configuration parameters. Not all parameters
+         can be changed"
+    INDEX       { gamTtLoopConfigInstanceId }
+    ::= { gamTtLoopConfigInstanceTable 1 }
+
+GAMTtLoopConfigInstanceEntry ::= SEQUENCE {
+    gamTtLoopConfigInstanceId          Integer32,
+    gamTtLoopConfigInstanceName        GAMDisplayString,
+    gamTtLoopConfigInstanceType        GAMTtLoopInstanceType,
+    gamTtLoopConfigInstanceDirection   GAMTtLoopInstanceDirection,
+    gamTtLoopConfigInstanceFlow        GAMInterfaceIndex,
+    gamTtLoopConfigInstancePort        GAMInterfaceIndex,
+    gamTtLoopConfigInstanceLevel       Unsigned32,
+    gamTtLoopConfigInstanceSubscriber  GAMTtLoopInstanceSubscriber,
+    gamTtLoopConfigInstanceAdminState  GAMTtLoopInstanceAdminState,
+    gamTtLoopConfigInstanceAction      GAMRowEditorState
+}
+
+gamTtLoopConfigInstanceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The TT_LOOP instance ID"
+    ::= { gamTtLoopConfigInstanceEntry 1 }
+
+gamTtLoopConfigInstanceName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Instance name"
+    ::= { gamTtLoopConfigInstanceEntry 2 }
+
+gamTtLoopConfigInstanceType OBJECT-TYPE
+    SYNTAX      GAMTtLoopInstanceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Traffic Test loop type. Currently OAM Loop is only supported in EVC
+         domain."
+    ::= { gamTtLoopConfigInstanceEntry 3 }
+
+gamTtLoopConfigInstanceDirection OBJECT-TYPE
+    SYNTAX      GAMTtLoopInstanceDirection
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The instance direction."
+    ::= { gamTtLoopConfigInstanceEntry 4 }
+
+gamTtLoopConfigInstanceFlow OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The interface index of the flow instance."
+    ::= { gamTtLoopConfigInstanceEntry 6 }
+
+gamTtLoopConfigInstancePort OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The instance residence port."
+    ::= { gamTtLoopConfigInstanceEntry 7 }
+
+gamTtLoopConfigInstanceLevel OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The instance MEG level"
+    ::= { gamTtLoopConfigInstanceEntry 8 }
+
+gamTtLoopConfigInstanceSubscriber OBJECT-TYPE
+    SYNTAX      GAMTtLoopInstanceSubscriber
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The EVC OAM loop subscriber mode"
+    ::= { gamTtLoopConfigInstanceEntry 9 }
+
+gamTtLoopConfigInstanceAdminState OBJECT-TYPE
+    SYNTAX      GAMTtLoopInstanceAdminState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The instance Administrative state."
+    ::= { gamTtLoopConfigInstanceEntry 10 }
+
+gamTtLoopConfigInstanceAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamTtLoopConfigInstanceEntry 100 }
+
+gamTtLoopConfigInstanceRowEditor OBJECT IDENTIFIER
+    ::= { gamTtLoopConfig 2 }
+
+gamTtLoopConfigInstanceRowEditorId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The TT_LOOP instance ID"
+    ::= { gamTtLoopConfigInstanceRowEditor 1 }
+
+gamTtLoopConfigInstanceRowEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Instance name"
+    ::= { gamTtLoopConfigInstanceRowEditor 2 }
+
+gamTtLoopConfigInstanceRowEditorType OBJECT-TYPE
+    SYNTAX      GAMTtLoopInstanceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Traffic Test loop type. Currently OAM Loop is only supported in EVC
+         domain."
+    ::= { gamTtLoopConfigInstanceRowEditor 3 }
+
+gamTtLoopConfigInstanceRowEditorDirection OBJECT-TYPE
+    SYNTAX      GAMTtLoopInstanceDirection
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The instance direction."
+    ::= { gamTtLoopConfigInstanceRowEditor 4 }
+
+gamTtLoopConfigInstanceRowEditorFlow OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The interface index of the flow instance."
+    ::= { gamTtLoopConfigInstanceRowEditor 6 }
+
+gamTtLoopConfigInstanceRowEditorPort OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The instance residence port."
+    ::= { gamTtLoopConfigInstanceRowEditor 7 }
+
+gamTtLoopConfigInstanceRowEditorLevel OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The instance MEG level"
+    ::= { gamTtLoopConfigInstanceRowEditor 8 }
+
+gamTtLoopConfigInstanceRowEditorSubscriber OBJECT-TYPE
+    SYNTAX      GAMTtLoopInstanceSubscriber
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The EVC OAM loop subscriber mode"
+    ::= { gamTtLoopConfigInstanceRowEditor 9 }
+
+gamTtLoopConfigInstanceRowEditorAdminState OBJECT-TYPE
+    SYNTAX      GAMTtLoopInstanceAdminState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The instance Administrative state."
+    ::= { gamTtLoopConfigInstanceRowEditor 10 }
+
+gamTtLoopConfigInstanceRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamTtLoopConfigInstanceRowEditor 100 }
+
+gamTtLoopConfigLlInstanceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMTtLoopConfigLlInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table enables the user to configure the MEF 46 Latching Loopback
+         parameters for the created TT-LOOP instances. Entries in the table will
+         be automatically created or deleted when the corresponding entry in the
+         ttLoopConfigInstanceTable is created or deleted, but the content will
+         only be valid if the Latching Loopback function has been enabled for
+         the TT-LOOP instance."
+    ::= { gamTtLoopConfig 3 }
+
+gamTtLoopConfigLlInstanceEntry OBJECT-TYPE
+    SYNTAX      GAMTtLoopConfigLlInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This entry contains all configurable Latching Loopback parameters for a
+         TT-LOOP instance."
+    INDEX       { gamTtLoopConfigLlInstanceId }
+    ::= { gamTtLoopConfigLlInstanceTable 1 }
+
+GAMTtLoopConfigLlInstanceEntry ::= SEQUENCE {
+    gamTtLoopConfigLlInstanceId         Integer32,
+    gamTtLoopConfigLlInstanceEnable     TruthValue,
+    gamTtLoopConfigLlInstanceMepId      Unsigned32,
+    gamTtLoopConfigLlInstanceSourceMac  MacAddress,
+    gamTtLoopConfigLlInstanceAction     GAMRowEditorState
+}
+
+gamTtLoopConfigLlInstanceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The TT_LOOP instance ID"
+    ::= { gamTtLoopConfigLlInstanceEntry 1 }
+
+gamTtLoopConfigLlInstanceEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Setting this object to 'true' enables the use of Latching Loopback
+         functionality for an existing TT-LOOP instance. If the value is 'false'
+         the instance works as a static TT-LOOP instance."
+    ::= { gamTtLoopConfigLlInstanceEntry 2 }
+
+gamTtLoopConfigLlInstanceMepId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The MEP ID associated with the TT-LOOP instance. If the Latching
+         Loopback function is enabled using the 'Enable' object above then this
+         value must be a valid MEP ID value. The MEP may however not be created
+         yet."
+    ::= { gamTtLoopConfigLlInstanceEntry 3 }
+
+gamTtLoopConfigLlInstanceSourceMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The source MAC address from which to accept Latching Loopback Message
+         (LLM) PDUs for this instance."
+    ::= { gamTtLoopConfigLlInstanceEntry 4 }
+
+gamTtLoopConfigLlInstanceAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamTtLoopConfigLlInstanceEntry 100 }
+
+gamTtLoopStatus OBJECT IDENTIFIER
+    ::= { gamTtLoopMibObjects 3 }
+
+gamTtLoopStatusInstanceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMTtLoopStatusInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of created instance status"
+    ::= { gamTtLoopStatus 1 }
+
+gamTtLoopStatusInstanceEntry OBJECT-TYPE
+    SYNTAX      GAMTtLoopStatusInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a created instance status"
+    INDEX       { gamTtLoopStatusInstanceId }
+    ::= { gamTtLoopStatusInstanceTable 1 }
+
+GAMTtLoopStatusInstanceEntry ::= SEQUENCE {
+    gamTtLoopStatusInstanceId         Integer32,
+    gamTtLoopStatusInstanceOperState  GAMTtLoopInstanceOperState
+}
+
+gamTtLoopStatusInstanceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The TT_LOOP instance ID"
+    ::= { gamTtLoopStatusInstanceEntry 1 }
+
+gamTtLoopStatusInstanceOperState OBJECT-TYPE
+    SYNTAX      GAMTtLoopInstanceOperState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The instance Operational state."
+    ::= { gamTtLoopStatusInstanceEntry 2 }
+
+gamTtLoopStatusLlInstanceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMTtLoopStatusLlInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table enables the user to view the MEF 46 Latching Loopback status
+         for the created TT-LOOP instances. Entries in the table will be
+         automatically created or deleted when the corresponding entry in the
+         ttLoopConfigInstanceTable is created or deleted."
+    ::= { gamTtLoopStatus 2 }
+
+gamTtLoopStatusLlInstanceEntry OBJECT-TYPE
+    SYNTAX      GAMTtLoopStatusLlInstanceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This entry contains all status Latching Loopback parameters for a
+         TT-LOOP instance."
+    INDEX       { gamTtLoopStatusLlInstanceId }
+    ::= { gamTtLoopStatusLlInstanceTable 1 }
+
+GAMTtLoopStatusLlInstanceEntry ::= SEQUENCE {
+    gamTtLoopStatusLlInstanceId              Integer32,
+    gamTtLoopStatusLlInstanceRemainExpTimer  Unsigned32
+}
+
+gamTtLoopStatusLlInstanceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The TT_LOOP instance ID"
+    ::= { gamTtLoopStatusLlInstanceEntry 1 }
+
+gamTtLoopStatusLlInstanceRemainExpTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The remaining expiry timer in seconds. This value is non-zero if the
+         operational state of the Latching Loopback instance is 'up' (aka.
+         'Active' in MEF 46 terms). It will be zero if the operational state is
+         not 'up' or if Latching Loopback has not been enabled for the TT-LOOP
+         instance."
+    ::= { gamTtLoopStatusLlInstanceEntry 2 }
+
+gamTtLoopMibConformance OBJECT IDENTIFIER
+    ::= { gamTtLoopMib 2 }
+
+gamTtLoopMibCompliances OBJECT IDENTIFIER
+    ::= { gamTtLoopMibConformance 1 }
+
+gamTtLoopMibGroups OBJECT IDENTIFIER
+    ::= { gamTtLoopMibConformance 2 }
+
+gamTtLoopCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamTtLoopCapabilitiesInstanceMax,
+                  gamTtLoopCapabilitiesNameMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamTtLoopMibGroups 1 }
+
+gamTtLoopConfigInstanceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamTtLoopConfigInstanceId,
+                  gamTtLoopConfigInstanceName,
+                  gamTtLoopConfigInstanceType,
+                  gamTtLoopConfigInstanceDirection,
+                  gamTtLoopConfigInstanceFlow,
+                  gamTtLoopConfigInstancePort,
+                  gamTtLoopConfigInstanceLevel,
+                  gamTtLoopConfigInstanceSubscriber,
+                  gamTtLoopConfigInstanceAdminState,
+                  gamTtLoopConfigInstanceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamTtLoopMibGroups 2 }
+
+gamTtLoopConfigInstanceRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamTtLoopConfigInstanceRowEditorId,
+                  gamTtLoopConfigInstanceRowEditorName,
+                  gamTtLoopConfigInstanceRowEditorType,
+                  gamTtLoopConfigInstanceRowEditorDirection,
+                  gamTtLoopConfigInstanceRowEditorFlow,
+                  gamTtLoopConfigInstanceRowEditorPort,
+                  gamTtLoopConfigInstanceRowEditorLevel,
+                  gamTtLoopConfigInstanceRowEditorSubscriber,
+                  gamTtLoopConfigInstanceRowEditorAdminState,
+                  gamTtLoopConfigInstanceRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamTtLoopMibGroups 3 }
+
+gamTtLoopConfigLlInstanceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamTtLoopConfigLlInstanceId,
+                  gamTtLoopConfigLlInstanceEnable,
+                  gamTtLoopConfigLlInstanceMepId,
+                  gamTtLoopConfigLlInstanceSourceMac,
+                  gamTtLoopConfigLlInstanceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamTtLoopMibGroups 4 }
+
+gamTtLoopStatusInstanceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamTtLoopStatusInstanceId,
+                  gamTtLoopStatusInstanceOperState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamTtLoopMibGroups 5 }
+
+gamTtLoopStatusLlInstanceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamTtLoopStatusLlInstanceId,
+                  gamTtLoopStatusLlInstanceRemainExpTimer }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamTtLoopMibGroups 6 }
+
+gamTtLoopMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamTtLoopCapabilitiesInfoGroup,
+                       gamTtLoopConfigInstanceTableInfoGroup,
+                       gamTtLoopConfigInstanceRowEditorInfoGroup,
+                       gamTtLoopConfigLlInstanceTableInfoGroup,
+                       gamTtLoopStatusInstanceTableInfoGroup,
+                       gamTtLoopStatusLlInstanceTableInfoGroup }
+
+    ::= { gamTtLoopMibCompliances 1 }
+
+END

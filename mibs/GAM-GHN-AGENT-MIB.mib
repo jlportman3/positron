@@ -1,0 +1,4240 @@
+-- *****************************************************************
+-- GHN-AGENT-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-GHN-AGENT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMMacStringList FROM GAM-TC
+    GAMPortStatusSpeed FROM GAM-TC
+    GAMRfc5517Mode FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    GAMVlanListQuarter FROM GAM-TC
+    Counter64 FROM SNMPv2-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamGhnAgentMib MODULE-IDENTITY
+    LAST-UPDATED "201908270000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of G.hn agent"
+    REVISION    "201908270000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 143 }
+
+
+GAMGhnAgentCPEType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the G.hn CPE types."
+    SYNTAX      INTEGER { gamPortM(0), g1000m(1), g1000c(2),
+                          g1001m(3), g1001c(4), gamCPEcoax(5),
+                          gamCPEmimo(6), sfpMethod(7), g1001mr(8),
+                          g1001cr(9), gamPortC(10), g1001mp(11),
+                          g2002m(12), g1002c(13), g2002mPlus(14),
+                          g1002cPlus(15), g1002m(16), g1002mPlus(17),
+                          unknown(255) }
+
+GAMGhnAgentEndpointState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the G.hn endpoint state."
+    SYNTAX      INTEGER { notDetected(0), ok(1),
+                          quarantinedWrongPort(2),
+                          quarantinedUnknownMAC(3) }
+
+GAMGhnAgentFwUpgradeStage ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the G.hn device firmware upgrade stage."
+    SYNTAX      INTEGER { initial(0), downloading(1), validating(2),
+                          upgrading(3) }
+
+GAMGhnAgentPoeInputSrcMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the PoE output status."
+    SYNTAX      INTEGER { notFeedingPower(0), feedingPower(1), na(2) }
+
+GAMGhnAgentPoeMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the PoE modes."
+    SYNTAX      INTEGER { dot3af(0), dot3at(1), na(2) }
+
+GAMGhnAgentPoeModeCtrl ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the PoE mode controls. 'Disable' will disable
+         PoE. 'Enable' will enable PoE (if available). 'Force' enable PoE when
+         the downstream equipment request 802.3at even if the endpoint source is
+         802.3af."
+    SYNTAX      INTEGER { disable(0), enable(1), force(2) }
+
+GAMGhnAgentPortMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the G.hn port mode."
+    SYNTAX      INTEGER { coax(0), mimo(1), siso(2), unknown(255) }
+
+GAMGhnAgentPortRole ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the G.hn port role."
+    SYNTAX      INTEGER { domainMaster(0), endpoint(1) }
+
+GAMGhnAgentSubscriberModel ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the G.hn global subscriber model."
+    SYNTAX      INTEGER { endpointAware(0), portAware(1) }
+
+GAMGhnAgentVectorBoostState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the G.hn VectorBoost(tm) state."
+    SYNTAX      INTEGER { unavailable(0), measuring(1), ready(2) }
+
+gamGhnAgentMibObjects OBJECT IDENTIFIER
+    ::= { gamGhnAgentMib 1 }
+
+gamGhnAgentConfig OBJECT IDENTIFIER
+    ::= { gamGhnAgentMibObjects 2 }
+
+gamGhnAgentConfigGlobal OBJECT IDENTIFIER
+    ::= { gamGhnAgentConfig 5 }
+
+gamGhnAgentConfigGlobalSubscriberModel OBJECT-TYPE
+    SYNTAX      GAMGhnAgentSubscriberModel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The subscriber model. In endpoint-aware, each subscriber is assigned an
+         endpoint. In port-aware, each subscriber is assigned a port. Only for
+         MIMO/SISO systems (GAM-xx-M) support port-aware model."
+    ::= { gamGhnAgentConfigGlobal 10 }
+
+gamGhnAgentConfigGlobalDefaultNNIIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The default NNI port to use for double-tagging when the subscriber NNI
+         is set to 'default'."
+    ::= { gamGhnAgentConfigGlobal 20 }
+
+gamGhnAgentConfigGlobalEndpointAutoFwUpgrade OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable endpoints automatic firmware upgrade."
+    ::= { gamGhnAgentConfigGlobal 30 }
+
+gamGhnAgentConfigGlobalShelfSeedIndex OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set base extented seed index when multiple shelves share the same
+         binder."
+    ::= { gamGhnAgentConfigGlobal 40 }
+
+gamGhnAgentConfigPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn port config."
+    ::= { gamGhnAgentConfig 10 }
+
+gamGhnAgentConfigPortEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row set the G.hn port config."
+    INDEX       { gamGhnAgentConfigPortPortIfIndex }
+    ::= { gamGhnAgentConfigPortTable 1 }
+
+GAMGhnAgentConfigPortEntry ::= SEQUENCE {
+    gamGhnAgentConfigPortPortIfIndex           GAMInterfaceIndex,
+    gamGhnAgentConfigPortIfIndex               GAMInterfaceIndex,
+    gamGhnAgentConfigPortName                  GAMDisplayString,
+    gamGhnAgentConfigPortMacAddress            MacAddress,
+    gamGhnAgentConfigPortPortMode              GAMGhnAgentPortMode,
+    gamGhnAgentConfigPortPortRole              GAMGhnAgentPortRole,
+    gamGhnAgentConfigPortRfc5517Mode           GAMRfc5517Mode,
+    gamGhnAgentConfigPortRfc5517Community      GAMUnsigned8,
+    gamGhnAgentConfigPortAllowedVlans0To1K     GAMVlanListQuarter,
+    gamGhnAgentConfigPortAllowedVlans1KTo2K    GAMVlanListQuarter,
+    gamGhnAgentConfigPortAllowedVlans2KTo3K    GAMVlanListQuarter,
+    gamGhnAgentConfigPortAllowedVlans3KTo4K    GAMVlanListQuarter,
+    gamGhnAgentConfigPortForbiddenVlans0To1K   GAMVlanListQuarter,
+    gamGhnAgentConfigPortForbiddenVlans1KTo2K  GAMVlanListQuarter,
+    gamGhnAgentConfigPortForbiddenVlans2KTo3K  GAMVlanListQuarter,
+    gamGhnAgentConfigPortForbiddenVlans3KTo4K  GAMVlanListQuarter,
+    gamGhnAgentConfigPortAction                GAMRowEditorState
+}
+
+gamGhnAgentConfigPortPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamGhnAgentConfigPortEntry 1 }
+
+gamGhnAgentConfigPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamGhnAgentConfigPortEntry 10 }
+
+gamGhnAgentConfigPortName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable name"
+    ::= { gamGhnAgentConfigPortEntry 30 }
+
+gamGhnAgentConfigPortMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn local port MAC address."
+    ::= { gamGhnAgentConfigPortEntry 40 }
+
+gamGhnAgentConfigPortPortMode OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPortMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn port mode."
+    ::= { gamGhnAgentConfigPortEntry 50 }
+
+gamGhnAgentConfigPortPortRole OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPortRole
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn port role."
+    ::= { gamGhnAgentConfigPortEntry 60 }
+
+gamGhnAgentConfigPortRfc5517Mode OBJECT-TYPE
+    SYNTAX      GAMRfc5517Mode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn port RFC5517 mode."
+    ::= { gamGhnAgentConfigPortEntry 71 }
+
+gamGhnAgentConfigPortRfc5517Community OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (1..99)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn port RFC5517 community number. This parameter is effective only
+         when the RFC 5517 mode is set to 'community'"
+    ::= { gamGhnAgentConfigPortEntry 72 }
+
+gamGhnAgentConfigPortAllowedVlans0To1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating the allowed VLANs, applicable
+         only if RFC 5517 mode is set to a promiscuous mode (uplink or
+         stacking)."
+    ::= { gamGhnAgentConfigPortEntry 80 }
+
+gamGhnAgentConfigPortAllowedVlans1KTo2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating the allowed VLANs, applicable
+         only if RFC 5517 mode is set to a promiscuous mode (uplink or
+         stacking)."
+    ::= { gamGhnAgentConfigPortEntry 90 }
+
+gamGhnAgentConfigPortAllowedVlans2KTo3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating the allowed VLANs, applicable
+         only if RFC 5517 mode is set to a promiscuous mode (uplink or
+         stacking)."
+    ::= { gamGhnAgentConfigPortEntry 100 }
+
+gamGhnAgentConfigPortAllowedVlans3KTo4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Last quarter of bit-array indicating the allowed VLANs, applicable only
+         if RFC 5517 mode is set to a promiscuous mode (uplink or stacking)."
+    ::= { gamGhnAgentConfigPortEntry 110 }
+
+gamGhnAgentConfigPortForbiddenVlans0To1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating the forbidden VLANs."
+    ::= { gamGhnAgentConfigPortEntry 120 }
+
+gamGhnAgentConfigPortForbiddenVlans1KTo2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating the forbidden VLANs."
+    ::= { gamGhnAgentConfigPortEntry 130 }
+
+gamGhnAgentConfigPortForbiddenVlans2KTo3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating the forbidden VLANs."
+    ::= { gamGhnAgentConfigPortEntry 140 }
+
+gamGhnAgentConfigPortForbiddenVlans3KTo4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Last quarter of bit-array indicating the forbidden VLANs."
+    ::= { gamGhnAgentConfigPortEntry 150 }
+
+gamGhnAgentConfigPortAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamGhnAgentConfigPortEntry 10000 }
+
+gamGhnAgentConfigEndpointTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentConfigEndpointEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn endpoint config."
+    ::= { gamGhnAgentConfig 20 }
+
+gamGhnAgentConfigEndpointEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentConfigEndpointEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row set the G.hn endpoint config."
+    INDEX       { gamGhnAgentConfigEndpointEndpointId }
+    ::= { gamGhnAgentConfigEndpointTable 1 }
+
+GAMGhnAgentConfigEndpointEntry ::= SEQUENCE {
+    gamGhnAgentConfigEndpointEndpointId     Integer32,
+    gamGhnAgentConfigEndpointId             Unsigned32,
+    gamGhnAgentConfigEndpointMacAddress     MacAddress,
+    gamGhnAgentConfigEndpointName           GAMDisplayString,
+    gamGhnAgentConfigEndpointDescription    GAMDisplayString,
+    gamGhnAgentConfigEndpointPortIfIndex    GAMInterfaceIndex,
+    gamGhnAgentConfigEndpointAutoPort       TruthValue,
+    gamGhnAgentConfigEndpointAllowMgmtVlan  TruthValue,
+    gamGhnAgentConfigEndpointAction         GAMRowEditorState
+}
+
+gamGhnAgentConfigEndpointEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentConfigEndpointEntry 1 }
+
+gamGhnAgentConfigEndpointId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The endpoint ID."
+    ::= { gamGhnAgentConfigEndpointEntry 10 }
+
+gamGhnAgentConfigEndpointMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentConfigEndpointEntry 20 }
+
+gamGhnAgentConfigEndpointName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable name"
+    ::= { gamGhnAgentConfigEndpointEntry 30 }
+
+gamGhnAgentConfigEndpointDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable description string"
+    ::= { gamGhnAgentConfigEndpointEntry 40 }
+
+gamGhnAgentConfigEndpointPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn port index assigned to this endpoint, 0 to leave unassigned from
+         all ports."
+    ::= { gamGhnAgentConfigEndpointEntry 50 }
+
+gamGhnAgentConfigEndpointAutoPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates if the endpoint gets assigned to the first port where it is
+         discovered. This is effective only if the port is left unassigned"
+    ::= { gamGhnAgentConfigEndpointEntry 55 }
+
+gamGhnAgentConfigEndpointAllowMgmtVlan OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Allow access to management VLAN from subscriber endpoint."
+    ::= { gamGhnAgentConfigEndpointEntry 60 }
+
+gamGhnAgentConfigEndpointAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamGhnAgentConfigEndpointEntry 10000 }
+
+gamGhnAgentConfigEndpointEditor OBJECT IDENTIFIER
+    ::= { gamGhnAgentConfig 21 }
+
+gamGhnAgentConfigEndpointEditorEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentConfigEndpointEditor 1 }
+
+gamGhnAgentConfigEndpointEditorId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The endpoint ID."
+    ::= { gamGhnAgentConfigEndpointEditor 10 }
+
+gamGhnAgentConfigEndpointEditorMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentConfigEndpointEditor 20 }
+
+gamGhnAgentConfigEndpointEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable name"
+    ::= { gamGhnAgentConfigEndpointEditor 30 }
+
+gamGhnAgentConfigEndpointEditorDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable description string"
+    ::= { gamGhnAgentConfigEndpointEditor 40 }
+
+gamGhnAgentConfigEndpointEditorPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn port index assigned to this endpoint, 0 to leave unassigned from
+         all ports."
+    ::= { gamGhnAgentConfigEndpointEditor 50 }
+
+gamGhnAgentConfigEndpointEditorAutoPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates if the endpoint gets assigned to the first port where it is
+         discovered. This is effective only if the port is left unassigned"
+    ::= { gamGhnAgentConfigEndpointEditor 55 }
+
+gamGhnAgentConfigEndpointEditorAllowMgmtVlan OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Allow access to management VLAN from subscriber endpoint."
+    ::= { gamGhnAgentConfigEndpointEditor 60 }
+
+gamGhnAgentConfigEndpointEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamGhnAgentConfigEndpointEditor 10000 }
+
+gamGhnAgentConfigBwProfileTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentConfigBwProfileEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn bandwidth profile config."
+    ::= { gamGhnAgentConfig 30 }
+
+gamGhnAgentConfigBwProfileEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentConfigBwProfileEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row set the G.hn bandwidth profile config."
+    INDEX       { gamGhnAgentConfigBwProfileBwProfileId }
+    ::= { gamGhnAgentConfigBwProfileTable 1 }
+
+GAMGhnAgentConfigBwProfileEntry ::= SEQUENCE {
+    gamGhnAgentConfigBwProfileBwProfileId  Integer32,
+    gamGhnAgentConfigBwProfileId           Unsigned32,
+    gamGhnAgentConfigBwProfileUid          Unsigned32,
+    gamGhnAgentConfigBwProfileName         GAMDisplayString,
+    gamGhnAgentConfigBwProfileDescription  GAMDisplayString,
+    gamGhnAgentConfigBwProfileDsBw         Unsigned32,
+    gamGhnAgentConfigBwProfileUsBw         Unsigned32,
+    gamGhnAgentConfigBwProfileAction       GAMRowEditorState
+}
+
+gamGhnAgentConfigBwProfileBwProfileId OBJECT-TYPE
+    SYNTAX      Integer32 (0..15)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn bandwidth profile."
+    ::= { gamGhnAgentConfigBwProfileEntry 1 }
+
+gamGhnAgentConfigBwProfileId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The bandwidth profile ID."
+    ::= { gamGhnAgentConfigBwProfileEntry 10 }
+
+gamGhnAgentConfigBwProfileUid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A number uniquely identifying this bandwidth profile. Incremented for
+         each newly added bandwidth profile. Not persistent across reboot. This
+         value is read-only."
+    ::= { gamGhnAgentConfigBwProfileEntry 20 }
+
+gamGhnAgentConfigBwProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable name"
+    ::= { gamGhnAgentConfigBwProfileEntry 30 }
+
+gamGhnAgentConfigBwProfileDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable description string"
+    ::= { gamGhnAgentConfigBwProfileEntry 40 }
+
+gamGhnAgentConfigBwProfileDsBw OBJECT-TYPE
+    SYNTAX      Unsigned32 (10..1999)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Bandwidth profile downstream bandwidth."
+    ::= { gamGhnAgentConfigBwProfileEntry 50 }
+
+gamGhnAgentConfigBwProfileUsBw OBJECT-TYPE
+    SYNTAX      Unsigned32 (10..1999)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Bandwidth profile upstream bandwidth."
+    ::= { gamGhnAgentConfigBwProfileEntry 60 }
+
+gamGhnAgentConfigBwProfileAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamGhnAgentConfigBwProfileEntry 10000 }
+
+gamGhnAgentConfigBwProfileEditor OBJECT IDENTIFIER
+    ::= { gamGhnAgentConfig 31 }
+
+gamGhnAgentConfigBwProfileEditorBwProfileId OBJECT-TYPE
+    SYNTAX      Integer32 (0..15)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn bandwidth profile."
+    ::= { gamGhnAgentConfigBwProfileEditor 1 }
+
+gamGhnAgentConfigBwProfileEditorId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The bandwidth profile ID."
+    ::= { gamGhnAgentConfigBwProfileEditor 10 }
+
+gamGhnAgentConfigBwProfileEditorUid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A number uniquely identifying this bandwidth profile. Incremented for
+         each newly added bandwidth profile. Not persistent across reboot. This
+         value is read-only."
+    ::= { gamGhnAgentConfigBwProfileEditor 20 }
+
+gamGhnAgentConfigBwProfileEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable name"
+    ::= { gamGhnAgentConfigBwProfileEditor 30 }
+
+gamGhnAgentConfigBwProfileEditorDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable description string"
+    ::= { gamGhnAgentConfigBwProfileEditor 40 }
+
+gamGhnAgentConfigBwProfileEditorDsBw OBJECT-TYPE
+    SYNTAX      Unsigned32 (10..1999)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Bandwidth profile downstream bandwidth."
+    ::= { gamGhnAgentConfigBwProfileEditor 50 }
+
+gamGhnAgentConfigBwProfileEditorUsBw OBJECT-TYPE
+    SYNTAX      Unsigned32 (10..1999)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Bandwidth profile upstream bandwidth."
+    ::= { gamGhnAgentConfigBwProfileEditor 60 }
+
+gamGhnAgentConfigBwProfileEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamGhnAgentConfigBwProfileEditor 10000 }
+
+gamGhnAgentConfigUserTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentConfigUserEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn subscriber config."
+    ::= { gamGhnAgentConfig 40 }
+
+gamGhnAgentConfigUserEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentConfigUserEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row set the G.hn subscriber config."
+    INDEX       { gamGhnAgentConfigUserUserId }
+    ::= { gamGhnAgentConfigUserTable 1 }
+
+GAMGhnAgentConfigUserEntry ::= SEQUENCE {
+    gamGhnAgentConfigUserUserId                    Integer32,
+    gamGhnAgentConfigUserId                        Unsigned32,
+    gamGhnAgentConfigUserUid                       Unsigned32,
+    gamGhnAgentConfigUserName                      GAMDisplayString,
+    gamGhnAgentConfigUserDescription               GAMDisplayString,
+    gamGhnAgentConfigUserEndpointId                Unsigned32,
+    gamGhnAgentConfigUserEndpointName              GAMDisplayString,
+    gamGhnAgentConfigUserBwProfileId               Unsigned32,
+    gamGhnAgentConfigUserBwProfileName             GAMDisplayString,
+    gamGhnAgentConfigUserVlanId                    GAMUnsigned16,
+    gamGhnAgentConfigUserVlanIsTagged              TruthValue,
+    gamGhnAgentConfigUserRemappedVlanId            GAMUnsigned16,
+    gamGhnAgentConfigUserPort2VlanId               GAMUnsigned16,
+    gamGhnAgentConfigUserAllowedTaggedVlans0To1K   GAMVlanListQuarter,
+    gamGhnAgentConfigUserAllowedTaggedVlans1KTo2K  GAMVlanListQuarter,
+    gamGhnAgentConfigUserAllowedTaggedVlans2KTo3K  GAMVlanListQuarter,
+    gamGhnAgentConfigUserAllowedTaggedVlans3KTo4K  GAMVlanListQuarter,
+    gamGhnAgentConfigUserTrunkMode                 TruthValue,
+    gamGhnAgentConfigUserPortIfIndex               GAMInterfaceIndex,
+    gamGhnAgentConfigUserDoubleTags                TruthValue,
+    gamGhnAgentConfigUserNNIIfIndex                GAMInterfaceIndex,
+    gamGhnAgentConfigUserOuterTagVlanId            GAMUnsigned16,
+    gamGhnAgentConfigUserPoeModeCtrl               GAMGhnAgentPoeModeCtrl,
+    gamGhnAgentConfigUserAction                    GAMRowEditorState
+}
+
+gamGhnAgentConfigUserUserId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn subscriber."
+    ::= { gamGhnAgentConfigUserEntry 1 }
+
+gamGhnAgentConfigUserId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The subscriber ID."
+    ::= { gamGhnAgentConfigUserEntry 10 }
+
+gamGhnAgentConfigUserUid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A number uniquely identifying this subscriber. Incremented for each
+         newly added subscriber. Not persistent across reboot. This value is
+         read-only."
+    ::= { gamGhnAgentConfigUserEntry 20 }
+
+gamGhnAgentConfigUserName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable name"
+    ::= { gamGhnAgentConfigUserEntry 30 }
+
+gamGhnAgentConfigUserDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable description string"
+    ::= { gamGhnAgentConfigUserEntry 40 }
+
+gamGhnAgentConfigUserEndpointId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn endpoint ID assigned to this subscriber, 0 to configure subscriber
+         with no assigned endpoint. Writable only when configuring subscriber by
+         id."
+    ::= { gamGhnAgentConfigUserEntry 50 }
+
+gamGhnAgentConfigUserEndpointName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn endpoint assigned to this subscriber. Writable only when
+         configuring subscriber by name."
+    ::= { gamGhnAgentConfigUserEntry 55 }
+
+gamGhnAgentConfigUserBwProfileId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn bandwidth profile ID assigned to this subscriber, 0 for
+         unthrottled. Writable only when configuring subscriber by id."
+    ::= { gamGhnAgentConfigUserEntry 70 }
+
+gamGhnAgentConfigUserBwProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn bandwidth profile assigned to this subscriber. Writable only when
+         configuring subscriber by name."
+    ::= { gamGhnAgentConfigUserEntry 75 }
+
+gamGhnAgentConfigUserVlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vlan ID assigned to this subscriber."
+    ::= { gamGhnAgentConfigUserEntry 90 }
+
+gamGhnAgentConfigUserVlanIsTagged OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Keep VLAN tag at endpoint facility port."
+    ::= { gamGhnAgentConfigUserEntry 100 }
+
+gamGhnAgentConfigUserRemappedVlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Remapped Vlan ID. 0 for no remapping, otherwize, must be a value
+         between 3 and 4093."
+    ::= { gamGhnAgentConfigUserEntry 110 }
+
+gamGhnAgentConfigUserPort2VlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VLAN ID attributed to the second Ethernet port, for services such
+         as IPTV, VoIP, etc. This is applicable only for endpoints which is
+         equipped with two Ethernet ports, such as the G1000-M/C, and not
+         applicable for endpoints equipped with a single Ethernet port such as
+         the G1001-M/C. That correspond to the VLAN used for the second Ethernet
+         port."
+    ::= { gamGhnAgentConfigUserEntry 120 }
+
+gamGhnAgentConfigUserAllowedTaggedVlans0To1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating the extra allowed tagged VLANs."
+    ::= { gamGhnAgentConfigUserEntry 130 }
+
+gamGhnAgentConfigUserAllowedTaggedVlans1KTo2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating the extra allowed tagged VLANs."
+    ::= { gamGhnAgentConfigUserEntry 140 }
+
+gamGhnAgentConfigUserAllowedTaggedVlans2KTo3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating the extra allowed tagged VLANs."
+    ::= { gamGhnAgentConfigUserEntry 150 }
+
+gamGhnAgentConfigUserAllowedTaggedVlans3KTo4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Last quarter of bit-array indicating the extra allowed tagged VLANs."
+    ::= { gamGhnAgentConfigUserEntry 160 }
+
+gamGhnAgentConfigUserTrunkMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Allow CPE trunk mode. Not available for all CPE."
+    ::= { gamGhnAgentConfigUserEntry 170 }
+
+gamGhnAgentConfigUserPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn subscriber assigned port (applicable only when the system is in
+         port-aware model)."
+    ::= { gamGhnAgentConfigUserEntry 180 }
+
+gamGhnAgentConfigUserDoubleTags OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Use double-tagging."
+    ::= { gamGhnAgentConfigUserEntry 190 }
+
+gamGhnAgentConfigUserNNIIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Uplink port to use for double-tagging traffic. Set to None to use NNI
+         defined in the global configuration."
+    ::= { gamGhnAgentConfigUserEntry 200 }
+
+gamGhnAgentConfigUserOuterTagVlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Outer tag used in double tagging."
+    ::= { gamGhnAgentConfigUserEntry 210 }
+
+gamGhnAgentConfigUserPoeModeCtrl OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPoeModeCtrl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "PoE mode control (only effective for endpoints that supports PoE). Set
+         to 'Disable' to disable PoE. Set to 'Enable' to enable PoE (if endpoint
+         supports it). Set ot 'Force' to PoE active if the downstream equipment
+         request 802.3at even if the endpoint source is 802.3af."
+    ::= { gamGhnAgentConfigUserEntry 220 }
+
+gamGhnAgentConfigUserAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamGhnAgentConfigUserEntry 10000 }
+
+gamGhnAgentConfigUserRowEditor OBJECT IDENTIFIER
+    ::= { gamGhnAgentConfig 41 }
+
+gamGhnAgentConfigUserRowEditorUserId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn subscriber."
+    ::= { gamGhnAgentConfigUserRowEditor 1 }
+
+gamGhnAgentConfigUserRowEditorId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The subscriber ID."
+    ::= { gamGhnAgentConfigUserRowEditor 10 }
+
+gamGhnAgentConfigUserRowEditorUid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A number uniquely identifying this subscriber. Incremented for each
+         newly added subscriber. Not persistent across reboot. This value is
+         read-only."
+    ::= { gamGhnAgentConfigUserRowEditor 20 }
+
+gamGhnAgentConfigUserRowEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable name"
+    ::= { gamGhnAgentConfigUserRowEditor 30 }
+
+gamGhnAgentConfigUserRowEditorDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User-configurable description string"
+    ::= { gamGhnAgentConfigUserRowEditor 40 }
+
+gamGhnAgentConfigUserRowEditorEndpointId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn endpoint ID assigned to this subscriber, 0 to configure subscriber
+         with no assigned endpoint. Writable only when configuring subscriber by
+         id."
+    ::= { gamGhnAgentConfigUserRowEditor 50 }
+
+gamGhnAgentConfigUserRowEditorEndpointName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn endpoint assigned to this subscriber. Writable only when
+         configuring subscriber by name."
+    ::= { gamGhnAgentConfigUserRowEditor 55 }
+
+gamGhnAgentConfigUserRowEditorBwProfileId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn bandwidth profile ID assigned to this subscriber, 0 for
+         unthrottled. Writable only when configuring subscriber by id."
+    ::= { gamGhnAgentConfigUserRowEditor 70 }
+
+gamGhnAgentConfigUserRowEditorBwProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn bandwidth profile assigned to this subscriber. Writable only when
+         configuring subscriber by name."
+    ::= { gamGhnAgentConfigUserRowEditor 75 }
+
+gamGhnAgentConfigUserRowEditorVlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vlan ID assigned to this subscriber."
+    ::= { gamGhnAgentConfigUserRowEditor 90 }
+
+gamGhnAgentConfigUserRowEditorVlanIsTagged OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Keep VLAN tag at endpoint facility port."
+    ::= { gamGhnAgentConfigUserRowEditor 100 }
+
+gamGhnAgentConfigUserRowEditorRemappedVlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Remapped Vlan ID. 0 for no remapping, otherwize, must be a value
+         between 3 and 4093."
+    ::= { gamGhnAgentConfigUserRowEditor 110 }
+
+gamGhnAgentConfigUserRowEditorPort2VlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VLAN ID attributed to the second Ethernet port, for services such
+         as IPTV, VoIP, etc. This is applicable only for endpoints which is
+         equipped with two Ethernet ports, such as the G1000-M/C, and not
+         applicable for endpoints equipped with a single Ethernet port such as
+         the G1001-M/C. That correspond to the VLAN used for the second Ethernet
+         port."
+    ::= { gamGhnAgentConfigUserRowEditor 120 }
+
+gamGhnAgentConfigUserRowEditorAllowedTaggedVlans0To1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating the extra allowed tagged VLANs."
+    ::= { gamGhnAgentConfigUserRowEditor 130 }
+
+gamGhnAgentConfigUserRowEditorAllowedTaggedVlans1KTo2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating the extra allowed tagged VLANs."
+    ::= { gamGhnAgentConfigUserRowEditor 140 }
+
+gamGhnAgentConfigUserRowEditorAllowedTaggedVlans2KTo3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating the extra allowed tagged VLANs."
+    ::= { gamGhnAgentConfigUserRowEditor 150 }
+
+gamGhnAgentConfigUserRowEditorAllowedTaggedVlans3KTo4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Last quarter of bit-array indicating the extra allowed tagged VLANs."
+    ::= { gamGhnAgentConfigUserRowEditor 160 }
+
+gamGhnAgentConfigUserRowEditorTrunkMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Allow CPE trunk mode. Not available for all CPE."
+    ::= { gamGhnAgentConfigUserRowEditor 170 }
+
+gamGhnAgentConfigUserRowEditorPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn subscriber assigned port (applicable only when the system is in
+         port-aware model)."
+    ::= { gamGhnAgentConfigUserRowEditor 180 }
+
+gamGhnAgentConfigUserRowEditorDoubleTags OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Use double-tagging."
+    ::= { gamGhnAgentConfigUserRowEditor 190 }
+
+gamGhnAgentConfigUserRowEditorNNIIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Uplink port to use for double-tagging traffic. Set to None to use NNI
+         defined in the global configuration."
+    ::= { gamGhnAgentConfigUserRowEditor 200 }
+
+gamGhnAgentConfigUserRowEditorOuterTagVlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Outer tag used in double tagging."
+    ::= { gamGhnAgentConfigUserRowEditor 210 }
+
+gamGhnAgentConfigUserRowEditorPoeModeCtrl OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPoeModeCtrl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "PoE mode control (only effective for endpoints that supports PoE). Set
+         to 'Disable' to disable PoE. Set to 'Enable' to enable PoE (if endpoint
+         supports it). Set ot 'Force' to PoE active if the downstream equipment
+         request 802.3at even if the endpoint source is 802.3af."
+    ::= { gamGhnAgentConfigUserRowEditor 220 }
+
+gamGhnAgentConfigUserRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamGhnAgentConfigUserRowEditor 10000 }
+
+gamGhnAgentConfigVectorBoostEngine OBJECT IDENTIFIER
+    ::= { gamGhnAgentConfig 50 }
+
+gamGhnAgentConfigVectorBoostEngineVdslCoex OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Configures VectorBoost performance. Set to true when all the pairs in
+         the binder group are assigned to the GAM. This provides the best
+         performance. Set to false when pairs in the binder group are shared
+         with other G.hn equipment. VectorBoost will still function, but with
+         reduced performance."
+    ::= { gamGhnAgentConfigVectorBoostEngine 10 }
+
+gamGhnAgentConfigVectorBoostEngineForceBandLevel OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Configures VectorBoost performance. Force minimum number of allocated
+         band in upstream and downstream."
+    ::= { gamGhnAgentConfigVectorBoostEngine 20 }
+
+gamGhnAgentConfigVectorBoostEngineCdtaEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable or disable VectorBoost engine CDTA."
+    ::= { gamGhnAgentConfigVectorBoostEngine 1000 }
+
+gamGhnAgentConfigVectorBoostEngineCdtaDownUpWeight OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn VectorBoost engine CDTA down:up weight. The upstream rate is set
+         to 100 - the downstream rate. For example, if you specify a value of
+         70, it results in a bandwidth allocation of 70% downstream and 30%
+         upstream when full bandwidth is used in both directions. Default: 50."
+    ::= { gamGhnAgentConfigVectorBoostEngine 1010 }
+
+gamGhnAgentConfigVectorBoostEngineCdtaMinDownUpRate OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn VectorBoost engine CDTA minimum down:up rate. Sets the minimum
+         ratio between downstream and upstream traffic that will be selected by
+         CDTA. Specify a value for the downstream rate. The upstream rate is set
+         to 10 - downstream rate. For example, if you specify a value of 7, it
+         results in a bandwidth allocation of 70% downstream and 30% upstream
+         when full bandwidth is used in both directions. Range: 2 to 8. Default:
+         3."
+    ::= { gamGhnAgentConfigVectorBoostEngine 1020 }
+
+gamGhnAgentConfigVectorBoostEngineCdtaMaxDownUpRate OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn VectorBoost engine CDTA maximum down:up rate. Sets the minimum
+         ratio between downstream and upstream traffic that will be selected by
+         CDTA. Specify a value for the downstream rate. The upstream rate is set
+         to 10 - downstream rate. For example, if you specify a value of 7, it
+         results in a bandwidth allocation of 70% downstream and 30% upstream
+         when full bandwidth is used in both directions. Range: 2 to 8. Default:
+         7."
+    ::= { gamGhnAgentConfigVectorBoostEngine 1030 }
+
+gamGhnAgentConfigVectorBoostEngineCdtaDefaultDownUpRate OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn VectorBoost engine CDTA default down:up rate. Sets the initial
+         ratio between downstream and upstream traffic when CDTA is enabled.
+         When CDTA is disabled, the effective rate is set to this rate and does
+         not change. Specify a value for the downstream rate. The upstream rate
+         is set to 10 - downstream rate. For example, if you specify a value of
+         7, it results in a bandwidth allocation of 70% downstream and 30%
+         upstream when full bandwidth is used in both directions. Range: 2 to 8.
+         Default: 5."
+    ::= { gamGhnAgentConfigVectorBoostEngine 1040 }
+
+gamGhnAgentConfigVectorBoostEngineCdtaPercMetricChange OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "G.hn VectorBoost engine CDTA percentage metric change. Sets the G.hn
+         VectorBoost engine CDTA metric change percentage. CDTA adjusts
+         bandwidth allocation when the traffic ratio on the link differs from
+         the currently allocated bandwidth ratio by the specified percentage.
+         Range: 0 to 100. Default: 5."
+    ::= { gamGhnAgentConfigVectorBoostEngine 1050 }
+
+gamGhnAgentStatus OBJECT IDENTIFIER
+    ::= { gamGhnAgentMibObjects 3 }
+
+gamGhnAgentStatusPort OBJECT IDENTIFIER
+    ::= { gamGhnAgentStatus 10 }
+
+gamGhnAgentStatusPortBriefTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusPortBriefEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn brief port status."
+    ::= { gamGhnAgentStatusPort 10 }
+
+gamGhnAgentStatusPortBriefEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusPortBriefEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the brief status for one G.hn port."
+    INDEX       { gamGhnAgentStatusPortBriefPortIfIndex }
+    ::= { gamGhnAgentStatusPortBriefTable 1 }
+
+GAMGhnAgentStatusPortBriefEntry ::= SEQUENCE {
+    gamGhnAgentStatusPortBriefPortIfIndex              GAMInterfaceIndex,
+    gamGhnAgentStatusPortBriefIfIndex                  GAMInterfaceIndex,
+    gamGhnAgentStatusPortBriefAdminEnabled             TruthValue,
+    gamGhnAgentStatusPortBriefMacAddress               MacAddress,
+    gamGhnAgentStatusPortBriefEndpointsMacAddressList  GAMMacStringList,
+    gamGhnAgentStatusPortBriefOutageNSA                TruthValue,
+    gamGhnAgentStatusPortBriefOutageSA                 TruthValue,
+    gamGhnAgentStatusPortBriefRpf                      TruthValue
+}
+
+gamGhnAgentStatusPortBriefPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamGhnAgentStatusPortBriefEntry 1 }
+
+gamGhnAgentStatusPortBriefIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamGhnAgentStatusPortBriefEntry 10 }
+
+gamGhnAgentStatusPortBriefAdminEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates if the interface is shutdown or activated. TRUE if interface
+         is activated."
+    ::= { gamGhnAgentStatusPortBriefEntry 20 }
+
+gamGhnAgentStatusPortBriefMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn local port MAC address."
+    ::= { gamGhnAgentStatusPortBriefEntry 30 }
+
+gamGhnAgentStatusPortBriefEndpointsMacAddressList OBJECT-TYPE
+    SYNTAX      GAMMacStringList (SIZE(0..287))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Textual list of G.hn discovered endpoints MAC address."
+    ::= { gamGhnAgentStatusPortBriefEntry 40 }
+
+gamGhnAgentStatusPortBriefOutageNSA OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates if this port is in Non-Service-Affecting outage condition."
+    ::= { gamGhnAgentStatusPortBriefEntry 50 }
+
+gamGhnAgentStatusPortBriefOutageSA OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates if this port is in Service-Affecting outage condition."
+    ::= { gamGhnAgentStatusPortBriefEntry 60 }
+
+gamGhnAgentStatusPortBriefRpf OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates remote power feed status. Set if this port is receiving power
+         from the remote CPE. This is set only for system that support remote
+         power feed, like the GAM-8."
+    ::= { gamGhnAgentStatusPortBriefEntry 70 }
+
+gamGhnAgentStatusPortDetailedTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusPortDetailedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn detailed port status."
+    ::= { gamGhnAgentStatusPort 20 }
+
+gamGhnAgentStatusPortDetailedEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusPortDetailedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the detailed status for one G.hn port."
+    INDEX       { gamGhnAgentStatusPortDetailedPortIfIndex }
+    ::= { gamGhnAgentStatusPortDetailedTable 1 }
+
+GAMGhnAgentStatusPortDetailedEntry ::= SEQUENCE {
+    gamGhnAgentStatusPortDetailedPortIfIndex       GAMInterfaceIndex,
+    gamGhnAgentStatusPortDetailedMacAddress        MacAddress,
+    gamGhnAgentStatusPortDetailedAlive             TruthValue,
+    gamGhnAgentStatusPortDetailedDeviceName        GAMDisplayString,
+    gamGhnAgentStatusPortDetailedHwProduct         GAMDisplayString,
+    gamGhnAgentStatusPortDetailedSerialNumber      GAMDisplayString,
+    gamGhnAgentStatusPortDetailedUptime            GAMDisplayString,
+    gamGhnAgentStatusPortDetailedFwVersion         GAMDisplayString,
+    gamGhnAgentStatusPortDetailedXputIndicator     GAMUnsigned16,
+    gamGhnAgentStatusPortDetailedMode              GAMGhnAgentPortMode,
+    gamGhnAgentStatusPortDetailedWireLengthMeters  Unsigned32,
+    gamGhnAgentStatusPortDetailedWireLengthFeet    Unsigned32,
+    gamGhnAgentStatusPortDetailedRxPhyRate         Unsigned32,
+    gamGhnAgentStatusPortDetailedTxPhyRate         Unsigned32,
+    gamGhnAgentStatusPortDetailedRxAllocBands      Unsigned32,
+    gamGhnAgentStatusPortDetailedTxAllocBands      Unsigned32,
+    gamGhnAgentStatusPortDetailedRxMaxXput         Unsigned32,
+    gamGhnAgentStatusPortDetailedTxMaxXput         Unsigned32,
+    gamGhnAgentStatusPortDetailedRxUsage           Unsigned32,
+    gamGhnAgentStatusPortDetailedTxUsage           Unsigned32
+}
+
+gamGhnAgentStatusPortDetailedPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamGhnAgentStatusPortDetailedEntry 1 }
+
+gamGhnAgentStatusPortDetailedMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn endpoint MAC address."
+    ::= { gamGhnAgentStatusPortDetailedEntry 10 }
+
+gamGhnAgentStatusPortDetailedAlive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device is detected. Other fields will not be returned if device is
+         undetected."
+    ::= { gamGhnAgentStatusPortDetailedEntry 20 }
+
+gamGhnAgentStatusPortDetailedDeviceName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device model name."
+    ::= { gamGhnAgentStatusPortDetailedEntry 30 }
+
+gamGhnAgentStatusPortDetailedHwProduct OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..11))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device hardware product name."
+    ::= { gamGhnAgentStatusPortDetailedEntry 40 }
+
+gamGhnAgentStatusPortDetailedSerialNumber OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device serial number."
+    ::= { gamGhnAgentStatusPortDetailedEntry 50 }
+
+gamGhnAgentStatusPortDetailedUptime OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..39))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device uptime."
+    ::= { gamGhnAgentStatusPortDetailedEntry 60 }
+
+gamGhnAgentStatusPortDetailedFwVersion OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..99))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device firmware version."
+    ::= { gamGhnAgentStatusPortDetailedEntry 70 }
+
+gamGhnAgentStatusPortDetailedXputIndicator OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TX bandwidth allocation, in Mbps."
+    ::= { gamGhnAgentStatusPortDetailedEntry 80 }
+
+gamGhnAgentStatusPortDetailedMode OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPortMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device mode."
+    ::= { gamGhnAgentStatusPortDetailedEntry 90 }
+
+gamGhnAgentStatusPortDetailedWireLengthMeters OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Estimated wire length (in meters). This parameter is available only
+         valid for MIMO/SISO systems (GAM-xx-M)"
+    ::= { gamGhnAgentStatusPortDetailedEntry 100 }
+
+gamGhnAgentStatusPortDetailedWireLengthFeet OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Estimated wire length (in feet). This parameter is available only valid
+         for MIMO/SISO systems (GAM-xx-M)"
+    ::= { gamGhnAgentStatusPortDetailedEntry 105 }
+
+gamGhnAgentStatusPortDetailedRxPhyRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream PHY allocated bandwidth, in Mbps. This parameter is
+         available only for endpoints."
+    ::= { gamGhnAgentStatusPortDetailedEntry 110 }
+
+gamGhnAgentStatusPortDetailedTxPhyRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream PHY allocated bandwidth, in Mbps. This parameter is available
+         only for endpoints."
+    ::= { gamGhnAgentStatusPortDetailedEntry 120 }
+
+gamGhnAgentStatusPortDetailedRxAllocBands OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream number of bands currently allocated. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusPortDetailedEntry 130 }
+
+gamGhnAgentStatusPortDetailedTxAllocBands OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream number of bands currently allocated. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusPortDetailedEntry 140 }
+
+gamGhnAgentStatusPortDetailedRxMaxXput OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream maximum usable data throughput, in Mbps. This parameter is
+         available only for endpoints."
+    ::= { gamGhnAgentStatusPortDetailedEntry 150 }
+
+gamGhnAgentStatusPortDetailedTxMaxXput OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream maximum usable data throughput, in Mbps. This parameter is
+         available only for endpoints."
+    ::= { gamGhnAgentStatusPortDetailedEntry 160 }
+
+gamGhnAgentStatusPortDetailedRxUsage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream max allocatable bandwidth, in Mbps. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusPortDetailedEntry 170 }
+
+gamGhnAgentStatusPortDetailedTxUsage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream max allocatable bandwidth, in Mbps. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusPortDetailedEntry 180 }
+
+gamGhnAgentStatusEndpoint OBJECT IDENTIFIER
+    ::= { gamGhnAgentStatus 20 }
+
+gamGhnAgentStatusEndpointBriefTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusEndpointBriefEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn brief endpoint status."
+    ::= { gamGhnAgentStatusEndpoint 10 }
+
+gamGhnAgentStatusEndpointBriefEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusEndpointBriefEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the brief status for one endpoint."
+    INDEX       { gamGhnAgentStatusEndpointBriefEndpointId }
+    ::= { gamGhnAgentStatusEndpointBriefTable 1 }
+
+GAMGhnAgentStatusEndpointBriefEntry ::= SEQUENCE {
+    gamGhnAgentStatusEndpointBriefEndpointId           Integer32,
+    gamGhnAgentStatusEndpointBriefMacAddress           MacAddress,
+    gamGhnAgentStatusEndpointBriefConfEndpointId       Unsigned32,
+    gamGhnAgentStatusEndpointBriefConfEndpointName     GAMDisplayString,
+    gamGhnAgentStatusEndpointBriefConfPortIfIndex      GAMInterfaceIndex,
+    gamGhnAgentStatusEndpointBriefConfAutoPort         TruthValue,
+    gamGhnAgentStatusEndpointBriefDetectedPortIfIndex  GAMInterfaceIndex,
+    gamGhnAgentStatusEndpointBriefConfUserId           Unsigned32,
+    gamGhnAgentStatusEndpointBriefConfUserName         GAMDisplayString,
+    gamGhnAgentStatusEndpointBriefConfUserUid          Unsigned32,
+    gamGhnAgentStatusEndpointBriefConfBwProfileId      Unsigned32,
+    gamGhnAgentStatusEndpointBriefConfBwProfileName    GAMDisplayString,
+    gamGhnAgentStatusEndpointBriefConfBwProfileUid     Unsigned32,
+    gamGhnAgentStatusEndpointBriefState                GAMGhnAgentEndpointState,
+    gamGhnAgentStatusEndpointBriefModelType            GAMGhnAgentCPEType,
+    gamGhnAgentStatusEndpointBriefModelString          GAMDisplayString,
+    gamGhnAgentStatusEndpointBriefFwMismatch           TruthValue
+}
+
+gamGhnAgentStatusEndpointBriefEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 1 }
+
+gamGhnAgentStatusEndpointBriefMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn endpoint MAC address."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 10 }
+
+gamGhnAgentStatusEndpointBriefConfEndpointId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If this endpoint is configured, this is the configured endpoint ID.
+         That value is mainly usefull when enumerating endpoints by MAC address.
+         In this case, the key is the MAC address, so this give a reference to
+         the configured endpoint ID. In case of endpoints which are not
+         configured in the system, this value will be 0. That would indicate a
+         newly discovered or rogue endpoint."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 20 }
+
+gamGhnAgentStatusEndpointBriefConfEndpointName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If this endpoint is configured, this is the configured endpoint name.
+         In case of endpoints which are not configured in the system, this value
+         will be blank. That would indicate a newly discovered or rogue
+         endpoint."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 25 }
+
+gamGhnAgentStatusEndpointBriefConfPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn port index on which this endpoint is assigned. 0 means not
+         assigned to any port."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 30 }
+
+gamGhnAgentStatusEndpointBriefConfAutoPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates if the endpoint gets assigned to the first port where it is
+         discovered."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 35 }
+
+gamGhnAgentStatusEndpointBriefDetectedPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn port index on which this endpoint is detected. 0 means not
+         detected on any port."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 40 }
+
+gamGhnAgentStatusEndpointBriefConfUserId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If this endpoint is configured, this is the subscriber ID that this
+         endpoint is associated with. 0 means not assigned to any subscriber."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 50 }
+
+gamGhnAgentStatusEndpointBriefConfUserName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If this endpoint is configured, this is the subscriber ID that this
+         endpoint is associated with."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 55 }
+
+gamGhnAgentStatusEndpointBriefConfUserUid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Id uniquely identifying the subscriber onto which this endpoint is
+         assigned. Not persistent across reboot"
+    ::= { gamGhnAgentStatusEndpointBriefEntry 60 }
+
+gamGhnAgentStatusEndpointBriefConfBwProfileId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn bandwidth profile instance number on which this endpoint is
+         assigned. That is, the bandwidth profile instance number which is
+         assigned to the subscriber to which this endpoint is currently assigned
+         to. If this endpoint is not assigned to any subscriber, then usually
+         the default bandwidth profile will be assigned to this endpoint. 0
+         means no bandwidth profile assigned (i.e. unthrottled)."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 70 }
+
+gamGhnAgentStatusEndpointBriefConfBwProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Name of the G.hn bandwidth profile on which this endpoint is assigned.
+         That is, the bandwidth profile which is assigned to the subscriber to
+         which this endpoint is currently assigned to. If this endpoint is not
+         assigned to any subscriber, then usually the default bandwidth profile
+         will be assigned to this endpoint."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 75 }
+
+gamGhnAgentStatusEndpointBriefConfBwProfileUid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Id uniquely identifying the bandwidth profile. Not persistent across
+         reboot"
+    ::= { gamGhnAgentStatusEndpointBriefEntry 80 }
+
+gamGhnAgentStatusEndpointBriefState OBJECT-TYPE
+    SYNTAX      GAMGhnAgentEndpointState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates the endpoint state."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 90 }
+
+gamGhnAgentStatusEndpointBriefModelType OBJECT-TYPE
+    SYNTAX      GAMGhnAgentCPEType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Endpoint model type. Available only when endpoint is detected."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 100 }
+
+gamGhnAgentStatusEndpointBriefModelString OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Endpoint model string. Available only when endpoint is detected."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 110 }
+
+gamGhnAgentStatusEndpointBriefFwMismatch OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates if endpoint is in firmware mismatch. Available only when
+         endpoint is detected."
+    ::= { gamGhnAgentStatusEndpointBriefEntry 120 }
+
+gamGhnAgentStatusEndpointDetailedTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusEndpointDetailedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn detailed endpoint status."
+    ::= { gamGhnAgentStatusEndpoint 20 }
+
+gamGhnAgentStatusEndpointDetailedEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusEndpointDetailedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the detailed status for one endpoint."
+    INDEX       { gamGhnAgentStatusEndpointDetailedEndpointId }
+    ::= { gamGhnAgentStatusEndpointDetailedTable 1 }
+
+GAMGhnAgentStatusEndpointDetailedEntry ::= SEQUENCE {
+    gamGhnAgentStatusEndpointDetailedEndpointId        Integer32,
+    gamGhnAgentStatusEndpointDetailedMacAddress        MacAddress,
+    gamGhnAgentStatusEndpointDetailedAlive             TruthValue,
+    gamGhnAgentStatusEndpointDetailedDeviceName        GAMDisplayString,
+    gamGhnAgentStatusEndpointDetailedHwProduct         GAMDisplayString,
+    gamGhnAgentStatusEndpointDetailedSerialNumber      GAMDisplayString,
+    gamGhnAgentStatusEndpointDetailedUptime            GAMDisplayString,
+    gamGhnAgentStatusEndpointDetailedFwVersion         GAMDisplayString,
+    gamGhnAgentStatusEndpointDetailedXputIndicator     GAMUnsigned16,
+    gamGhnAgentStatusEndpointDetailedMode              GAMGhnAgentPortMode,
+    gamGhnAgentStatusEndpointDetailedWireLengthMeters  Unsigned32,
+    gamGhnAgentStatusEndpointDetailedWireLengthFeet    Unsigned32,
+    gamGhnAgentStatusEndpointDetailedRxPhyRate         Unsigned32,
+    gamGhnAgentStatusEndpointDetailedTxPhyRate         Unsigned32,
+    gamGhnAgentStatusEndpointDetailedRxAllocBands      Unsigned32,
+    gamGhnAgentStatusEndpointDetailedTxAllocBands      Unsigned32,
+    gamGhnAgentStatusEndpointDetailedRxMaxXput         Unsigned32,
+    gamGhnAgentStatusEndpointDetailedTxMaxXput         Unsigned32,
+    gamGhnAgentStatusEndpointDetailedRxUsage           Unsigned32,
+    gamGhnAgentStatusEndpointDetailedTxUsage           Unsigned32
+}
+
+gamGhnAgentStatusEndpointDetailedEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 1 }
+
+gamGhnAgentStatusEndpointDetailedMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn endpoint MAC address."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 10 }
+
+gamGhnAgentStatusEndpointDetailedAlive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device is detected. Other fields will not be returned if device is
+         undetected."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 20 }
+
+gamGhnAgentStatusEndpointDetailedDeviceName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device model name."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 30 }
+
+gamGhnAgentStatusEndpointDetailedHwProduct OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..11))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device hardware product name."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 40 }
+
+gamGhnAgentStatusEndpointDetailedSerialNumber OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device serial number."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 50 }
+
+gamGhnAgentStatusEndpointDetailedUptime OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..39))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device uptime."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 60 }
+
+gamGhnAgentStatusEndpointDetailedFwVersion OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..99))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device firmware version."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 70 }
+
+gamGhnAgentStatusEndpointDetailedXputIndicator OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TX bandwidth allocation, in Mbps."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 80 }
+
+gamGhnAgentStatusEndpointDetailedMode OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPortMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device mode."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 90 }
+
+gamGhnAgentStatusEndpointDetailedWireLengthMeters OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Estimated wire length (in meters). This parameter is available only
+         valid for MIMO/SISO systems (GAM-xx-M)"
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 100 }
+
+gamGhnAgentStatusEndpointDetailedWireLengthFeet OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Estimated wire length (in feet). This parameter is available only valid
+         for MIMO/SISO systems (GAM-xx-M)"
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 105 }
+
+gamGhnAgentStatusEndpointDetailedRxPhyRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream PHY allocated bandwidth, in Mbps. This parameter is
+         available only for endpoints."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 110 }
+
+gamGhnAgentStatusEndpointDetailedTxPhyRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream PHY allocated bandwidth, in Mbps. This parameter is available
+         only for endpoints."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 120 }
+
+gamGhnAgentStatusEndpointDetailedRxAllocBands OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream number of bands currently allocated. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 130 }
+
+gamGhnAgentStatusEndpointDetailedTxAllocBands OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream number of bands currently allocated. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 140 }
+
+gamGhnAgentStatusEndpointDetailedRxMaxXput OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream maximum usable data throughput, in Mbps. This parameter is
+         available only for endpoints."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 150 }
+
+gamGhnAgentStatusEndpointDetailedTxMaxXput OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream maximum usable data throughput, in Mbps. This parameter is
+         available only for endpoints."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 160 }
+
+gamGhnAgentStatusEndpointDetailedRxUsage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream max allocatable bandwidth, in Mbps. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 170 }
+
+gamGhnAgentStatusEndpointDetailedTxUsage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream max allocatable bandwidth, in Mbps. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusEndpointDetailedEntry 180 }
+
+gamGhnAgentStatusEndpointLinkTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusEndpointLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn endpoint link status."
+    ::= { gamGhnAgentStatusEndpoint 30 }
+
+gamGhnAgentStatusEndpointLinkEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusEndpointLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the link status for one Ethernet port."
+    INDEX       { gamGhnAgentStatusEndpointLinkEndpointId,
+                  gamGhnAgentStatusEndpointLinkEthPort }
+    ::= { gamGhnAgentStatusEndpointLinkTable 1 }
+
+GAMGhnAgentStatusEndpointLinkEntry ::= SEQUENCE {
+    gamGhnAgentStatusEndpointLinkEndpointId  Integer32,
+    gamGhnAgentStatusEndpointLinkEthPort     Unsigned32,
+    gamGhnAgentStatusEndpointLinkValid       TruthValue,
+    gamGhnAgentStatusEndpointLinkLink        TruthValue,
+    gamGhnAgentStatusEndpointLinkFdx         TruthValue,
+    gamGhnAgentStatusEndpointLinkSpeed       GAMPortStatusSpeed
+}
+
+gamGhnAgentStatusEndpointLinkEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentStatusEndpointLinkEntry 1 }
+
+gamGhnAgentStatusEndpointLinkEthPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint Ethernet port instance."
+    ::= { gamGhnAgentStatusEndpointLinkEntry 2 }
+
+gamGhnAgentStatusEndpointLinkValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface data is available and valid"
+    ::= { gamGhnAgentStatusEndpointLinkEntry 10 }
+
+gamGhnAgentStatusEndpointLinkLink OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface has link."
+    ::= { gamGhnAgentStatusEndpointLinkEntry 20 }
+
+gamGhnAgentStatusEndpointLinkFdx OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface is running in full duplex."
+    ::= { gamGhnAgentStatusEndpointLinkEntry 30 }
+
+gamGhnAgentStatusEndpointLinkSpeed OBJECT-TYPE
+    SYNTAX      GAMPortStatusSpeed
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the current interface speed."
+    ::= { gamGhnAgentStatusEndpointLinkEntry 40 }
+
+gamGhnAgentStatusEndpointFwUpgradeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusEndpointFwUpgradeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn endpoint firmware upgrade status."
+    ::= { gamGhnAgentStatusEndpoint 40 }
+
+gamGhnAgentStatusEndpointFwUpgradeEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusEndpointFwUpgradeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the firmware status for one endpoint."
+    INDEX       { gamGhnAgentStatusEndpointFwUpgradeEndpointId }
+    ::= { gamGhnAgentStatusEndpointFwUpgradeTable 1 }
+
+GAMGhnAgentStatusEndpointFwUpgradeEntry ::= SEQUENCE {
+    gamGhnAgentStatusEndpointFwUpgradeEndpointId       Integer32,
+    gamGhnAgentStatusEndpointFwUpgradeStatus           GAMDisplayString,
+    gamGhnAgentStatusEndpointFwUpgradeDownloadedBytes  Integer32,
+    gamGhnAgentStatusEndpointFwUpgradeFdx              GAMGhnAgentFwUpgradeStage
+}
+
+gamGhnAgentStatusEndpointFwUpgradeEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentStatusEndpointFwUpgradeEntry 1 }
+
+gamGhnAgentStatusEndpointFwUpgradeStatus OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..199))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Status string"
+    ::= { gamGhnAgentStatusEndpointFwUpgradeEntry 10 }
+
+gamGhnAgentStatusEndpointFwUpgradeDownloadedBytes OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates number of bytes transferred to the endpoint during download
+         stage."
+    ::= { gamGhnAgentStatusEndpointFwUpgradeEntry 20 }
+
+gamGhnAgentStatusEndpointFwUpgradeFdx OBJECT-TYPE
+    SYNTAX      GAMGhnAgentFwUpgradeStage
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current upgrade stage."
+    ::= { gamGhnAgentStatusEndpointFwUpgradeEntry 30 }
+
+gamGhnAgentStatusEndpointPoeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusEndpointPoeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn endpoint PoE status."
+    ::= { gamGhnAgentStatusEndpoint 50 }
+
+gamGhnAgentStatusEndpointPoeEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusEndpointPoeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the PoE status for one endpoint."
+    INDEX       { gamGhnAgentStatusEndpointPoeEndpointId }
+    ::= { gamGhnAgentStatusEndpointPoeTable 1 }
+
+GAMGhnAgentStatusEndpointPoeEntry ::= SEQUENCE {
+    gamGhnAgentStatusEndpointPoeEndpointId     Integer32,
+    gamGhnAgentStatusEndpointPoeCpePort        Unsigned32,
+    gamGhnAgentStatusEndpointPoeEnabled        TruthValue,
+    gamGhnAgentStatusEndpointPoeMode           GAMGhnAgentPoeMode,
+    gamGhnAgentStatusEndpointPoePSEOverload    TruthValue,
+    gamGhnAgentStatusEndpointPoeInputPwrSrc    GAMGhnAgentPoeInputSrcMode,
+    gamGhnAgentStatusEndpointPoeInputPwrLevel  GAMGhnAgentPoeMode,
+    gamGhnAgentStatusEndpointPoeOutputStatus   GAMGhnAgentPoeInputSrcMode
+}
+
+gamGhnAgentStatusEndpointPoeEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentStatusEndpointPoeEntry 1 }
+
+gamGhnAgentStatusEndpointPoeCpePort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Which CPE port is this status referring to. That is the port which is
+         PoE-capable. Zero if the CPE is not PoE-capable"
+    ::= { gamGhnAgentStatusEndpointPoeEntry 10 }
+
+gamGhnAgentStatusEndpointPoeEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates if PoE is enabled"
+    ::= { gamGhnAgentStatusEndpointPoeEntry 15 }
+
+gamGhnAgentStatusEndpointPoeMode OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPoeMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "PoE mode"
+    ::= { gamGhnAgentStatusEndpointPoeEntry 20 }
+
+gamGhnAgentStatusEndpointPoePSEOverload OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates if there is Power Source Equipment (PSE) overload"
+    ::= { gamGhnAgentStatusEndpointPoeEntry 30 }
+
+gamGhnAgentStatusEndpointPoeInputPwrSrc OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPoeInputSrcMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Input power source"
+    ::= { gamGhnAgentStatusEndpointPoeEntry 40 }
+
+gamGhnAgentStatusEndpointPoeInputPwrLevel OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPoeMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Input power level"
+    ::= { gamGhnAgentStatusEndpointPoeEntry 50 }
+
+gamGhnAgentStatusEndpointPoeOutputStatus OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPoeInputSrcMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Output status"
+    ::= { gamGhnAgentStatusEndpointPoeEntry 60 }
+
+gamGhnAgentStatusEndpointByMac OBJECT IDENTIFIER
+    ::= { gamGhnAgentStatus 30 }
+
+gamGhnAgentStatusEndpointByMacBriefTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusEndpointByMacBriefEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn brief endpoint status, by MAC address. This also include
+         discovered endpoints which have no 'ID' associated with (i.e. 'rogue'
+         endpoints)"
+    ::= { gamGhnAgentStatusEndpointByMac 10 }
+
+gamGhnAgentStatusEndpointByMacBriefEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusEndpointByMacBriefEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the brief status for one endpoint."
+    INDEX       {                   gamGhnAgentStatusEndpointByMacBriefEndpointMacAddress }
+    ::= { gamGhnAgentStatusEndpointByMacBriefTable 1 }
+
+GAMGhnAgentStatusEndpointByMacBriefEntry ::= SEQUENCE {
+    gamGhnAgentStatusEndpointByMacBriefEndpointMacAddress   MacAddress,
+    gamGhnAgentStatusEndpointByMacBriefMacAddress           MacAddress,
+    gamGhnAgentStatusEndpointByMacBriefConfEndpointId       Unsigned32,
+    gamGhnAgentStatusEndpointByMacBriefConfEndpointName     GAMDisplayString,
+    gamGhnAgentStatusEndpointByMacBriefConfPortIfIndex      GAMInterfaceIndex,
+    gamGhnAgentStatusEndpointByMacBriefConfAutoPort         TruthValue,
+    gamGhnAgentStatusEndpointByMacBriefDetectedPortIfIndex  GAMInterfaceIndex,
+    gamGhnAgentStatusEndpointByMacBriefConfUserId           Unsigned32,
+    gamGhnAgentStatusEndpointByMacBriefConfUserName         GAMDisplayString,
+    gamGhnAgentStatusEndpointByMacBriefConfUserUid          Unsigned32,
+    gamGhnAgentStatusEndpointByMacBriefConfBwProfileId      Unsigned32,
+    gamGhnAgentStatusEndpointByMacBriefConfBwProfileName    GAMDisplayString,
+    gamGhnAgentStatusEndpointByMacBriefConfBwProfileUid     Unsigned32,
+    gamGhnAgentStatusEndpointByMacBriefState                GAMGhnAgentEndpointState,
+    gamGhnAgentStatusEndpointByMacBriefModelType            GAMGhnAgentCPEType,
+    gamGhnAgentStatusEndpointByMacBriefModelString          GAMDisplayString,
+    gamGhnAgentStatusEndpointByMacBriefFwMismatch           TruthValue
+}
+
+gamGhnAgentStatusEndpointByMacBriefEndpointMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 1 }
+
+gamGhnAgentStatusEndpointByMacBriefMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn endpoint MAC address."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 10 }
+
+gamGhnAgentStatusEndpointByMacBriefConfEndpointId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If this endpoint is configured, this is the configured endpoint ID.
+         That value is mainly usefull when enumerating endpoints by MAC address.
+         In this case, the key is the MAC address, so this give a reference to
+         the configured endpoint ID. In case of endpoints which are not
+         configured in the system, this value will be 0. That would indicate a
+         newly discovered or rogue endpoint."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 20 }
+
+gamGhnAgentStatusEndpointByMacBriefConfEndpointName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If this endpoint is configured, this is the configured endpoint name.
+         In case of endpoints which are not configured in the system, this value
+         will be blank. That would indicate a newly discovered or rogue
+         endpoint."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 25 }
+
+gamGhnAgentStatusEndpointByMacBriefConfPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn port index on which this endpoint is assigned. 0 means not
+         assigned to any port."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 30 }
+
+gamGhnAgentStatusEndpointByMacBriefConfAutoPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates if the endpoint gets assigned to the first port where it is
+         discovered."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 35 }
+
+gamGhnAgentStatusEndpointByMacBriefDetectedPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn port index on which this endpoint is detected. 0 means not
+         detected on any port."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 40 }
+
+gamGhnAgentStatusEndpointByMacBriefConfUserId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If this endpoint is configured, this is the subscriber ID that this
+         endpoint is associated with. 0 means not assigned to any subscriber."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 50 }
+
+gamGhnAgentStatusEndpointByMacBriefConfUserName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If this endpoint is configured, this is the subscriber ID that this
+         endpoint is associated with."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 55 }
+
+gamGhnAgentStatusEndpointByMacBriefConfUserUid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Id uniquely identifying the subscriber onto which this endpoint is
+         assigned. Not persistent across reboot"
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 60 }
+
+gamGhnAgentStatusEndpointByMacBriefConfBwProfileId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn bandwidth profile instance number on which this endpoint is
+         assigned. That is, the bandwidth profile instance number which is
+         assigned to the subscriber to which this endpoint is currently assigned
+         to. If this endpoint is not assigned to any subscriber, then usually
+         the default bandwidth profile will be assigned to this endpoint. 0
+         means no bandwidth profile assigned (i.e. unthrottled)."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 70 }
+
+gamGhnAgentStatusEndpointByMacBriefConfBwProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Name of the G.hn bandwidth profile on which this endpoint is assigned.
+         That is, the bandwidth profile which is assigned to the subscriber to
+         which this endpoint is currently assigned to. If this endpoint is not
+         assigned to any subscriber, then usually the default bandwidth profile
+         will be assigned to this endpoint."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 75 }
+
+gamGhnAgentStatusEndpointByMacBriefConfBwProfileUid OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Id uniquely identifying the bandwidth profile. Not persistent across
+         reboot"
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 80 }
+
+gamGhnAgentStatusEndpointByMacBriefState OBJECT-TYPE
+    SYNTAX      GAMGhnAgentEndpointState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates the endpoint state."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 90 }
+
+gamGhnAgentStatusEndpointByMacBriefModelType OBJECT-TYPE
+    SYNTAX      GAMGhnAgentCPEType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Endpoint model type. Available only when endpoint is detected."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 100 }
+
+gamGhnAgentStatusEndpointByMacBriefModelString OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Endpoint model string. Available only when endpoint is detected."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 110 }
+
+gamGhnAgentStatusEndpointByMacBriefFwMismatch OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates if endpoint is in firmware mismatch. Available only when
+         endpoint is detected."
+    ::= { gamGhnAgentStatusEndpointByMacBriefEntry 120 }
+
+gamGhnAgentStatusEndpointByMacDetailedTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusEndpointByMacDetailedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn detailed endpoint status, by MAC address. This also
+         include discovered endpoints which have no 'ID' associated with (i.e.
+         'rogue' endpoints)"
+    ::= { gamGhnAgentStatusEndpointByMac 20 }
+
+gamGhnAgentStatusEndpointByMacDetailedEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusEndpointByMacDetailedEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the detailed status for one endpoint."
+    INDEX       {                   gamGhnAgentStatusEndpointByMacDetailedEndpointMacAddress }
+    ::= { gamGhnAgentStatusEndpointByMacDetailedTable 1 }
+
+GAMGhnAgentStatusEndpointByMacDetailedEntry ::= SEQUENCE {
+    gamGhnAgentStatusEndpointByMacDetailedEndpointMacAddress  MacAddress,
+    gamGhnAgentStatusEndpointByMacDetailedMacAddress          MacAddress,
+    gamGhnAgentStatusEndpointByMacDetailedAlive               TruthValue,
+    gamGhnAgentStatusEndpointByMacDetailedDeviceName          GAMDisplayString,
+    gamGhnAgentStatusEndpointByMacDetailedHwProduct           GAMDisplayString,
+    gamGhnAgentStatusEndpointByMacDetailedSerialNumber        GAMDisplayString,
+    gamGhnAgentStatusEndpointByMacDetailedUptime              GAMDisplayString,
+    gamGhnAgentStatusEndpointByMacDetailedFwVersion           GAMDisplayString,
+    gamGhnAgentStatusEndpointByMacDetailedXputIndicator       GAMUnsigned16,
+    gamGhnAgentStatusEndpointByMacDetailedMode                GAMGhnAgentPortMode,
+    gamGhnAgentStatusEndpointByMacDetailedWireLengthMeters    Unsigned32,
+    gamGhnAgentStatusEndpointByMacDetailedWireLengthFeet      Unsigned32,
+    gamGhnAgentStatusEndpointByMacDetailedRxPhyRate           Unsigned32,
+    gamGhnAgentStatusEndpointByMacDetailedTxPhyRate           Unsigned32,
+    gamGhnAgentStatusEndpointByMacDetailedRxAllocBands        Unsigned32,
+    gamGhnAgentStatusEndpointByMacDetailedTxAllocBands        Unsigned32,
+    gamGhnAgentStatusEndpointByMacDetailedRxMaxXput           Unsigned32,
+    gamGhnAgentStatusEndpointByMacDetailedTxMaxXput           Unsigned32,
+    gamGhnAgentStatusEndpointByMacDetailedRxUsage             Unsigned32,
+    gamGhnAgentStatusEndpointByMacDetailedTxUsage             Unsigned32
+}
+
+gamGhnAgentStatusEndpointByMacDetailedEndpointMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 1 }
+
+gamGhnAgentStatusEndpointByMacDetailedMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "G.hn endpoint MAC address."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 10 }
+
+gamGhnAgentStatusEndpointByMacDetailedAlive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device is detected. Other fields will not be returned if device is
+         undetected."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 20 }
+
+gamGhnAgentStatusEndpointByMacDetailedDeviceName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device model name."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 30 }
+
+gamGhnAgentStatusEndpointByMacDetailedHwProduct OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..11))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device hardware product name."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 40 }
+
+gamGhnAgentStatusEndpointByMacDetailedSerialNumber OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device serial number."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 50 }
+
+gamGhnAgentStatusEndpointByMacDetailedUptime OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..39))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device uptime."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 60 }
+
+gamGhnAgentStatusEndpointByMacDetailedFwVersion OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..99))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device firmware version."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 70 }
+
+gamGhnAgentStatusEndpointByMacDetailedXputIndicator OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TX bandwidth allocation, in Mbps."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 80 }
+
+gamGhnAgentStatusEndpointByMacDetailedMode OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPortMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Device mode."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 90 }
+
+gamGhnAgentStatusEndpointByMacDetailedWireLengthMeters OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Estimated wire length (in meters). This parameter is available only
+         valid for MIMO/SISO systems (GAM-xx-M)"
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 100 }
+
+gamGhnAgentStatusEndpointByMacDetailedWireLengthFeet OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Estimated wire length (in feet). This parameter is available only valid
+         for MIMO/SISO systems (GAM-xx-M)"
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 105 }
+
+gamGhnAgentStatusEndpointByMacDetailedRxPhyRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream PHY allocated bandwidth, in Mbps. This parameter is
+         available only for endpoints."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 110 }
+
+gamGhnAgentStatusEndpointByMacDetailedTxPhyRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream PHY allocated bandwidth, in Mbps. This parameter is available
+         only for endpoints."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 120 }
+
+gamGhnAgentStatusEndpointByMacDetailedRxAllocBands OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream number of bands currently allocated. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 130 }
+
+gamGhnAgentStatusEndpointByMacDetailedTxAllocBands OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream number of bands currently allocated. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 140 }
+
+gamGhnAgentStatusEndpointByMacDetailedRxMaxXput OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream maximum usable data throughput, in Mbps. This parameter is
+         available only for endpoints."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 150 }
+
+gamGhnAgentStatusEndpointByMacDetailedTxMaxXput OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream maximum usable data throughput, in Mbps. This parameter is
+         available only for endpoints."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 160 }
+
+gamGhnAgentStatusEndpointByMacDetailedRxUsage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Downstream max allocatable bandwidth, in Mbps. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 170 }
+
+gamGhnAgentStatusEndpointByMacDetailedTxUsage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream max allocatable bandwidth, in Mbps. This parameter is
+         available only for endpoints, and only valid for MIMO/SISO systems
+         (GAM-xx-M)."
+    ::= { gamGhnAgentStatusEndpointByMacDetailedEntry 180 }
+
+gamGhnAgentStatusEndpointByMacLinkTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusEndpointByMacLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn endpoint (by MAC) link status."
+    ::= { gamGhnAgentStatusEndpointByMac 30 }
+
+gamGhnAgentStatusEndpointByMacLinkEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusEndpointByMacLinkEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the link status for one Ethernet port."
+    INDEX       {                   gamGhnAgentStatusEndpointByMacLinkEndpointMacAddress,
+                  gamGhnAgentStatusEndpointByMacLinkEthPort }
+    ::= { gamGhnAgentStatusEndpointByMacLinkTable 1 }
+
+GAMGhnAgentStatusEndpointByMacLinkEntry ::= SEQUENCE {
+    gamGhnAgentStatusEndpointByMacLinkEndpointMacAddress  MacAddress,
+    gamGhnAgentStatusEndpointByMacLinkEthPort             Unsigned32,
+    gamGhnAgentStatusEndpointByMacLinkValid               TruthValue,
+    gamGhnAgentStatusEndpointByMacLinkLink                TruthValue,
+    gamGhnAgentStatusEndpointByMacLinkFdx                 TruthValue,
+    gamGhnAgentStatusEndpointByMacLinkSpeed               GAMPortStatusSpeed
+}
+
+gamGhnAgentStatusEndpointByMacLinkEndpointMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentStatusEndpointByMacLinkEntry 1 }
+
+gamGhnAgentStatusEndpointByMacLinkEthPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint Ethernet port instance."
+    ::= { gamGhnAgentStatusEndpointByMacLinkEntry 2 }
+
+gamGhnAgentStatusEndpointByMacLinkValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface data is available and valid"
+    ::= { gamGhnAgentStatusEndpointByMacLinkEntry 10 }
+
+gamGhnAgentStatusEndpointByMacLinkLink OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface has link."
+    ::= { gamGhnAgentStatusEndpointByMacLinkEntry 20 }
+
+gamGhnAgentStatusEndpointByMacLinkFdx OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface is running in full duplex."
+    ::= { gamGhnAgentStatusEndpointByMacLinkEntry 30 }
+
+gamGhnAgentStatusEndpointByMacLinkSpeed OBJECT-TYPE
+    SYNTAX      GAMPortStatusSpeed
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the current interface speed."
+    ::= { gamGhnAgentStatusEndpointByMacLinkEntry 40 }
+
+gamGhnAgentStatusEndpointByMacFwUpgradeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusEndpointByMacFwUpgradeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn endpoint (by MAC) firmware upgrade status."
+    ::= { gamGhnAgentStatusEndpointByMac 40 }
+
+gamGhnAgentStatusEndpointByMacFwUpgradeEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusEndpointByMacFwUpgradeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the firmware status for one endpoint."
+    INDEX       {                   gamGhnAgentStatusEndpointByMacFwUpgradeEndpointMacAddress }
+    ::= { gamGhnAgentStatusEndpointByMacFwUpgradeTable 1 }
+
+GAMGhnAgentStatusEndpointByMacFwUpgradeEntry ::= SEQUENCE {
+    gamGhnAgentStatusEndpointByMacFwUpgradeEndpointMacAddress  MacAddress,
+    gamGhnAgentStatusEndpointByMacFwUpgradeStatus              GAMDisplayString,
+    gamGhnAgentStatusEndpointByMacFwUpgradeDownloadedBytes     Integer32,
+    gamGhnAgentStatusEndpointByMacFwUpgradeFdx                 GAMGhnAgentFwUpgradeStage
+}
+
+gamGhnAgentStatusEndpointByMacFwUpgradeEndpointMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentStatusEndpointByMacFwUpgradeEntry 1 }
+
+gamGhnAgentStatusEndpointByMacFwUpgradeStatus OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..199))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Status string"
+    ::= { gamGhnAgentStatusEndpointByMacFwUpgradeEntry 10 }
+
+gamGhnAgentStatusEndpointByMacFwUpgradeDownloadedBytes OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates number of bytes transferred to the endpoint during download
+         stage."
+    ::= { gamGhnAgentStatusEndpointByMacFwUpgradeEntry 20 }
+
+gamGhnAgentStatusEndpointByMacFwUpgradeFdx OBJECT-TYPE
+    SYNTAX      GAMGhnAgentFwUpgradeStage
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current upgrade stage."
+    ::= { gamGhnAgentStatusEndpointByMacFwUpgradeEntry 30 }
+
+gamGhnAgentStatusEndpointByMacPoeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatusEndpointByMacPoeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn endpoint (by MAC) PoE status."
+    ::= { gamGhnAgentStatusEndpointByMac 50 }
+
+gamGhnAgentStatusEndpointByMacPoeEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatusEndpointByMacPoeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the PoE status for one endpoint."
+    INDEX       {                   gamGhnAgentStatusEndpointByMacPoeEndpointMacAddress }
+    ::= { gamGhnAgentStatusEndpointByMacPoeTable 1 }
+
+GAMGhnAgentStatusEndpointByMacPoeEntry ::= SEQUENCE {
+    gamGhnAgentStatusEndpointByMacPoeEndpointMacAddress  MacAddress,
+    gamGhnAgentStatusEndpointByMacPoeCpePort             Unsigned32,
+    gamGhnAgentStatusEndpointByMacPoeEnabled             TruthValue,
+    gamGhnAgentStatusEndpointByMacPoeMode                GAMGhnAgentPoeMode,
+    gamGhnAgentStatusEndpointByMacPoePSEOverload         TruthValue,
+    gamGhnAgentStatusEndpointByMacPoeInputPwrSrc         GAMGhnAgentPoeInputSrcMode,
+    gamGhnAgentStatusEndpointByMacPoeInputPwrLevel       GAMGhnAgentPoeMode,
+    gamGhnAgentStatusEndpointByMacPoeOutputStatus        GAMGhnAgentPoeInputSrcMode
+}
+
+gamGhnAgentStatusEndpointByMacPoeEndpointMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentStatusEndpointByMacPoeEntry 1 }
+
+gamGhnAgentStatusEndpointByMacPoeCpePort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Which CPE port is this status referring to. That is the port which is
+         PoE-capable. Zero if the CPE is not PoE-capable"
+    ::= { gamGhnAgentStatusEndpointByMacPoeEntry 10 }
+
+gamGhnAgentStatusEndpointByMacPoeEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates if PoE is enabled"
+    ::= { gamGhnAgentStatusEndpointByMacPoeEntry 15 }
+
+gamGhnAgentStatusEndpointByMacPoeMode OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPoeMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "PoE mode"
+    ::= { gamGhnAgentStatusEndpointByMacPoeEntry 20 }
+
+gamGhnAgentStatusEndpointByMacPoePSEOverload OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates if there is Power Source Equipment (PSE) overload"
+    ::= { gamGhnAgentStatusEndpointByMacPoeEntry 30 }
+
+gamGhnAgentStatusEndpointByMacPoeInputPwrSrc OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPoeInputSrcMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Input power source"
+    ::= { gamGhnAgentStatusEndpointByMacPoeEntry 40 }
+
+gamGhnAgentStatusEndpointByMacPoeInputPwrLevel OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPoeMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Input power level"
+    ::= { gamGhnAgentStatusEndpointByMacPoeEntry 50 }
+
+gamGhnAgentStatusEndpointByMacPoeOutputStatus OBJECT-TYPE
+    SYNTAX      GAMGhnAgentPoeInputSrcMode
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Output status"
+    ::= { gamGhnAgentStatusEndpointByMacPoeEntry 60 }
+
+gamGhnAgentStatusVectorBoost OBJECT IDENTIFIER
+    ::= { gamGhnAgentStatus 40 }
+
+gamGhnAgentStatusVectorBoostState OBJECT-TYPE
+    SYNTAX      GAMGhnAgentVectorBoostState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows VectorBoost current state. Only available for GAM MIMO."
+    ::= { gamGhnAgentStatusVectorBoost 10 }
+
+gamGhnAgentControl OBJECT IDENTIFIER
+    ::= { gamGhnAgentMibObjects 4 }
+
+gamGhnAgentControlPort OBJECT IDENTIFIER
+    ::= { gamGhnAgentControl 10 }
+
+gamGhnAgentControlPortStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentControlPortStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Use this table entries to clear the G.hn port Ethernet statistics."
+    ::= { gamGhnAgentControlPort 20 }
+
+gamGhnAgentControlPortStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentControlPortStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contain the Ethernet statistics clear controls for one G.hn
+         port."
+    INDEX       { gamGhnAgentControlPortStatisticsPortIfIndex }
+    ::= { gamGhnAgentControlPortStatisticsTable 1 }
+
+GAMGhnAgentControlPortStatisticsEntry ::= SEQUENCE {
+    gamGhnAgentControlPortStatisticsPortIfIndex    GAMInterfaceIndex,
+    gamGhnAgentControlPortStatisticsClearEthStats  TruthValue
+}
+
+gamGhnAgentControlPortStatisticsPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamGhnAgentControlPortStatisticsEntry 1 }
+
+gamGhnAgentControlPortStatisticsClearEthStats OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to clear Ethernet statistics. This field always read back
+         as false."
+    ::= { gamGhnAgentControlPortStatisticsEntry 10 }
+
+gamGhnAgentControlEndpoint OBJECT IDENTIFIER
+    ::= { gamGhnAgentControl 20 }
+
+gamGhnAgentControlEndpointSystemTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentControlEndpointSystemEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Use this table entries to manage G.hn endpoints system controls."
+    ::= { gamGhnAgentControlEndpoint 10 }
+
+gamGhnAgentControlEndpointSystemEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentControlEndpointSystemEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contain the system controls for one G.hn endpoint."
+    INDEX       { gamGhnAgentControlEndpointSystemEndpointId }
+    ::= { gamGhnAgentControlEndpointSystemTable 1 }
+
+GAMGhnAgentControlEndpointSystemEntry ::= SEQUENCE {
+    gamGhnAgentControlEndpointSystemEndpointId      Integer32,
+    gamGhnAgentControlEndpointSystemReboot          TruthValue,
+    gamGhnAgentControlEndpointSystemStartFwUpgrade  TruthValue
+}
+
+gamGhnAgentControlEndpointSystemEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentControlEndpointSystemEntry 1 }
+
+gamGhnAgentControlEndpointSystemReboot OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to initiate endpoint reboot. This field always read back as
+         false."
+    ::= { gamGhnAgentControlEndpointSystemEntry 10 }
+
+gamGhnAgentControlEndpointSystemStartFwUpgrade OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to initiate firmware upgrade. This field always read back
+         as false."
+    ::= { gamGhnAgentControlEndpointSystemEntry 20 }
+
+gamGhnAgentControlEndpointStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentControlEndpointStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Use this table entries to clear the G.hn endpoint statistics."
+    ::= { gamGhnAgentControlEndpoint 20 }
+
+gamGhnAgentControlEndpointStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentControlEndpointStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contain the statistics clear controls for one G.hn endpoint."
+    INDEX       { gamGhnAgentControlEndpointStatisticsEndpointId }
+    ::= { gamGhnAgentControlEndpointStatisticsTable 1 }
+
+GAMGhnAgentControlEndpointStatisticsEntry ::= SEQUENCE {
+    gamGhnAgentControlEndpointStatisticsEndpointId     Integer32,
+    gamGhnAgentControlEndpointStatisticsClearEthStats  TruthValue,
+    gamGhnAgentControlEndpointStatisticsClearGhnStats  TruthValue
+}
+
+gamGhnAgentControlEndpointStatisticsEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentControlEndpointStatisticsEntry 1 }
+
+gamGhnAgentControlEndpointStatisticsClearEthStats OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to clear Ethernet statistics. This field always read back
+         as false."
+    ::= { gamGhnAgentControlEndpointStatisticsEntry 10 }
+
+gamGhnAgentControlEndpointStatisticsClearGhnStats OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to clear G.hn statistics. This field always read back as
+         false."
+    ::= { gamGhnAgentControlEndpointStatisticsEntry 20 }
+
+gamGhnAgentControlEndpointPoETable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentControlEndpointPoEEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Use this table entries to manage G.hn endpoints PoE controls."
+    ::= { gamGhnAgentControlEndpoint 30 }
+
+gamGhnAgentControlEndpointPoEEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentControlEndpointPoEEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contain the PoE controls for one G.hn endpoint."
+    INDEX       { gamGhnAgentControlEndpointPoEEndpointId }
+    ::= { gamGhnAgentControlEndpointPoETable 1 }
+
+GAMGhnAgentControlEndpointPoEEntry ::= SEQUENCE {
+    gamGhnAgentControlEndpointPoEEndpointId  Integer32,
+    gamGhnAgentControlEndpointPoECyclePower  TruthValue
+}
+
+gamGhnAgentControlEndpointPoEEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentControlEndpointPoEEntry 1 }
+
+gamGhnAgentControlEndpointPoECyclePower OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to cycle PoE power (effectively resetting the downstream
+         device, provided it's powered over Ethernet). This field always read
+         back as false."
+    ::= { gamGhnAgentControlEndpointPoEEntry 10 }
+
+gamGhnAgentControlEndpointByMac OBJECT IDENTIFIER
+    ::= { gamGhnAgentControl 30 }
+
+gamGhnAgentControlEndpointByMacSystemTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentControlEndpointByMacSystemEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Use this table entries to manage G.hn endpoints (by MAC) system
+         controls."
+    ::= { gamGhnAgentControlEndpointByMac 10 }
+
+gamGhnAgentControlEndpointByMacSystemEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentControlEndpointByMacSystemEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contain the system controls for one G.hn endpoint."
+    INDEX       {                   gamGhnAgentControlEndpointByMacSystemEndpointMacAddress }
+    ::= { gamGhnAgentControlEndpointByMacSystemTable 1 }
+
+GAMGhnAgentControlEndpointByMacSystemEntry ::= SEQUENCE {
+    gamGhnAgentControlEndpointByMacSystemEndpointMacAddress  MacAddress,
+    gamGhnAgentControlEndpointByMacSystemReboot              TruthValue,
+    gamGhnAgentControlEndpointByMacSystemStartFwUpgrade      TruthValue
+}
+
+gamGhnAgentControlEndpointByMacSystemEndpointMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentControlEndpointByMacSystemEntry 1 }
+
+gamGhnAgentControlEndpointByMacSystemReboot OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to initiate endpoint reboot. This field always read back as
+         false."
+    ::= { gamGhnAgentControlEndpointByMacSystemEntry 10 }
+
+gamGhnAgentControlEndpointByMacSystemStartFwUpgrade OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to initiate firmware upgrade. This field always read back
+         as false."
+    ::= { gamGhnAgentControlEndpointByMacSystemEntry 20 }
+
+gamGhnAgentControlEndpointByMacStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentControlEndpointByMacStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Use this table entries to clear the G.hn endpoint (by MAC) statistics."
+    ::= { gamGhnAgentControlEndpointByMac 20 }
+
+gamGhnAgentControlEndpointByMacStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentControlEndpointByMacStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contain the statistics clear controls for one G.hn endpoint."
+    INDEX       {                   gamGhnAgentControlEndpointByMacStatisticsEndpointMacAddress }
+    ::= { gamGhnAgentControlEndpointByMacStatisticsTable 1 }
+
+GAMGhnAgentControlEndpointByMacStatisticsEntry ::= SEQUENCE {
+    gamGhnAgentControlEndpointByMacStatisticsEndpointMacAddress  MacAddress,
+    gamGhnAgentControlEndpointByMacStatisticsClearEthStats       TruthValue,
+    gamGhnAgentControlEndpointByMacStatisticsClearGhnStats       TruthValue
+}
+
+gamGhnAgentControlEndpointByMacStatisticsEndpointMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentControlEndpointByMacStatisticsEntry 1 }
+
+gamGhnAgentControlEndpointByMacStatisticsClearEthStats OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to clear Ethernet statistics. This field always read back
+         as false."
+    ::= { gamGhnAgentControlEndpointByMacStatisticsEntry 10 }
+
+gamGhnAgentControlEndpointByMacStatisticsClearGhnStats OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to clear G.hn statistics. This field always read back as
+         false."
+    ::= { gamGhnAgentControlEndpointByMacStatisticsEntry 20 }
+
+gamGhnAgentControlEndpointByMacPoETable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentControlEndpointByMacPoEEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Use this table entries to manage G.hn endpoints (by MAC) PoE controls."
+    ::= { gamGhnAgentControlEndpointByMac 30 }
+
+gamGhnAgentControlEndpointByMacPoEEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentControlEndpointByMacPoEEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contain the PoE controls for one G.hn endpoint."
+    INDEX       {                   gamGhnAgentControlEndpointByMacPoEEndpointMacAddress }
+    ::= { gamGhnAgentControlEndpointByMacPoETable 1 }
+
+GAMGhnAgentControlEndpointByMacPoEEntry ::= SEQUENCE {
+    gamGhnAgentControlEndpointByMacPoEEndpointMacAddress  MacAddress,
+    gamGhnAgentControlEndpointByMacPoECyclePower          TruthValue
+}
+
+gamGhnAgentControlEndpointByMacPoEEndpointMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentControlEndpointByMacPoEEntry 1 }
+
+gamGhnAgentControlEndpointByMacPoECyclePower OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to cycle PoE power (effectively resetting the downstream
+         device, provided it's powered over Ethernet). This field always read
+         back as false."
+    ::= { gamGhnAgentControlEndpointByMacPoEEntry 10 }
+
+gamGhnAgentStatistics OBJECT IDENTIFIER
+    ::= { gamGhnAgentMibObjects 5 }
+
+gamGhnAgentStatisticsPort OBJECT IDENTIFIER
+    ::= { gamGhnAgentStatistics 10 }
+
+gamGhnAgentStatisticsPortEthTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatisticsPortEthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn port Ethernet statistics."
+    ::= { gamGhnAgentStatisticsPort 10 }
+
+gamGhnAgentStatisticsPortEthEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatisticsPortEthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contain the Ethernet statistics for one G.hn port."
+    INDEX       { gamGhnAgentStatisticsPortEthPortIfIndex }
+    ::= { gamGhnAgentStatisticsPortEthTable 1 }
+
+GAMGhnAgentStatisticsPortEthEntry ::= SEQUENCE {
+    gamGhnAgentStatisticsPortEthPortIfIndex  GAMInterfaceIndex,
+    gamGhnAgentStatisticsPortEthValid        TruthValue,
+    gamGhnAgentStatisticsPortEthRxBytes      Counter64,
+    gamGhnAgentStatisticsPortEthTxBytes      Counter64,
+    gamGhnAgentStatisticsPortEthRxPackets    Counter64,
+    gamGhnAgentStatisticsPortEthTxPackets    Counter64,
+    gamGhnAgentStatisticsPortEthRxErrors     Counter64
+}
+
+gamGhnAgentStatisticsPortEthPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamGhnAgentStatisticsPortEthEntry 1 }
+
+gamGhnAgentStatisticsPortEthValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface data is available and valid"
+    ::= { gamGhnAgentStatisticsPortEthEntry 10 }
+
+gamGhnAgentStatisticsPortEthRxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes received at the interface."
+    ::= { gamGhnAgentStatisticsPortEthEntry 20 }
+
+gamGhnAgentStatisticsPortEthTxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes transmitted by the interface."
+    ::= { gamGhnAgentStatisticsPortEthEntry 30 }
+
+gamGhnAgentStatisticsPortEthRxPackets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets received at the interface."
+    ::= { gamGhnAgentStatisticsPortEthEntry 40 }
+
+gamGhnAgentStatisticsPortEthTxPackets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets transmitted by the interface."
+    ::= { gamGhnAgentStatisticsPortEthEntry 50 }
+
+gamGhnAgentStatisticsPortEthRxErrors OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets received in error at the interface."
+    ::= { gamGhnAgentStatisticsPortEthEntry 60 }
+
+gamGhnAgentStatisticsEndpoint OBJECT IDENTIFIER
+    ::= { gamGhnAgentStatistics 20 }
+
+gamGhnAgentStatisticsEndpointEthTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatisticsEndpointEthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn endpoint Ethernet statistics."
+    ::= { gamGhnAgentStatisticsEndpoint 10 }
+
+gamGhnAgentStatisticsEndpointEthEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatisticsEndpointEthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the Ethernet statistics for one Ethernet port of an
+         endpoint."
+    INDEX       { gamGhnAgentStatisticsEndpointEthEndpointId,
+                  gamGhnAgentStatisticsEndpointEthEthPort }
+    ::= { gamGhnAgentStatisticsEndpointEthTable 1 }
+
+GAMGhnAgentStatisticsEndpointEthEntry ::= SEQUENCE {
+    gamGhnAgentStatisticsEndpointEthEndpointId  Integer32,
+    gamGhnAgentStatisticsEndpointEthEthPort     Unsigned32,
+    gamGhnAgentStatisticsEndpointEthValid       TruthValue,
+    gamGhnAgentStatisticsEndpointEthRxBytes     Counter64,
+    gamGhnAgentStatisticsEndpointEthTxBytes     Counter64,
+    gamGhnAgentStatisticsEndpointEthRxPackets   Counter64,
+    gamGhnAgentStatisticsEndpointEthTxPackets   Counter64,
+    gamGhnAgentStatisticsEndpointEthRxErrors    Counter64
+}
+
+gamGhnAgentStatisticsEndpointEthEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentStatisticsEndpointEthEntry 1 }
+
+gamGhnAgentStatisticsEndpointEthEthPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint Ethernet port instance."
+    ::= { gamGhnAgentStatisticsEndpointEthEntry 2 }
+
+gamGhnAgentStatisticsEndpointEthValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface data is available and valid"
+    ::= { gamGhnAgentStatisticsEndpointEthEntry 10 }
+
+gamGhnAgentStatisticsEndpointEthRxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes received at the interface."
+    ::= { gamGhnAgentStatisticsEndpointEthEntry 20 }
+
+gamGhnAgentStatisticsEndpointEthTxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes transmitted by the interface."
+    ::= { gamGhnAgentStatisticsEndpointEthEntry 30 }
+
+gamGhnAgentStatisticsEndpointEthRxPackets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets received at the interface."
+    ::= { gamGhnAgentStatisticsEndpointEthEntry 40 }
+
+gamGhnAgentStatisticsEndpointEthTxPackets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets transmitted by the interface."
+    ::= { gamGhnAgentStatisticsEndpointEthEntry 50 }
+
+gamGhnAgentStatisticsEndpointEthRxErrors OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets received in error at the interface."
+    ::= { gamGhnAgentStatisticsEndpointEthEntry 60 }
+
+gamGhnAgentStatisticsEndpointGhnTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatisticsEndpointGhnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn endpoint G.hn statistics."
+    ::= { gamGhnAgentStatisticsEndpoint 20 }
+
+gamGhnAgentStatisticsEndpointGhnEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatisticsEndpointGhnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the G.hn statistics for one endpoint."
+    INDEX       { gamGhnAgentStatisticsEndpointGhnEndpointId }
+    ::= { gamGhnAgentStatisticsEndpointGhnTable 1 }
+
+GAMGhnAgentStatisticsEndpointGhnEntry ::= SEQUENCE {
+    gamGhnAgentStatisticsEndpointGhnEndpointId      Integer32,
+    gamGhnAgentStatisticsEndpointGhnUsFrames        Unsigned32,
+    gamGhnAgentStatisticsEndpointGhnUsPDUs          Unsigned32,
+    gamGhnAgentStatisticsEndpointGhnUsErrorPercent  GAMUnsigned8,
+    gamGhnAgentStatisticsEndpointGhnUsAbortPercent  GAMUnsigned8,
+    gamGhnAgentStatisticsEndpointGhnDsFrames        Unsigned32,
+    gamGhnAgentStatisticsEndpointGhnDsPDUs          Unsigned32,
+    gamGhnAgentStatisticsEndpointGhnDsErrorPercent  GAMUnsigned8,
+    gamGhnAgentStatisticsEndpointGhnDsAbortPercent  GAMUnsigned8
+}
+
+gamGhnAgentStatisticsEndpointGhnEndpointId OBJECT-TYPE
+    SYNTAX      Integer32 (0..384)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The identification of a G.hn endpoint."
+    ::= { gamGhnAgentStatisticsEndpointGhnEntry 1 }
+
+gamGhnAgentStatisticsEndpointGhnUsFrames OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frames in upstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointGhnEntry 10 }
+
+gamGhnAgentStatisticsEndpointGhnUsPDUs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of PDUs in upstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointGhnEntry 20 }
+
+gamGhnAgentStatisticsEndpointGhnUsErrorPercent OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The error rate (in percent) in upstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointGhnEntry 30 }
+
+gamGhnAgentStatisticsEndpointGhnUsAbortPercent OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The abort rate (in percent) in upstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointGhnEntry 40 }
+
+gamGhnAgentStatisticsEndpointGhnDsFrames OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frames in downstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointGhnEntry 1010 }
+
+gamGhnAgentStatisticsEndpointGhnDsPDUs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of PDUs in downstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointGhnEntry 1020 }
+
+gamGhnAgentStatisticsEndpointGhnDsErrorPercent OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The error rate (in percent) in downstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointGhnEntry 1030 }
+
+gamGhnAgentStatisticsEndpointGhnDsAbortPercent OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The abort rate (in percent) in downstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointGhnEntry 1040 }
+
+gamGhnAgentStatisticsEndpointByMac OBJECT IDENTIFIER
+    ::= { gamGhnAgentStatistics 30 }
+
+gamGhnAgentStatisticsEndpointByMacEthTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatisticsEndpointByMacEthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn endpoint (by MAC) Ethernet statistics."
+    ::= { gamGhnAgentStatisticsEndpointByMac 10 }
+
+gamGhnAgentStatisticsEndpointByMacEthEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatisticsEndpointByMacEthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the Ethernet statistics for one Ethernet port of an
+         endpoint."
+    INDEX       {                   gamGhnAgentStatisticsEndpointByMacEthEndpointMacAddress,
+                  gamGhnAgentStatisticsEndpointByMacEthEthPort }
+    ::= { gamGhnAgentStatisticsEndpointByMacEthTable 1 }
+
+GAMGhnAgentStatisticsEndpointByMacEthEntry ::= SEQUENCE {
+    gamGhnAgentStatisticsEndpointByMacEthEndpointMacAddress  MacAddress,
+    gamGhnAgentStatisticsEndpointByMacEthEthPort             Unsigned32,
+    gamGhnAgentStatisticsEndpointByMacEthValid               TruthValue,
+    gamGhnAgentStatisticsEndpointByMacEthRxBytes             Counter64,
+    gamGhnAgentStatisticsEndpointByMacEthTxBytes             Counter64,
+    gamGhnAgentStatisticsEndpointByMacEthRxPackets           Counter64,
+    gamGhnAgentStatisticsEndpointByMacEthTxPackets           Counter64,
+    gamGhnAgentStatisticsEndpointByMacEthRxErrors            Counter64
+}
+
+gamGhnAgentStatisticsEndpointByMacEthEndpointMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentStatisticsEndpointByMacEthEntry 1 }
+
+gamGhnAgentStatisticsEndpointByMacEthEthPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint Ethernet port instance."
+    ::= { gamGhnAgentStatisticsEndpointByMacEthEntry 2 }
+
+gamGhnAgentStatisticsEndpointByMacEthValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface data is available and valid"
+    ::= { gamGhnAgentStatisticsEndpointByMacEthEntry 10 }
+
+gamGhnAgentStatisticsEndpointByMacEthRxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes received at the interface."
+    ::= { gamGhnAgentStatisticsEndpointByMacEthEntry 20 }
+
+gamGhnAgentStatisticsEndpointByMacEthTxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes transmitted by the interface."
+    ::= { gamGhnAgentStatisticsEndpointByMacEthEntry 30 }
+
+gamGhnAgentStatisticsEndpointByMacEthRxPackets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets received at the interface."
+    ::= { gamGhnAgentStatisticsEndpointByMacEthEntry 40 }
+
+gamGhnAgentStatisticsEndpointByMacEthTxPackets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets transmitted by the interface."
+    ::= { gamGhnAgentStatisticsEndpointByMacEthEntry 50 }
+
+gamGhnAgentStatisticsEndpointByMacEthRxErrors OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of packets received in error at the interface."
+    ::= { gamGhnAgentStatisticsEndpointByMacEthEntry 60 }
+
+gamGhnAgentStatisticsEndpointByMacGhnTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMGhnAgentStatisticsEndpointByMacGhnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of G.hn endpoint (by MAC) G.hn statistics."
+    ::= { gamGhnAgentStatisticsEndpointByMac 20 }
+
+gamGhnAgentStatisticsEndpointByMacGhnEntry OBJECT-TYPE
+    SYNTAX      GAMGhnAgentStatisticsEndpointByMacGhnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the G.hn statistics for one endpoint."
+    INDEX       {                   gamGhnAgentStatisticsEndpointByMacGhnEndpointMacAddress }
+    ::= { gamGhnAgentStatisticsEndpointByMacGhnTable 1 }
+
+GAMGhnAgentStatisticsEndpointByMacGhnEntry ::= SEQUENCE {
+    gamGhnAgentStatisticsEndpointByMacGhnEndpointMacAddress  MacAddress,
+    gamGhnAgentStatisticsEndpointByMacGhnUsFrames            Unsigned32,
+    gamGhnAgentStatisticsEndpointByMacGhnUsPDUs              Unsigned32,
+    gamGhnAgentStatisticsEndpointByMacGhnUsErrorPercent      GAMUnsigned8,
+    gamGhnAgentStatisticsEndpointByMacGhnUsAbortPercent      GAMUnsigned8,
+    gamGhnAgentStatisticsEndpointByMacGhnDsFrames            Unsigned32,
+    gamGhnAgentStatisticsEndpointByMacGhnDsPDUs              Unsigned32,
+    gamGhnAgentStatisticsEndpointByMacGhnDsErrorPercent      GAMUnsigned8,
+    gamGhnAgentStatisticsEndpointByMacGhnDsAbortPercent      GAMUnsigned8
+}
+
+gamGhnAgentStatisticsEndpointByMacGhnEndpointMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The endpoint MAC address."
+    ::= { gamGhnAgentStatisticsEndpointByMacGhnEntry 1 }
+
+gamGhnAgentStatisticsEndpointByMacGhnUsFrames OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frames in upstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointByMacGhnEntry 10 }
+
+gamGhnAgentStatisticsEndpointByMacGhnUsPDUs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of PDUs in upstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointByMacGhnEntry 20 }
+
+gamGhnAgentStatisticsEndpointByMacGhnUsErrorPercent OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The error rate (in percent) in upstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointByMacGhnEntry 30 }
+
+gamGhnAgentStatisticsEndpointByMacGhnUsAbortPercent OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The abort rate (in percent) in upstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointByMacGhnEntry 40 }
+
+gamGhnAgentStatisticsEndpointByMacGhnDsFrames OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frames in downstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointByMacGhnEntry 1010 }
+
+gamGhnAgentStatisticsEndpointByMacGhnDsPDUs OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of PDUs in downstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointByMacGhnEntry 1020 }
+
+gamGhnAgentStatisticsEndpointByMacGhnDsErrorPercent OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The error rate (in percent) in downstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointByMacGhnEntry 1030 }
+
+gamGhnAgentStatisticsEndpointByMacGhnDsAbortPercent OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The abort rate (in percent) in downstream drirection."
+    ::= { gamGhnAgentStatisticsEndpointByMacGhnEntry 1040 }
+
+gamGhnAgentMibConformance OBJECT IDENTIFIER
+    ::= { gamGhnAgentMib 2 }
+
+gamGhnAgentMibCompliances OBJECT IDENTIFIER
+    ::= { gamGhnAgentMibConformance 1 }
+
+gamGhnAgentMibGroups OBJECT IDENTIFIER
+    ::= { gamGhnAgentMibConformance 2 }
+
+gamGhnAgentConfigGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentConfigGlobalSubscriberModel,
+                  gamGhnAgentConfigGlobalDefaultNNIIfIndex,
+                  gamGhnAgentConfigGlobalEndpointAutoFwUpgrade,
+                  gamGhnAgentConfigGlobalShelfSeedIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 1 }
+
+gamGhnAgentConfigPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentConfigPortPortIfIndex,
+                  gamGhnAgentConfigPortIfIndex,
+                  gamGhnAgentConfigPortName,
+                  gamGhnAgentConfigPortMacAddress,
+                  gamGhnAgentConfigPortPortMode,
+                  gamGhnAgentConfigPortPortRole,
+                  gamGhnAgentConfigPortRfc5517Mode,
+                  gamGhnAgentConfigPortRfc5517Community,
+                  gamGhnAgentConfigPortAllowedVlans0To1K,
+                  gamGhnAgentConfigPortAllowedVlans1KTo2K,
+                  gamGhnAgentConfigPortAllowedVlans2KTo3K,
+                  gamGhnAgentConfigPortAllowedVlans3KTo4K,
+                  gamGhnAgentConfigPortForbiddenVlans0To1K,
+                  gamGhnAgentConfigPortForbiddenVlans1KTo2K,
+                  gamGhnAgentConfigPortForbiddenVlans2KTo3K,
+                  gamGhnAgentConfigPortForbiddenVlans3KTo4K,
+                  gamGhnAgentConfigPortAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 2 }
+
+gamGhnAgentConfigEndpointTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentConfigEndpointEndpointId,
+                  gamGhnAgentConfigEndpointId,
+                  gamGhnAgentConfigEndpointMacAddress,
+                  gamGhnAgentConfigEndpointName,
+                  gamGhnAgentConfigEndpointDescription,
+                  gamGhnAgentConfigEndpointPortIfIndex,
+                  gamGhnAgentConfigEndpointAutoPort,
+                  gamGhnAgentConfigEndpointAllowMgmtVlan,
+                  gamGhnAgentConfigEndpointAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 3 }
+
+gamGhnAgentConfigEndpointEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentConfigEndpointEditorEndpointId,
+                  gamGhnAgentConfigEndpointEditorId,
+                  gamGhnAgentConfigEndpointEditorMacAddress,
+                  gamGhnAgentConfigEndpointEditorName,
+                  gamGhnAgentConfigEndpointEditorDescription,
+                  gamGhnAgentConfigEndpointEditorPortIfIndex,
+                  gamGhnAgentConfigEndpointEditorAutoPort,
+                  gamGhnAgentConfigEndpointEditorAllowMgmtVlan,
+                  gamGhnAgentConfigEndpointEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 4 }
+
+gamGhnAgentConfigBwProfileTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentConfigBwProfileBwProfileId,
+                  gamGhnAgentConfigBwProfileId,
+                  gamGhnAgentConfigBwProfileUid,
+                  gamGhnAgentConfigBwProfileName,
+                  gamGhnAgentConfigBwProfileDescription,
+                  gamGhnAgentConfigBwProfileDsBw,
+                  gamGhnAgentConfigBwProfileUsBw,
+                  gamGhnAgentConfigBwProfileAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 5 }
+
+gamGhnAgentConfigBwProfileEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentConfigBwProfileEditorBwProfileId,
+                  gamGhnAgentConfigBwProfileEditorId,
+                  gamGhnAgentConfigBwProfileEditorUid,
+                  gamGhnAgentConfigBwProfileEditorName,
+                  gamGhnAgentConfigBwProfileEditorDescription,
+                  gamGhnAgentConfigBwProfileEditorDsBw,
+                  gamGhnAgentConfigBwProfileEditorUsBw,
+                  gamGhnAgentConfigBwProfileEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 6 }
+
+gamGhnAgentConfigUserTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentConfigUserUserId,
+                  gamGhnAgentConfigUserId, gamGhnAgentConfigUserUid,
+                  gamGhnAgentConfigUserName,
+                  gamGhnAgentConfigUserDescription,
+                  gamGhnAgentConfigUserEndpointId,
+                  gamGhnAgentConfigUserEndpointName,
+                  gamGhnAgentConfigUserBwProfileId,
+                  gamGhnAgentConfigUserBwProfileName,
+                  gamGhnAgentConfigUserVlanId,
+                  gamGhnAgentConfigUserVlanIsTagged,
+                  gamGhnAgentConfigUserRemappedVlanId,
+                  gamGhnAgentConfigUserPort2VlanId,
+                  gamGhnAgentConfigUserAllowedTaggedVlans0To1K,
+                  gamGhnAgentConfigUserAllowedTaggedVlans1KTo2K,
+                  gamGhnAgentConfigUserAllowedTaggedVlans2KTo3K,
+                  gamGhnAgentConfigUserAllowedTaggedVlans3KTo4K,
+                  gamGhnAgentConfigUserTrunkMode,
+                  gamGhnAgentConfigUserPortIfIndex,
+                  gamGhnAgentConfigUserDoubleTags,
+                  gamGhnAgentConfigUserNNIIfIndex,
+                  gamGhnAgentConfigUserOuterTagVlanId,
+                  gamGhnAgentConfigUserPoeModeCtrl,
+                  gamGhnAgentConfigUserAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 7 }
+
+gamGhnAgentConfigUserRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentConfigUserRowEditorUserId,
+                  gamGhnAgentConfigUserRowEditorId,
+                  gamGhnAgentConfigUserRowEditorUid,
+                  gamGhnAgentConfigUserRowEditorName,
+                  gamGhnAgentConfigUserRowEditorDescription,
+                  gamGhnAgentConfigUserRowEditorEndpointId,
+                  gamGhnAgentConfigUserRowEditorEndpointName,
+                  gamGhnAgentConfigUserRowEditorBwProfileId,
+                  gamGhnAgentConfigUserRowEditorBwProfileName,
+                  gamGhnAgentConfigUserRowEditorVlanId,
+                  gamGhnAgentConfigUserRowEditorVlanIsTagged,
+                  gamGhnAgentConfigUserRowEditorRemappedVlanId,
+                  gamGhnAgentConfigUserRowEditorPort2VlanId,
+                  gamGhnAgentConfigUserRowEditorAllowedTaggedVlans0To1K,
+                  gamGhnAgentConfigUserRowEditorAllowedTaggedVlans1KTo2K,
+                  gamGhnAgentConfigUserRowEditorAllowedTaggedVlans2KTo3K,
+                  gamGhnAgentConfigUserRowEditorAllowedTaggedVlans3KTo4K,
+                  gamGhnAgentConfigUserRowEditorTrunkMode,
+                  gamGhnAgentConfigUserRowEditorPortIfIndex,
+                  gamGhnAgentConfigUserRowEditorDoubleTags,
+                  gamGhnAgentConfigUserRowEditorNNIIfIndex,
+                  gamGhnAgentConfigUserRowEditorOuterTagVlanId,
+                  gamGhnAgentConfigUserRowEditorPoeModeCtrl,
+                  gamGhnAgentConfigUserRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 8 }
+
+gamGhnAgentConfigVectorBoostEngineInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentConfigVectorBoostEngineVdslCoex,
+                  gamGhnAgentConfigVectorBoostEngineForceBandLevel,
+                  gamGhnAgentConfigVectorBoostEngineCdtaEnable,
+                  gamGhnAgentConfigVectorBoostEngineCdtaDownUpWeight,
+                  gamGhnAgentConfigVectorBoostEngineCdtaMinDownUpRate,
+                  gamGhnAgentConfigVectorBoostEngineCdtaMaxDownUpRate,
+                  gamGhnAgentConfigVectorBoostEngineCdtaDefaultDownUpRate,
+                  gamGhnAgentConfigVectorBoostEngineCdtaPercMetricChange }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 9 }
+
+gamGhnAgentStatusPortBriefTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentStatusPortBriefPortIfIndex,
+                  gamGhnAgentStatusPortBriefIfIndex,
+                  gamGhnAgentStatusPortBriefAdminEnabled,
+                  gamGhnAgentStatusPortBriefMacAddress,
+                  gamGhnAgentStatusPortBriefEndpointsMacAddressList,
+                  gamGhnAgentStatusPortBriefOutageNSA,
+                  gamGhnAgentStatusPortBriefOutageSA,
+                  gamGhnAgentStatusPortBriefRpf }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 10 }
+
+gamGhnAgentStatusPortDetailedTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentStatusPortDetailedPortIfIndex,
+                  gamGhnAgentStatusPortDetailedMacAddress,
+                  gamGhnAgentStatusPortDetailedAlive,
+                  gamGhnAgentStatusPortDetailedDeviceName,
+                  gamGhnAgentStatusPortDetailedHwProduct,
+                  gamGhnAgentStatusPortDetailedSerialNumber,
+                  gamGhnAgentStatusPortDetailedUptime,
+                  gamGhnAgentStatusPortDetailedFwVersion,
+                  gamGhnAgentStatusPortDetailedXputIndicator,
+                  gamGhnAgentStatusPortDetailedMode,
+                  gamGhnAgentStatusPortDetailedWireLengthMeters,
+                  gamGhnAgentStatusPortDetailedWireLengthFeet,
+                  gamGhnAgentStatusPortDetailedRxPhyRate,
+                  gamGhnAgentStatusPortDetailedTxPhyRate,
+                  gamGhnAgentStatusPortDetailedRxAllocBands,
+                  gamGhnAgentStatusPortDetailedTxAllocBands,
+                  gamGhnAgentStatusPortDetailedRxMaxXput,
+                  gamGhnAgentStatusPortDetailedTxMaxXput,
+                  gamGhnAgentStatusPortDetailedRxUsage,
+                  gamGhnAgentStatusPortDetailedTxUsage }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 11 }
+
+gamGhnAgentStatusEndpointBriefTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentStatusEndpointBriefEndpointId,
+                  gamGhnAgentStatusEndpointBriefMacAddress,
+                  gamGhnAgentStatusEndpointBriefConfEndpointId,
+                  gamGhnAgentStatusEndpointBriefConfEndpointName,
+                  gamGhnAgentStatusEndpointBriefConfPortIfIndex,
+                  gamGhnAgentStatusEndpointBriefConfAutoPort,
+                  gamGhnAgentStatusEndpointBriefDetectedPortIfIndex,
+                  gamGhnAgentStatusEndpointBriefConfUserId,
+                  gamGhnAgentStatusEndpointBriefConfUserName,
+                  gamGhnAgentStatusEndpointBriefConfUserUid,
+                  gamGhnAgentStatusEndpointBriefConfBwProfileId,
+                  gamGhnAgentStatusEndpointBriefConfBwProfileName,
+                  gamGhnAgentStatusEndpointBriefConfBwProfileUid,
+                  gamGhnAgentStatusEndpointBriefState,
+                  gamGhnAgentStatusEndpointBriefModelType,
+                  gamGhnAgentStatusEndpointBriefModelString,
+                  gamGhnAgentStatusEndpointBriefFwMismatch }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 12 }
+
+gamGhnAgentStatusEndpointDetailedTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentStatusEndpointDetailedEndpointId,
+                  gamGhnAgentStatusEndpointDetailedMacAddress,
+                  gamGhnAgentStatusEndpointDetailedAlive,
+                  gamGhnAgentStatusEndpointDetailedDeviceName,
+                  gamGhnAgentStatusEndpointDetailedHwProduct,
+                  gamGhnAgentStatusEndpointDetailedSerialNumber,
+                  gamGhnAgentStatusEndpointDetailedUptime,
+                  gamGhnAgentStatusEndpointDetailedFwVersion,
+                  gamGhnAgentStatusEndpointDetailedXputIndicator,
+                  gamGhnAgentStatusEndpointDetailedMode,
+                  gamGhnAgentStatusEndpointDetailedWireLengthMeters,
+                  gamGhnAgentStatusEndpointDetailedWireLengthFeet,
+                  gamGhnAgentStatusEndpointDetailedRxPhyRate,
+                  gamGhnAgentStatusEndpointDetailedTxPhyRate,
+                  gamGhnAgentStatusEndpointDetailedRxAllocBands,
+                  gamGhnAgentStatusEndpointDetailedTxAllocBands,
+                  gamGhnAgentStatusEndpointDetailedRxMaxXput,
+                  gamGhnAgentStatusEndpointDetailedTxMaxXput,
+                  gamGhnAgentStatusEndpointDetailedRxUsage,
+                  gamGhnAgentStatusEndpointDetailedTxUsage }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 13 }
+
+gamGhnAgentStatusEndpointLinkTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentStatusEndpointLinkEndpointId,
+                  gamGhnAgentStatusEndpointLinkEthPort,
+                  gamGhnAgentStatusEndpointLinkValid,
+                  gamGhnAgentStatusEndpointLinkLink,
+                  gamGhnAgentStatusEndpointLinkFdx,
+                  gamGhnAgentStatusEndpointLinkSpeed }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 14 }
+
+gamGhnAgentStatusEndpointFwUpgradeTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentStatusEndpointFwUpgradeEndpointId,
+                  gamGhnAgentStatusEndpointFwUpgradeStatus,
+                  gamGhnAgentStatusEndpointFwUpgradeDownloadedBytes,
+                  gamGhnAgentStatusEndpointFwUpgradeFdx }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 15 }
+
+gamGhnAgentStatusEndpointPoeTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentStatusEndpointPoeEndpointId,
+                  gamGhnAgentStatusEndpointPoeCpePort,
+                  gamGhnAgentStatusEndpointPoeEnabled,
+                  gamGhnAgentStatusEndpointPoeMode,
+                  gamGhnAgentStatusEndpointPoePSEOverload,
+                  gamGhnAgentStatusEndpointPoeInputPwrSrc,
+                  gamGhnAgentStatusEndpointPoeInputPwrLevel,
+                  gamGhnAgentStatusEndpointPoeOutputStatus }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 16 }
+
+gamGhnAgentStatusEndpointByMacBriefTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamGhnAgentStatusEndpointByMacBriefEndpointMacAddress,
+                  gamGhnAgentStatusEndpointByMacBriefMacAddress,
+                  gamGhnAgentStatusEndpointByMacBriefConfEndpointId,
+                  gamGhnAgentStatusEndpointByMacBriefConfEndpointName,
+                  gamGhnAgentStatusEndpointByMacBriefConfPortIfIndex,
+                  gamGhnAgentStatusEndpointByMacBriefConfAutoPort,
+                  gamGhnAgentStatusEndpointByMacBriefDetectedPortIfIndex,
+                  gamGhnAgentStatusEndpointByMacBriefConfUserId,
+                  gamGhnAgentStatusEndpointByMacBriefConfUserName,
+                  gamGhnAgentStatusEndpointByMacBriefConfUserUid,
+                  gamGhnAgentStatusEndpointByMacBriefConfBwProfileId,
+                  gamGhnAgentStatusEndpointByMacBriefConfBwProfileName,
+                  gamGhnAgentStatusEndpointByMacBriefConfBwProfileUid,
+                  gamGhnAgentStatusEndpointByMacBriefState,
+                  gamGhnAgentStatusEndpointByMacBriefModelType,
+                  gamGhnAgentStatusEndpointByMacBriefModelString,
+                  gamGhnAgentStatusEndpointByMacBriefFwMismatch }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 17 }
+
+gamGhnAgentStatusEndpointByMacDetailedTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamGhnAgentStatusEndpointByMacDetailedEndpointMacAddress,
+                  gamGhnAgentStatusEndpointByMacDetailedMacAddress,
+                  gamGhnAgentStatusEndpointByMacDetailedAlive,
+                  gamGhnAgentStatusEndpointByMacDetailedDeviceName,
+                  gamGhnAgentStatusEndpointByMacDetailedHwProduct,
+                  gamGhnAgentStatusEndpointByMacDetailedSerialNumber,
+                  gamGhnAgentStatusEndpointByMacDetailedUptime,
+                  gamGhnAgentStatusEndpointByMacDetailedFwVersion,
+                  gamGhnAgentStatusEndpointByMacDetailedXputIndicator,
+                  gamGhnAgentStatusEndpointByMacDetailedMode,
+                  gamGhnAgentStatusEndpointByMacDetailedWireLengthMeters,
+                  gamGhnAgentStatusEndpointByMacDetailedWireLengthFeet,
+                  gamGhnAgentStatusEndpointByMacDetailedRxPhyRate,
+                  gamGhnAgentStatusEndpointByMacDetailedTxPhyRate,
+                  gamGhnAgentStatusEndpointByMacDetailedRxAllocBands,
+                  gamGhnAgentStatusEndpointByMacDetailedTxAllocBands,
+                  gamGhnAgentStatusEndpointByMacDetailedRxMaxXput,
+                  gamGhnAgentStatusEndpointByMacDetailedTxMaxXput,
+                  gamGhnAgentStatusEndpointByMacDetailedRxUsage,
+                  gamGhnAgentStatusEndpointByMacDetailedTxUsage }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 18 }
+
+gamGhnAgentStatusEndpointByMacLinkTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamGhnAgentStatusEndpointByMacLinkEndpointMacAddress,
+                  gamGhnAgentStatusEndpointByMacLinkEthPort,
+                  gamGhnAgentStatusEndpointByMacLinkValid,
+                  gamGhnAgentStatusEndpointByMacLinkLink,
+                  gamGhnAgentStatusEndpointByMacLinkFdx,
+                  gamGhnAgentStatusEndpointByMacLinkSpeed }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 19 }
+
+gamGhnAgentStatusEndpointByMacFwUpgradeTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamGhnAgentStatusEndpointByMacFwUpgradeEndpointMacAddress,
+                  gamGhnAgentStatusEndpointByMacFwUpgradeStatus,
+                  gamGhnAgentStatusEndpointByMacFwUpgradeDownloadedBytes,
+                  gamGhnAgentStatusEndpointByMacFwUpgradeFdx }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 20 }
+
+gamGhnAgentStatusEndpointByMacPoeTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamGhnAgentStatusEndpointByMacPoeEndpointMacAddress,
+                  gamGhnAgentStatusEndpointByMacPoeCpePort,
+                  gamGhnAgentStatusEndpointByMacPoeEnabled,
+                  gamGhnAgentStatusEndpointByMacPoeMode,
+                  gamGhnAgentStatusEndpointByMacPoePSEOverload,
+                  gamGhnAgentStatusEndpointByMacPoeInputPwrSrc,
+                  gamGhnAgentStatusEndpointByMacPoeInputPwrLevel,
+                  gamGhnAgentStatusEndpointByMacPoeOutputStatus }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 21 }
+
+gamGhnAgentStatusVectorBoostInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentStatusVectorBoostState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 22 }
+
+gamGhnAgentControlPortStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentControlPortStatisticsPortIfIndex,
+                  gamGhnAgentControlPortStatisticsClearEthStats }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 23 }
+
+gamGhnAgentControlEndpointSystemTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentControlEndpointSystemEndpointId,
+                  gamGhnAgentControlEndpointSystemReboot,
+                  gamGhnAgentControlEndpointSystemStartFwUpgrade }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 24 }
+
+gamGhnAgentControlEndpointStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentControlEndpointStatisticsEndpointId,
+                  gamGhnAgentControlEndpointStatisticsClearEthStats,
+                  gamGhnAgentControlEndpointStatisticsClearGhnStats }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 25 }
+
+gamGhnAgentControlEndpointPoETableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentControlEndpointPoEEndpointId,
+                  gamGhnAgentControlEndpointPoECyclePower }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 26 }
+
+gamGhnAgentControlEndpointByMacSystemTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamGhnAgentControlEndpointByMacSystemEndpointMacAddress,
+                  gamGhnAgentControlEndpointByMacSystemReboot,
+                  gamGhnAgentControlEndpointByMacSystemStartFwUpgrade }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 27 }
+
+gamGhnAgentControlEndpointByMacStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamGhnAgentControlEndpointByMacStatisticsEndpointMacAddress,
+                  gamGhnAgentControlEndpointByMacStatisticsClearEthStats,
+                  gamGhnAgentControlEndpointByMacStatisticsClearGhnStats }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 28 }
+
+gamGhnAgentControlEndpointByMacPoETableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamGhnAgentControlEndpointByMacPoEEndpointMacAddress,
+                  gamGhnAgentControlEndpointByMacPoECyclePower }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 29 }
+
+gamGhnAgentStatisticsPortEthTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentStatisticsPortEthPortIfIndex,
+                  gamGhnAgentStatisticsPortEthValid,
+                  gamGhnAgentStatisticsPortEthRxBytes,
+                  gamGhnAgentStatisticsPortEthTxBytes,
+                  gamGhnAgentStatisticsPortEthRxPackets,
+                  gamGhnAgentStatisticsPortEthTxPackets,
+                  gamGhnAgentStatisticsPortEthRxErrors }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 30 }
+
+gamGhnAgentStatisticsEndpointEthTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentStatisticsEndpointEthEndpointId,
+                  gamGhnAgentStatisticsEndpointEthEthPort,
+                  gamGhnAgentStatisticsEndpointEthValid,
+                  gamGhnAgentStatisticsEndpointEthRxBytes,
+                  gamGhnAgentStatisticsEndpointEthTxBytes,
+                  gamGhnAgentStatisticsEndpointEthRxPackets,
+                  gamGhnAgentStatisticsEndpointEthTxPackets,
+                  gamGhnAgentStatisticsEndpointEthRxErrors }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 31 }
+
+gamGhnAgentStatisticsEndpointGhnTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamGhnAgentStatisticsEndpointGhnEndpointId,
+                  gamGhnAgentStatisticsEndpointGhnUsFrames,
+                  gamGhnAgentStatisticsEndpointGhnUsPDUs,
+                  gamGhnAgentStatisticsEndpointGhnUsErrorPercent,
+                  gamGhnAgentStatisticsEndpointGhnUsAbortPercent,
+                  gamGhnAgentStatisticsEndpointGhnDsFrames,
+                  gamGhnAgentStatisticsEndpointGhnDsPDUs,
+                  gamGhnAgentStatisticsEndpointGhnDsErrorPercent,
+                  gamGhnAgentStatisticsEndpointGhnDsAbortPercent }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 32 }
+
+gamGhnAgentStatisticsEndpointByMacEthTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamGhnAgentStatisticsEndpointByMacEthEndpointMacAddress,
+                  gamGhnAgentStatisticsEndpointByMacEthEthPort,
+                  gamGhnAgentStatisticsEndpointByMacEthValid,
+                  gamGhnAgentStatisticsEndpointByMacEthRxBytes,
+                  gamGhnAgentStatisticsEndpointByMacEthTxBytes,
+                  gamGhnAgentStatisticsEndpointByMacEthRxPackets,
+                  gamGhnAgentStatisticsEndpointByMacEthTxPackets,
+                  gamGhnAgentStatisticsEndpointByMacEthRxErrors }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 33 }
+
+gamGhnAgentStatisticsEndpointByMacGhnTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamGhnAgentStatisticsEndpointByMacGhnEndpointMacAddress,
+                  gamGhnAgentStatisticsEndpointByMacGhnUsFrames,
+                  gamGhnAgentStatisticsEndpointByMacGhnUsPDUs,
+                  gamGhnAgentStatisticsEndpointByMacGhnUsErrorPercent,
+                  gamGhnAgentStatisticsEndpointByMacGhnUsAbortPercent,
+                  gamGhnAgentStatisticsEndpointByMacGhnDsFrames,
+                  gamGhnAgentStatisticsEndpointByMacGhnDsPDUs,
+                  gamGhnAgentStatisticsEndpointByMacGhnDsErrorPercent,
+                  gamGhnAgentStatisticsEndpointByMacGhnDsAbortPercent }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamGhnAgentMibGroups 34 }
+
+gamGhnAgentMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamGhnAgentConfigGlobalInfoGroup,
+                       gamGhnAgentConfigPortTableInfoGroup,
+                       gamGhnAgentConfigEndpointTableInfoGroup,
+                       gamGhnAgentConfigEndpointEditorInfoGroup,
+                       gamGhnAgentConfigBwProfileTableInfoGroup,
+                       gamGhnAgentConfigBwProfileEditorInfoGroup,
+                       gamGhnAgentConfigUserTableInfoGroup,
+                       gamGhnAgentConfigUserRowEditorInfoGroup,
+                       gamGhnAgentConfigVectorBoostEngineInfoGroup,
+                       gamGhnAgentStatusPortBriefTableInfoGroup,
+                       gamGhnAgentStatusPortDetailedTableInfoGroup,
+                       gamGhnAgentStatusEndpointBriefTableInfoGroup,
+                       gamGhnAgentStatusEndpointDetailedTableInfoGroup,
+                       gamGhnAgentStatusEndpointLinkTableInfoGroup,
+                       gamGhnAgentStatusEndpointFwUpgradeTableInfoGroup,
+                       gamGhnAgentStatusEndpointPoeTableInfoGroup,
+                       gamGhnAgentStatusEndpointByMacBriefTableInfoGroup,
+                       gamGhnAgentStatusEndpointByMacDetailedTableInfoGroup,
+                       gamGhnAgentStatusEndpointByMacLinkTableInfoGroup,
+                       gamGhnAgentStatusEndpointByMacFwUpgradeTableInfoGroup,
+                       gamGhnAgentStatusEndpointByMacPoeTableInfoGroup,
+                       gamGhnAgentStatusVectorBoostInfoGroup,
+                       gamGhnAgentControlPortStatisticsTableInfoGroup,
+                       gamGhnAgentControlEndpointSystemTableInfoGroup,
+                       gamGhnAgentControlEndpointStatisticsTableInfoGroup,
+                       gamGhnAgentControlEndpointPoETableInfoGroup,
+                       gamGhnAgentControlEndpointByMacSystemTableInfoGroup,
+                       gamGhnAgentControlEndpointByMacStatisticsTableInfoGroup,
+                       gamGhnAgentControlEndpointByMacPoETableInfoGroup,
+                       gamGhnAgentStatisticsPortEthTableInfoGroup,
+                       gamGhnAgentStatisticsEndpointEthTableInfoGroup,
+                       gamGhnAgentStatisticsEndpointGhnTableInfoGroup,
+                       gamGhnAgentStatisticsEndpointByMacEthTableInfoGroup,
+                       gamGhnAgentStatisticsEndpointByMacGhnTableInfoGroup }
+
+    ::= { gamGhnAgentMibCompliances 1 }
+
+END

@@ -1,0 +1,1464 @@
+-- *****************************************************************
+-- SNMP-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-SNMP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInetAddress FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamSnmpMib MODULE-IDENTITY
+    LAST-UPDATED "201604060000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of SNMP"
+    REVISION    "201604060000Z"
+    DESCRIPTION
+        "Improve descriptions for use of security_model. Change trap source
+         table."
+    REVISION    "201603070000Z"
+    DESCRIPTION
+        "Add trap receiver and source tables."
+    REVISION    "201602230000Z"
+    DESCRIPTION
+        "Move IPv6 enabled communities to seperate SnmpConfigCommunity6Table.
+         Rename community fields for backward compatibility."
+    REVISION    "201602110000Z"
+    DESCRIPTION
+        "Add SourceIpType as well as SourceIPv6 / SourceIPv6PrefixSize to
+         SnmpConfigCommunityTable."
+    REVISION    "201512110000Z"
+    DESCRIPTION
+        "Remove version and communities from vtssSnmpConfigGlobals, and update
+         SnmpConfigCommunityTable with security_name"
+    REVISION    "201507240000Z"
+    DESCRIPTION
+        "Correct the valid length of AuthPassword and PrivPassword, and correct
+         the description of vtssSnmpConfigViewViewType"
+    REVISION    "201407180000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 36 }
+
+
+GAMSnmpAuthProtocl ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The SNMP authentication protocol"
+    SYNTAX      INTEGER { snmpNoAuthProtocol(0),
+                          snmpMD5AuthProtocol(1),
+                          snmpSHAAuthProtocol(2) }
+
+GAMSnmpPrivProtocl ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The SNMP privacy protocol"
+    SYNTAX      INTEGER { snmpNoPrivProtocol(0),
+                          snmpDESPrivProtocol(1),
+                          snmpAESPrivProtocol(2) }
+
+GAMSnmpSecurityLevel ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The SNMP authentication protocol"
+    SYNTAX      INTEGER { snmpNoAuthNoPriv(1), snmpAuthNoPriv(2),
+                          snmpAuthPriv(3) }
+
+GAMSnmpSecurityModel ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The SNMP security model"
+    SYNTAX      INTEGER { any(0), v1(1), v2c(2), usm(3) }
+
+GAMSnmpTrapNotifyType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The SNMP trap notify type"
+    SYNTAX      INTEGER { trap(0), inform(1) }
+
+GAMSnmpVersion ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The version of SNMP"
+    SYNTAX      INTEGER { snmpV1(0), snmpV2c(1), snmpV3(2) }
+
+GAMSnmpViewType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The SNMP view type"
+    SYNTAX      INTEGER { included(0), excluded(1) }
+
+gamSnmpMibObjects OBJECT IDENTIFIER
+    ::= { gamSnmpMib 1 }
+
+gamSnmpConfig OBJECT IDENTIFIER
+    ::= { gamSnmpMibObjects 2 }
+
+gamSnmpConfigGlobals OBJECT IDENTIFIER
+    ::= { gamSnmpConfig 1 }
+
+gamSnmpConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global mode of SNMP."
+    ::= { gamSnmpConfigGlobals 1 }
+
+gamSnmpConfigGlobalsEngineId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(5..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SNMPv3 engine ID. The size of Engine ID is between 5 ~ 32 bytes.But
+         all-zeros and all-'F's are not allowed."
+    ::= { gamSnmpConfigGlobals 5 }
+
+gamSnmpConfigCommunityTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMSnmpConfigCommunityEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for configuring SNMP communities."
+    ::= { gamSnmpConfig 2 }
+
+gamSnmpConfigCommunityEntry OBJECT-TYPE
+    SYNTAX      GAMSnmpConfigCommunityEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry index key is community."
+    INDEX       { gamSnmpConfigCommunityName,
+                  gamSnmpConfigCommunitySourceIP,
+                  gamSnmpConfigCommunitySourceIPPrefixSize }
+    ::= { gamSnmpConfigCommunityTable 1 }
+
+GAMSnmpConfigCommunityEntry ::= SEQUENCE {
+    gamSnmpConfigCommunityName                GAMDisplayString,
+    gamSnmpConfigCommunitySourceIP            IpAddress,
+    gamSnmpConfigCommunitySourceIPPrefixSize  Integer32,
+    gamSnmpConfigCommunitySecret              GAMDisplayString,
+    gamSnmpConfigCommunityAction              GAMRowEditorState
+}
+
+gamSnmpConfigCommunityName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of SNMP community"
+    ::= { gamSnmpConfigCommunityEntry 1 }
+
+gamSnmpConfigCommunitySourceIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The SNMP access source IPv4 address"
+    ::= { gamSnmpConfigCommunityEntry 2 }
+
+gamSnmpConfigCommunitySourceIPPrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..32)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The SNMP access source IPv4 prefix size"
+    ::= { gamSnmpConfigCommunityEntry 3 }
+
+gamSnmpConfigCommunitySecret OBJECT-TYPE
+    SYNTAX      GAMDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The community secret of the SNMP community."
+    ::= { gamSnmpConfigCommunityEntry 4 }
+
+gamSnmpConfigCommunityAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigCommunityEntry 100 }
+
+gamSnmpConfigCommunityTableRowEditor OBJECT IDENTIFIER
+    ::= { gamSnmpConfig 3 }
+
+gamSnmpConfigCommunityTableRowEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Name of SNMP community"
+    ::= { gamSnmpConfigCommunityTableRowEditor 1 }
+
+gamSnmpConfigCommunityTableRowEditorSourceIP OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The SNMP access source IPv4 address"
+    ::= { gamSnmpConfigCommunityTableRowEditor 2 }
+
+gamSnmpConfigCommunityTableRowEditorSourceIPPrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..32)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The SNMP access source IPv4 prefix size"
+    ::= { gamSnmpConfigCommunityTableRowEditor 3 }
+
+gamSnmpConfigCommunityTableRowEditorSecret OBJECT-TYPE
+    SYNTAX      GAMDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The community secret of the SNMP community."
+    ::= { gamSnmpConfigCommunityTableRowEditor 4 }
+
+gamSnmpConfigCommunityTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigCommunityTableRowEditor 100 }
+
+gamSnmpConfigUserTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMSnmpConfigUserEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for configuring SNMPv3 users."
+    ::= { gamSnmpConfig 4 }
+
+gamSnmpConfigUserEntry OBJECT-TYPE
+    SYNTAX      GAMSnmpConfigUserEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry index keys are engine ID and user name."
+    INDEX       { gamSnmpConfigUserEngineId,
+                  gamSnmpConfigUserUserName }
+    ::= { gamSnmpConfigUserTable 1 }
+
+GAMSnmpConfigUserEntry ::= SEQUENCE {
+    gamSnmpConfigUserEngineId       OCTET STRING,
+    gamSnmpConfigUserUserName       GAMDisplayString,
+    gamSnmpConfigUserSecurityLevel  GAMSnmpSecurityLevel,
+    gamSnmpConfigUserAuthProtocol   GAMSnmpAuthProtocl,
+    gamSnmpConfigUserAuthPassword   GAMDisplayString,
+    gamSnmpConfigUserPrivProtocol   GAMSnmpPrivProtocl,
+    gamSnmpConfigUserPrivPassword   GAMDisplayString,
+    gamSnmpConfigUserAction         GAMRowEditorState
+}
+
+gamSnmpConfigUserEngineId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(5..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "SNMPv3 engine ID. The length is between 5 ~ 32 bytes. But all-zeros and
+         all-'F's are not allowed."
+    ::= { gamSnmpConfigUserEntry 1 }
+
+gamSnmpConfigUserUserName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of this entry"
+    ::= { gamSnmpConfigUserEntry 2 }
+
+gamSnmpConfigUserSecurityLevel OBJECT-TYPE
+    SYNTAX      GAMSnmpSecurityLevel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The security level of this entry. The object is read-only if the entry
+         is existent."
+    ::= { gamSnmpConfigUserEntry 3 }
+
+gamSnmpConfigUserAuthProtocol OBJECT-TYPE
+    SYNTAX      GAMSnmpAuthProtocl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The authentication protocol of this entry. The object is read-only if
+         the entry is existent."
+    ::= { gamSnmpConfigUserEntry 4 }
+
+gamSnmpConfigUserAuthPassword OBJECT-TYPE
+    SYNTAX      GAMDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The authentication password of this entry. Acceptable string length
+         range from 8 to 40.The object is read-only if the entry is existent."
+    ::= { gamSnmpConfigUserEntry 5 }
+
+gamSnmpConfigUserPrivProtocol OBJECT-TYPE
+    SYNTAX      GAMSnmpPrivProtocl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The privacy protocol of this entry. The object is read-only if the
+         entry is existent."
+    ::= { gamSnmpConfigUserEntry 6 }
+
+gamSnmpConfigUserPrivPassword OBJECT-TYPE
+    SYNTAX      GAMDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The privacy password of this entry. Acceptable string length range from
+         8 to 32.The object is read-only if the entry is existent."
+    ::= { gamSnmpConfigUserEntry 7 }
+
+gamSnmpConfigUserAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigUserEntry 100 }
+
+gamSnmpConfigUserTableRowEditor OBJECT IDENTIFIER
+    ::= { gamSnmpConfig 5 }
+
+gamSnmpConfigUserTableRowEditorEngineId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(5..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SNMPv3 engine ID. The length is between 5 ~ 32 bytes. But all-zeros and
+         all-'F's are not allowed."
+    ::= { gamSnmpConfigUserTableRowEditor 1 }
+
+gamSnmpConfigUserTableRowEditorUserName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of this entry"
+    ::= { gamSnmpConfigUserTableRowEditor 2 }
+
+gamSnmpConfigUserTableRowEditorSecurityLevel OBJECT-TYPE
+    SYNTAX      GAMSnmpSecurityLevel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The security level of this entry. The object is read-only if the entry
+         is existent."
+    ::= { gamSnmpConfigUserTableRowEditor 3 }
+
+gamSnmpConfigUserTableRowEditorAuthProtocol OBJECT-TYPE
+    SYNTAX      GAMSnmpAuthProtocl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The authentication protocol of this entry. The object is read-only if
+         the entry is existent."
+    ::= { gamSnmpConfigUserTableRowEditor 4 }
+
+gamSnmpConfigUserTableRowEditorAuthPassword OBJECT-TYPE
+    SYNTAX      GAMDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The authentication password of this entry. Acceptable string length
+         range from 8 to 40.The object is read-only if the entry is existent."
+    ::= { gamSnmpConfigUserTableRowEditor 5 }
+
+gamSnmpConfigUserTableRowEditorPrivProtocol OBJECT-TYPE
+    SYNTAX      GAMSnmpPrivProtocl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The privacy protocol of this entry. The object is read-only if the
+         entry is existent."
+    ::= { gamSnmpConfigUserTableRowEditor 6 }
+
+gamSnmpConfigUserTableRowEditorPrivPassword OBJECT-TYPE
+    SYNTAX      GAMDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The privacy password of this entry. Acceptable string length range from
+         8 to 32.The object is read-only if the entry is existent."
+    ::= { gamSnmpConfigUserTableRowEditor 7 }
+
+gamSnmpConfigUserTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigUserTableRowEditor 100 }
+
+gamSnmpConfigUserToAccessGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMSnmpConfigUserToAccessGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for configuring SNMP groups."
+    ::= { gamSnmpConfig 6 }
+
+gamSnmpConfigUserToAccessGroupEntry OBJECT-TYPE
+    SYNTAX      GAMSnmpConfigUserToAccessGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry index keys are security model and user/community name."
+    INDEX       { gamSnmpConfigUserToAccessGroupSecurityModel,
+                  gamSnmpConfigUserToAccessGroupUserOrCommunity }
+    ::= { gamSnmpConfigUserToAccessGroupTable 1 }
+
+GAMSnmpConfigUserToAccessGroupEntry ::= SEQUENCE {
+    gamSnmpConfigUserToAccessGroupSecurityModel    GAMSnmpSecurityModel,
+    gamSnmpConfigUserToAccessGroupUserOrCommunity  GAMDisplayString,
+    gamSnmpConfigUserToAccessGroupAccessGroupName  GAMDisplayString,
+    gamSnmpConfigUserToAccessGroupAction           GAMRowEditorState
+}
+
+gamSnmpConfigUserToAccessGroupSecurityModel OBJECT-TYPE
+    SYNTAX      GAMSnmpSecurityModel
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The security model of this entry. When v1 or v2c UserOrCommunity maps
+         to community, when v3 UserOrCommunity maps to user. The value 'any' is
+         not allowed."
+    ::= { gamSnmpConfigUserToAccessGroupEntry 1 }
+
+gamSnmpConfigUserToAccessGroupUserOrCommunity OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The security name (user or community) of this entry"
+    ::= { gamSnmpConfigUserToAccessGroupEntry 2 }
+
+gamSnmpConfigUserToAccessGroupAccessGroupName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The access group name of this entry."
+    ::= { gamSnmpConfigUserToAccessGroupEntry 3 }
+
+gamSnmpConfigUserToAccessGroupAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigUserToAccessGroupEntry 100 }
+
+gamSnmpConfigUserToAccessGroupTableRowEditor OBJECT IDENTIFIER
+    ::= { gamSnmpConfig 7 }
+
+gamSnmpConfigUserToAccessGroupTableRowEditorSecurityModel OBJECT-TYPE
+    SYNTAX      GAMSnmpSecurityModel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The security model of this entry. When v1 or v2c UserOrCommunity maps
+         to community, when v3 UserOrCommunity maps to user. The value 'any' is
+         not allowed."
+    ::= { gamSnmpConfigUserToAccessGroupTableRowEditor 1 }
+
+gamSnmpConfigUserToAccessGroupTableRowEditorUserOrCommunity OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The security name (user or community) of this entry"
+    ::= { gamSnmpConfigUserToAccessGroupTableRowEditor 2 }
+
+gamSnmpConfigUserToAccessGroupTableRowEditorAccessGroupName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The access group name of this entry."
+    ::= { gamSnmpConfigUserToAccessGroupTableRowEditor 3 }
+
+gamSnmpConfigUserToAccessGroupTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigUserToAccessGroupTableRowEditor 100 }
+
+gamSnmpConfigAccessGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMSnmpConfigAccessGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for configuring SNMP accesse groups."
+    ::= { gamSnmpConfig 8 }
+
+gamSnmpConfigAccessGroupEntry OBJECT-TYPE
+    SYNTAX      GAMSnmpConfigAccessGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry index keys are access group name, security model and security
+         level."
+    INDEX       { gamSnmpConfigAccessGroupAccessGroupName,
+                  gamSnmpConfigAccessGroupSecurityModel,
+                  gamSnmpConfigAccessGroupSecurityLevel }
+    ::= { gamSnmpConfigAccessGroupTable 1 }
+
+GAMSnmpConfigAccessGroupEntry ::= SEQUENCE {
+    gamSnmpConfigAccessGroupAccessGroupName  GAMDisplayString,
+    gamSnmpConfigAccessGroupSecurityModel    GAMSnmpSecurityModel,
+    gamSnmpConfigAccessGroupSecurityLevel    GAMSnmpSecurityLevel,
+    gamSnmpConfigAccessGroupReadViewName     GAMDisplayString,
+    gamSnmpConfigAccessGroupWriteViewName    GAMDisplayString,
+    gamSnmpConfigAccessGroupAction           GAMRowEditorState
+}
+
+gamSnmpConfigAccessGroupAccessGroupName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The access group name of this entry"
+    ::= { gamSnmpConfigAccessGroupEntry 1 }
+
+gamSnmpConfigAccessGroupSecurityModel OBJECT-TYPE
+    SYNTAX      GAMSnmpSecurityModel
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The security model of this entry. Can be v1, v2c, usm or any."
+    ::= { gamSnmpConfigAccessGroupEntry 2 }
+
+gamSnmpConfigAccessGroupSecurityLevel OBJECT-TYPE
+    SYNTAX      GAMSnmpSecurityLevel
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The security level of this entry"
+    ::= { gamSnmpConfigAccessGroupEntry 3 }
+
+gamSnmpConfigAccessGroupReadViewName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the MIB view defining the MIB objects for which this
+         request may request the current values."
+    ::= { gamSnmpConfigAccessGroupEntry 4 }
+
+gamSnmpConfigAccessGroupWriteViewName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the MIB view defining the MIB objects for which this
+         request may potentially set new values."
+    ::= { gamSnmpConfigAccessGroupEntry 5 }
+
+gamSnmpConfigAccessGroupAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigAccessGroupEntry 100 }
+
+gamSnmpConfigAccessGroupTableRowEditor OBJECT IDENTIFIER
+    ::= { gamSnmpConfig 9 }
+
+gamSnmpConfigAccessGroupTableRowEditorAccessGroupName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The access group name of this entry"
+    ::= { gamSnmpConfigAccessGroupTableRowEditor 1 }
+
+gamSnmpConfigAccessGroupTableRowEditorSecurityModel OBJECT-TYPE
+    SYNTAX      GAMSnmpSecurityModel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The security model of this entry. Can be v1, v2c, usm or any."
+    ::= { gamSnmpConfigAccessGroupTableRowEditor 2 }
+
+gamSnmpConfigAccessGroupTableRowEditorSecurityLevel OBJECT-TYPE
+    SYNTAX      GAMSnmpSecurityLevel
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The security level of this entry"
+    ::= { gamSnmpConfigAccessGroupTableRowEditor 3 }
+
+gamSnmpConfigAccessGroupTableRowEditorReadViewName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the MIB view defining the MIB objects for which this
+         request may request the current values."
+    ::= { gamSnmpConfigAccessGroupTableRowEditor 4 }
+
+gamSnmpConfigAccessGroupTableRowEditorWriteViewName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the MIB view defining the MIB objects for which this
+         request may potentially set new values."
+    ::= { gamSnmpConfigAccessGroupTableRowEditor 5 }
+
+gamSnmpConfigAccessGroupTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigAccessGroupTableRowEditor 100 }
+
+gamSnmpConfigViewTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMSnmpConfigViewEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for configuring SNMP views."
+    ::= { gamSnmpConfig 10 }
+
+gamSnmpConfigViewEntry OBJECT-TYPE
+    SYNTAX      GAMSnmpConfigViewEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry index keys are name and subtree."
+    INDEX       { gamSnmpConfigViewName, gamSnmpConfigViewSubtree }
+    ::= { gamSnmpConfigViewTable 1 }
+
+GAMSnmpConfigViewEntry ::= SEQUENCE {
+    gamSnmpConfigViewName      GAMDisplayString,
+    gamSnmpConfigViewSubtree   GAMDisplayString,
+    gamSnmpConfigViewViewType  GAMSnmpViewType,
+    gamSnmpConfigViewAction    GAMRowEditorState
+}
+
+gamSnmpConfigViewName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of this entry"
+    ::= { gamSnmpConfigViewEntry 1 }
+
+gamSnmpConfigViewSubtree OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The OID defining the root of the subtree to add to the named view."
+    ::= { gamSnmpConfigViewEntry 2 }
+
+gamSnmpConfigViewViewType OBJECT-TYPE
+    SYNTAX      GAMSnmpViewType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The view type of this entry. The value can be set to 'included' or
+         'excluded','included' indicates the view subtree is visible, otherwise
+         the view subtree is invisible."
+    ::= { gamSnmpConfigViewEntry 3 }
+
+gamSnmpConfigViewAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigViewEntry 100 }
+
+gamSnmpConfigViewTableRowEditor OBJECT IDENTIFIER
+    ::= { gamSnmpConfig 11 }
+
+gamSnmpConfigViewTableRowEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of this entry"
+    ::= { gamSnmpConfigViewTableRowEditor 1 }
+
+gamSnmpConfigViewTableRowEditorSubtree OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The OID defining the root of the subtree to add to the named view."
+    ::= { gamSnmpConfigViewTableRowEditor 2 }
+
+gamSnmpConfigViewTableRowEditorViewType OBJECT-TYPE
+    SYNTAX      GAMSnmpViewType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The view type of this entry. The value can be set to 'included' or
+         'excluded','included' indicates the view subtree is visible, otherwise
+         the view subtree is invisible."
+    ::= { gamSnmpConfigViewTableRowEditor 3 }
+
+gamSnmpConfigViewTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigViewTableRowEditor 100 }
+
+gamSnmpConfigCommunity6Table OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMSnmpConfigCommunity6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for configuring SNMP communities for IPv6."
+    ::= { gamSnmpConfig 12 }
+
+gamSnmpConfigCommunity6Entry OBJECT-TYPE
+    SYNTAX      GAMSnmpConfigCommunity6Entry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry index key is community."
+    INDEX       { gamSnmpConfigCommunity6Name,
+                  gamSnmpConfigCommunity6SourceIPv6,
+                  gamSnmpConfigCommunity6SourceIPv6PrefixSize }
+    ::= { gamSnmpConfigCommunity6Table 1 }
+
+GAMSnmpConfigCommunity6Entry ::= SEQUENCE {
+    gamSnmpConfigCommunity6Name                  GAMDisplayString,
+    gamSnmpConfigCommunity6SourceIPv6            InetAddressIPv6,
+    gamSnmpConfigCommunity6SourceIPv6PrefixSize  Integer32,
+    gamSnmpConfigCommunity6Secret                GAMDisplayString,
+    gamSnmpConfigCommunity6Action                GAMRowEditorState
+}
+
+gamSnmpConfigCommunity6Name OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of SNMP community"
+    ::= { gamSnmpConfigCommunity6Entry 1 }
+
+gamSnmpConfigCommunity6SourceIPv6 OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The SNMP access source IPv6 address"
+    ::= { gamSnmpConfigCommunity6Entry 2 }
+
+gamSnmpConfigCommunity6SourceIPv6PrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..128)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The SNMP access source IPv6 prefix size"
+    ::= { gamSnmpConfigCommunity6Entry 3 }
+
+gamSnmpConfigCommunity6Secret OBJECT-TYPE
+    SYNTAX      GAMDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The community secret of the SNMP community."
+    ::= { gamSnmpConfigCommunity6Entry 4 }
+
+gamSnmpConfigCommunity6Action OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigCommunity6Entry 100 }
+
+gamSnmpConfigCommunity6TableRowEditor OBJECT IDENTIFIER
+    ::= { gamSnmpConfig 13 }
+
+gamSnmpConfigCommunity6TableRowEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Name of SNMP community"
+    ::= { gamSnmpConfigCommunity6TableRowEditor 1 }
+
+gamSnmpConfigCommunity6TableRowEditorSourceIPv6 OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The SNMP access source IPv6 address"
+    ::= { gamSnmpConfigCommunity6TableRowEditor 2 }
+
+gamSnmpConfigCommunity6TableRowEditorSourceIPv6PrefixSize OBJECT-TYPE
+    SYNTAX      Integer32 (0..128)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The SNMP access source IPv6 prefix size"
+    ::= { gamSnmpConfigCommunity6TableRowEditor 3 }
+
+gamSnmpConfigCommunity6TableRowEditorSecret OBJECT-TYPE
+    SYNTAX      GAMDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The community secret of the SNMP community."
+    ::= { gamSnmpConfigCommunity6TableRowEditor 4 }
+
+gamSnmpConfigCommunity6TableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigCommunity6TableRowEditor 100 }
+
+gamSnmpConfigTrapReceiverTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMSnmpConfigTrapReceiverEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for configuring SNMP trap receivers."
+    ::= { gamSnmpConfig 20 }
+
+gamSnmpConfigTrapReceiverEntry OBJECT-TYPE
+    SYNTAX      GAMSnmpConfigTrapReceiverEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry index keys is trap receiver name."
+    INDEX       { gamSnmpConfigTrapReceiverName }
+    ::= { gamSnmpConfigTrapReceiverTable 1 }
+
+GAMSnmpConfigTrapReceiverEntry ::= SEQUENCE {
+    gamSnmpConfigTrapReceiverName        GAMDisplayString,
+    gamSnmpConfigTrapReceiverEnable      TruthValue,
+    gamSnmpConfigTrapReceiverAddress     GAMInetAddress,
+    gamSnmpConfigTrapReceiverPort        GAMUnsigned16,
+    gamSnmpConfigTrapReceiverVersion     GAMSnmpVersion,
+    gamSnmpConfigTrapReceiverCommunity   GAMDisplayString,
+    gamSnmpConfigTrapReceiverNotifyType  GAMSnmpTrapNotifyType,
+    gamSnmpConfigTrapReceiverTimeout     Integer32,
+    gamSnmpConfigTrapReceiverRetries     Integer32,
+    gamSnmpConfigTrapReceiverEngineId    OCTET STRING,
+    gamSnmpConfigTrapReceiverUserName    GAMDisplayString,
+    gamSnmpConfigTrapReceiverAction      GAMRowEditorState
+}
+
+gamSnmpConfigTrapReceiverName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of trap receiver"
+    ::= { gamSnmpConfigTrapReceiverEntry 1 }
+
+gamSnmpConfigTrapReceiverEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SNMP trap receiver enabled."
+    ::= { gamSnmpConfigTrapReceiverEntry 2 }
+
+gamSnmpConfigTrapReceiverAddress OBJECT-TYPE
+    SYNTAX      GAMInetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Internet address of the SNMP trap receiver."
+    ::= { gamSnmpConfigTrapReceiverEntry 3 }
+
+gamSnmpConfigTrapReceiverPort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Port number of the SNMP trap receiver."
+    ::= { gamSnmpConfigTrapReceiverEntry 4 }
+
+gamSnmpConfigTrapReceiverVersion OBJECT-TYPE
+    SYNTAX      GAMSnmpVersion
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SNMP Version. The supported versions are snmpV1, snmpV2c, snmpV3."
+    ::= { gamSnmpConfigTrapReceiverEntry 5 }
+
+gamSnmpConfigTrapReceiverCommunity OBJECT-TYPE
+    SYNTAX      GAMDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The community secret to use for SNMP traps."
+    ::= { gamSnmpConfigTrapReceiverEntry 6 }
+
+gamSnmpConfigTrapReceiverNotifyType OBJECT-TYPE
+    SYNTAX      GAMSnmpTrapNotifyType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Notification type: trap or inform."
+    ::= { gamSnmpConfigTrapReceiverEntry 7 }
+
+gamSnmpConfigTrapReceiverTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (1..2147)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Timeout. Only relevant for informs."
+    ::= { gamSnmpConfigTrapReceiverEntry 8 }
+
+gamSnmpConfigTrapReceiverRetries OBJECT-TYPE
+    SYNTAX      Integer32 (1..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Retries. Only relevant for informs."
+    ::= { gamSnmpConfigTrapReceiverEntry 9 }
+
+gamSnmpConfigTrapReceiverEngineId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(5..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SNMPv3 engine ID. The length is between 5 ~ 32 bytes. But all-zeros and
+         all-'F's are not allowed."
+    ::= { gamSnmpConfigTrapReceiverEntry 10 }
+
+gamSnmpConfigTrapReceiverUserName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SNMPv3 user name."
+    ::= { gamSnmpConfigTrapReceiverEntry 11 }
+
+gamSnmpConfigTrapReceiverAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigTrapReceiverEntry 100 }
+
+gamSnmpConfigTrapReceiverTableRowEditor OBJECT IDENTIFIER
+    ::= { gamSnmpConfig 21 }
+
+gamSnmpConfigTrapReceiverTableRowEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Name of trap receiver"
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 1 }
+
+gamSnmpConfigTrapReceiverTableRowEditorEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SNMP trap receiver enabled."
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 2 }
+
+gamSnmpConfigTrapReceiverTableRowEditorAddress OBJECT-TYPE
+    SYNTAX      GAMInetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Internet address of the SNMP trap receiver."
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 3 }
+
+gamSnmpConfigTrapReceiverTableRowEditorPort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Port number of the SNMP trap receiver."
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 4 }
+
+gamSnmpConfigTrapReceiverTableRowEditorVersion OBJECT-TYPE
+    SYNTAX      GAMSnmpVersion
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SNMP Version. The supported versions are snmpV1, snmpV2c, snmpV3."
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 5 }
+
+gamSnmpConfigTrapReceiverTableRowEditorCommunity OBJECT-TYPE
+    SYNTAX      GAMDisplayString
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The community secret to use for SNMP traps."
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 6 }
+
+gamSnmpConfigTrapReceiverTableRowEditorNotifyType OBJECT-TYPE
+    SYNTAX      GAMSnmpTrapNotifyType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Notification type: trap or inform."
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 7 }
+
+gamSnmpConfigTrapReceiverTableRowEditorTimeout OBJECT-TYPE
+    SYNTAX      Integer32 (1..2147)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Timeout. Only relevant for informs."
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 8 }
+
+gamSnmpConfigTrapReceiverTableRowEditorRetries OBJECT-TYPE
+    SYNTAX      Integer32 (1..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Retries. Only relevant for informs."
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 9 }
+
+gamSnmpConfigTrapReceiverTableRowEditorEngineId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(5..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SNMPv3 engine ID. The length is between 5 ~ 32 bytes. But all-zeros and
+         all-'F's are not allowed."
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 10 }
+
+gamSnmpConfigTrapReceiverTableRowEditorUserName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SNMPv3 user name."
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 11 }
+
+gamSnmpConfigTrapReceiverTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigTrapReceiverTableRowEditor 100 }
+
+gamSnmpConfigTrapSourceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMSnmpConfigTrapSourceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for configuring SNMP trap sources.
+         
+         A trap is sent for the given trap source if at least one filter with
+         filter_type included matches the filter, and no filters with
+         filter_type excluded matches."
+    ::= { gamSnmpConfig 22 }
+
+gamSnmpConfigTrapSourceEntry OBJECT-TYPE
+    SYNTAX      GAMSnmpConfigTrapSourceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The entry index keys is trap source name and a filter ID.
+         
+         The filter matches an index OID if the index_filter matches the OID of
+         the index taking index_mask into account.
+         
+         Each bit of index_mask corresponds to a sub-identifier of index_filter,
+         with the most significant bit of the i-th octet of this octet string
+         value (extended if necessary) corresponding to the (8*i - 7)-th
+         sub-identifier.
+         
+         Each bit of index_mask specifies whether or not the corresponding
+         sub-identifiers must match when determining if an OID matches; a '1'
+         indicates that an exact match must occur; a '0' indicates 'wild card'.
+         
+         If the value of index_mask is M bits long and there are more than M
+         sub-identifiers in index_filter, then the bit mask is extended with 1's
+         to be the required length."
+    INDEX       { gamSnmpConfigTrapSourceName,
+                  gamSnmpConfigTrapSourceIndexFilterID }
+    ::= { gamSnmpConfigTrapSourceTable 1 }
+
+GAMSnmpConfigTrapSourceEntry ::= SEQUENCE {
+    gamSnmpConfigTrapSourceName           GAMDisplayString,
+    gamSnmpConfigTrapSourceIndexFilterID  Integer32,
+    gamSnmpConfigTrapSourceIndexFilter    OCTET STRING,
+    gamSnmpConfigTrapSourceIndexMask      OCTET STRING,
+    gamSnmpConfigTrapSourceFilterType     GAMSnmpViewType,
+    gamSnmpConfigTrapSourceAction         GAMRowEditorState
+}
+
+gamSnmpConfigTrapSourceName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "SNMP trap event/table name"
+    ::= { gamSnmpConfigTrapSourceEntry 1 }
+
+gamSnmpConfigTrapSourceIndexFilterID OBJECT-TYPE
+    SYNTAX      Integer32 (0..127)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ID of filter for this SNMP trap"
+    ::= { gamSnmpConfigTrapSourceEntry 2 }
+
+gamSnmpConfigTrapSourceIndexFilter OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..508))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "OID subtree to use as index filter. Every OID is hex encoded as 4
+         bytes."
+    ::= { gamSnmpConfigTrapSourceEntry 3 }
+
+gamSnmpConfigTrapSourceIndexMask OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Mask for the OID subtree to use as index filter."
+    ::= { gamSnmpConfigTrapSourceEntry 4 }
+
+gamSnmpConfigTrapSourceFilterType OBJECT-TYPE
+    SYNTAX      GAMSnmpViewType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The filter type of this entry. The value can be set to 'included' or
+         'excluded'."
+    ::= { gamSnmpConfigTrapSourceEntry 5 }
+
+gamSnmpConfigTrapSourceAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigTrapSourceEntry 100 }
+
+gamSnmpConfigTrapSourceTableRowEditor OBJECT IDENTIFIER
+    ::= { gamSnmpConfig 23 }
+
+gamSnmpConfigTrapSourceTableRowEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SNMP trap event/table name"
+    ::= { gamSnmpConfigTrapSourceTableRowEditor 1 }
+
+gamSnmpConfigTrapSourceTableRowEditorIndexFilterID OBJECT-TYPE
+    SYNTAX      Integer32 (0..127)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "ID of filter for this SNMP trap"
+    ::= { gamSnmpConfigTrapSourceTableRowEditor 2 }
+
+gamSnmpConfigTrapSourceTableRowEditorIndexFilter OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..508))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "OID subtree to use as index filter. Every OID is hex encoded as 4
+         bytes."
+    ::= { gamSnmpConfigTrapSourceTableRowEditor 3 }
+
+gamSnmpConfigTrapSourceTableRowEditorIndexMask OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Mask for the OID subtree to use as index filter."
+    ::= { gamSnmpConfigTrapSourceTableRowEditor 4 }
+
+gamSnmpConfigTrapSourceTableRowEditorFilterType OBJECT-TYPE
+    SYNTAX      GAMSnmpViewType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The filter type of this entry. The value can be set to 'included' or
+         'excluded'."
+    ::= { gamSnmpConfigTrapSourceTableRowEditor 5 }
+
+gamSnmpConfigTrapSourceTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamSnmpConfigTrapSourceTableRowEditor 100 }
+
+gamSnmpMibConformance OBJECT IDENTIFIER
+    ::= { gamSnmpMib 2 }
+
+gamSnmpMibCompliances OBJECT IDENTIFIER
+    ::= { gamSnmpMibConformance 1 }
+
+gamSnmpMibGroups OBJECT IDENTIFIER
+    ::= { gamSnmpMibConformance 2 }
+
+gamSnmpConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigGlobalsMode,
+                  gamSnmpConfigGlobalsEngineId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 1 }
+
+gamSnmpConfigCommunityTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigCommunityName,
+                  gamSnmpConfigCommunitySourceIP,
+                  gamSnmpConfigCommunitySourceIPPrefixSize,
+                  gamSnmpConfigCommunitySecret,
+                  gamSnmpConfigCommunityAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 2 }
+
+gamSnmpConfigCommunityTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigCommunityTableRowEditorName,
+                  gamSnmpConfigCommunityTableRowEditorSourceIP,
+                  gamSnmpConfigCommunityTableRowEditorSourceIPPrefixSize,
+                  gamSnmpConfigCommunityTableRowEditorSecret,
+                  gamSnmpConfigCommunityTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 3 }
+
+gamSnmpConfigUserTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigUserEngineId,
+                  gamSnmpConfigUserUserName,
+                  gamSnmpConfigUserSecurityLevel,
+                  gamSnmpConfigUserAuthProtocol,
+                  gamSnmpConfigUserAuthPassword,
+                  gamSnmpConfigUserPrivProtocol,
+                  gamSnmpConfigUserPrivPassword,
+                  gamSnmpConfigUserAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 4 }
+
+gamSnmpConfigUserTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigUserTableRowEditorEngineId,
+                  gamSnmpConfigUserTableRowEditorUserName,
+                  gamSnmpConfigUserTableRowEditorSecurityLevel,
+                  gamSnmpConfigUserTableRowEditorAuthProtocol,
+                  gamSnmpConfigUserTableRowEditorAuthPassword,
+                  gamSnmpConfigUserTableRowEditorPrivProtocol,
+                  gamSnmpConfigUserTableRowEditorPrivPassword,
+                  gamSnmpConfigUserTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 5 }
+
+gamSnmpConfigUserToAccessGroupTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigUserToAccessGroupSecurityModel,
+                  gamSnmpConfigUserToAccessGroupUserOrCommunity,
+                  gamSnmpConfigUserToAccessGroupAccessGroupName,
+                  gamSnmpConfigUserToAccessGroupAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 6 }
+
+gamSnmpConfigUserToAccessGroupTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamSnmpConfigUserToAccessGroupTableRowEditorSecurityModel,
+                  gamSnmpConfigUserToAccessGroupTableRowEditorUserOrCommunity,
+                  gamSnmpConfigUserToAccessGroupTableRowEditorAccessGroupName,
+                  gamSnmpConfigUserToAccessGroupTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 7 }
+
+gamSnmpConfigAccessGroupTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigAccessGroupAccessGroupName,
+                  gamSnmpConfigAccessGroupSecurityModel,
+                  gamSnmpConfigAccessGroupSecurityLevel,
+                  gamSnmpConfigAccessGroupReadViewName,
+                  gamSnmpConfigAccessGroupWriteViewName,
+                  gamSnmpConfigAccessGroupAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 8 }
+
+gamSnmpConfigAccessGroupTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamSnmpConfigAccessGroupTableRowEditorAccessGroupName,
+                  gamSnmpConfigAccessGroupTableRowEditorSecurityModel,
+                  gamSnmpConfigAccessGroupTableRowEditorSecurityLevel,
+                  gamSnmpConfigAccessGroupTableRowEditorReadViewName,
+                  gamSnmpConfigAccessGroupTableRowEditorWriteViewName,
+                  gamSnmpConfigAccessGroupTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 9 }
+
+gamSnmpConfigViewTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigViewName, gamSnmpConfigViewSubtree,
+                  gamSnmpConfigViewViewType, gamSnmpConfigViewAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 10 }
+
+gamSnmpConfigViewTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigViewTableRowEditorName,
+                  gamSnmpConfigViewTableRowEditorSubtree,
+                  gamSnmpConfigViewTableRowEditorViewType,
+                  gamSnmpConfigViewTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 11 }
+
+gamSnmpConfigCommunity6TableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigCommunity6Name,
+                  gamSnmpConfigCommunity6SourceIPv6,
+                  gamSnmpConfigCommunity6SourceIPv6PrefixSize,
+                  gamSnmpConfigCommunity6Secret,
+                  gamSnmpConfigCommunity6Action }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 12 }
+
+gamSnmpConfigCommunity6TableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigCommunity6TableRowEditorName,
+                  gamSnmpConfigCommunity6TableRowEditorSourceIPv6,
+                  gamSnmpConfigCommunity6TableRowEditorSourceIPv6PrefixSize,
+                  gamSnmpConfigCommunity6TableRowEditorSecret,
+                  gamSnmpConfigCommunity6TableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 13 }
+
+gamSnmpConfigTrapReceiverTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigTrapReceiverName,
+                  gamSnmpConfigTrapReceiverEnable,
+                  gamSnmpConfigTrapReceiverAddress,
+                  gamSnmpConfigTrapReceiverPort,
+                  gamSnmpConfigTrapReceiverVersion,
+                  gamSnmpConfigTrapReceiverCommunity,
+                  gamSnmpConfigTrapReceiverNotifyType,
+                  gamSnmpConfigTrapReceiverTimeout,
+                  gamSnmpConfigTrapReceiverRetries,
+                  gamSnmpConfigTrapReceiverEngineId,
+                  gamSnmpConfigTrapReceiverUserName,
+                  gamSnmpConfigTrapReceiverAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 14 }
+
+gamSnmpConfigTrapReceiverTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigTrapReceiverTableRowEditorName,
+                  gamSnmpConfigTrapReceiverTableRowEditorEnable,
+                  gamSnmpConfigTrapReceiverTableRowEditorAddress,
+                  gamSnmpConfigTrapReceiverTableRowEditorPort,
+                  gamSnmpConfigTrapReceiverTableRowEditorVersion,
+                  gamSnmpConfigTrapReceiverTableRowEditorCommunity,
+                  gamSnmpConfigTrapReceiverTableRowEditorNotifyType,
+                  gamSnmpConfigTrapReceiverTableRowEditorTimeout,
+                  gamSnmpConfigTrapReceiverTableRowEditorRetries,
+                  gamSnmpConfigTrapReceiverTableRowEditorEngineId,
+                  gamSnmpConfigTrapReceiverTableRowEditorUserName,
+                  gamSnmpConfigTrapReceiverTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 15 }
+
+gamSnmpConfigTrapSourceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigTrapSourceName,
+                  gamSnmpConfigTrapSourceIndexFilterID,
+                  gamSnmpConfigTrapSourceIndexFilter,
+                  gamSnmpConfigTrapSourceIndexMask,
+                  gamSnmpConfigTrapSourceFilterType,
+                  gamSnmpConfigTrapSourceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 16 }
+
+gamSnmpConfigTrapSourceTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSnmpConfigTrapSourceTableRowEditorName,
+                  gamSnmpConfigTrapSourceTableRowEditorIndexFilterID,
+                  gamSnmpConfigTrapSourceTableRowEditorIndexFilter,
+                  gamSnmpConfigTrapSourceTableRowEditorIndexMask,
+                  gamSnmpConfigTrapSourceTableRowEditorFilterType,
+                  gamSnmpConfigTrapSourceTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSnmpMibGroups 17 }
+
+gamSnmpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamSnmpConfigGlobalsInfoGroup,
+                       gamSnmpConfigCommunityTableInfoGroup,
+                       gamSnmpConfigCommunityTableRowEditorInfoGroup,
+                       gamSnmpConfigUserTableInfoGroup,
+                       gamSnmpConfigUserTableRowEditorInfoGroup,
+                       gamSnmpConfigUserToAccessGroupTableInfoGroup,
+                       gamSnmpConfigUserToAccessGroupTableRowEditorInfoGroup,
+                       gamSnmpConfigAccessGroupTableInfoGroup,
+                       gamSnmpConfigAccessGroupTableRowEditorInfoGroup,
+                       gamSnmpConfigViewTableInfoGroup,
+                       gamSnmpConfigViewTableRowEditorInfoGroup,
+                       gamSnmpConfigCommunity6TableInfoGroup,
+                       gamSnmpConfigCommunity6TableRowEditorInfoGroup,
+                       gamSnmpConfigTrapReceiverTableInfoGroup,
+                       gamSnmpConfigTrapReceiverTableRowEditorInfoGroup,
+                       gamSnmpConfigTrapSourceTableInfoGroup,
+                       gamSnmpConfigTrapSourceTableRowEditorInfoGroup }
+
+    ::= { gamSnmpMibCompliances 1 }
+
+END

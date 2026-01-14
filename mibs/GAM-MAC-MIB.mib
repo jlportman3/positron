@@ -1,0 +1,813 @@
+-- *****************************************************************
+-- MAC-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-MAC-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMPortList FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    GAMVlan FROM GAM-TC
+    GAMVlanOrZero FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamMacMib MODULE-IDENTITY
+    LAST-UPDATED "201702230000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the MAC MIB"
+    REVISION    "201702230000Z"
+    DESCRIPTION
+        "Added support for SR and PSFP."
+    REVISION    "201408200000Z"
+    DESCRIPTION
+        "Updated types"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 12 }
+
+
+GAMMacPortLearnMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The learning mode of the port."
+    SYNTAX      INTEGER { auto(0), disable(1), secure(2) }
+
+gamMacMibObjects OBJECT IDENTIFIER
+    ::= { gamMacMib 1 }
+
+gamMacCapabilities OBJECT IDENTIFIER
+    ::= { gamMacMibObjects 1 }
+
+gamMacCapabilitiesNonVolatileMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Max number of static non-volatile MAC addresses that can be stored in
+         the system."
+    ::= { gamMacCapabilities 1 }
+
+gamMacConfig OBJECT IDENTIFIER
+    ::= { gamMacMibObjects 2 }
+
+gamMacConfigFdbGlobal OBJECT IDENTIFIER
+    ::= { gamMacConfig 1 }
+
+gamMacConfigFdbGlobalAgeTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Mac address aging time in the FDB."
+    ::= { gamMacConfigFdbGlobal 1 }
+
+gamMacConfigFdbTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMacConfigFdbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents static mac addresses added through the mgmt
+         interface. "
+    ::= { gamMacConfig 2 }
+
+gamMacConfigFdbEntry OBJECT-TYPE
+    SYNTAX      GAMMacConfigFdbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamMacConfigFdbVlanId, gamMacConfigFdbMacAddress }
+    ::= { gamMacConfigFdbTable 1 }
+
+GAMMacConfigFdbEntry ::= SEQUENCE {
+    gamMacConfigFdbVlanId      GAMVlan,
+    gamMacConfigFdbMacAddress  MacAddress,
+    gamMacConfigFdbPortList    GAMPortList,
+    gamMacConfigFdbSr          Integer32,
+    gamMacConfigFdbPsfp        Integer32,
+    gamMacConfigFdbAction      GAMRowEditorState
+}
+
+gamMacConfigFdbVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Vlan id used for indexing."
+    ::= { gamMacConfigFdbEntry 1 }
+
+gamMacConfigFdbMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address which this entry applies."
+    ::= { gamMacConfigFdbEntry 2 }
+
+gamMacConfigFdbPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "List of destination ports for which frames with this DMAC is forwarded
+         to."
+    ::= { gamMacConfigFdbEntry 3 }
+
+gamMacConfigFdbSr OBJECT-TYPE
+    SYNTAX      Integer32 (0..127)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SR ID "
+    ::= { gamMacConfigFdbEntry 4 }
+
+gamMacConfigFdbPsfp OBJECT-TYPE
+    SYNTAX      Integer32 (0..143)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Per-Stream Filtering and Policing ID"
+    ::= { gamMacConfigFdbEntry 5 }
+
+gamMacConfigFdbAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamMacConfigFdbEntry 100 }
+
+gamMacConfigFdbTableRowEditor OBJECT IDENTIFIER
+    ::= { gamMacConfig 3 }
+
+gamMacConfigFdbTableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vlan id used for indexing."
+    ::= { gamMacConfigFdbTableRowEditor 1 }
+
+gamMacConfigFdbTableRowEditorMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address which this entry applies."
+    ::= { gamMacConfigFdbTableRowEditor 2 }
+
+gamMacConfigFdbTableRowEditorPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "List of destination ports for which frames with this DMAC is forwarded
+         to."
+    ::= { gamMacConfigFdbTableRowEditor 3 }
+
+gamMacConfigFdbTableRowEditorSr OBJECT-TYPE
+    SYNTAX      Integer32 (0..127)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SR ID "
+    ::= { gamMacConfigFdbTableRowEditor 4 }
+
+gamMacConfigFdbTableRowEditorPsfp OBJECT-TYPE
+    SYNTAX      Integer32 (0..143)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Per-Stream Filtering and Policing ID"
+    ::= { gamMacConfigFdbTableRowEditor 5 }
+
+gamMacConfigFdbTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamMacConfigFdbTableRowEditor 100 }
+
+gamMacConfigPortLearnTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMacConfigPortLearnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents the learning mode of each port"
+    ::= { gamMacConfig 4 }
+
+gamMacConfigPortLearnEntry OBJECT-TYPE
+    SYNTAX      GAMMacConfigPortLearnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamMacConfigPortLearnIfIndex }
+    ::= { gamMacConfigPortLearnTable 1 }
+
+GAMMacConfigPortLearnEntry ::= SEQUENCE {
+    gamMacConfigPortLearnIfIndex        GAMInterfaceIndex,
+    gamMacConfigPortLearnLearnMode      GAMMacPortLearnMode,
+    gamMacConfigPortLearnChangeAllowed  TruthValue
+}
+
+gamMacConfigPortLearnIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Interface index."
+    ::= { gamMacConfigPortLearnEntry 1 }
+
+gamMacConfigPortLearnLearnMode OBJECT-TYPE
+    SYNTAX      GAMMacPortLearnMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The learn mode of the port. Auto(0) means auto learning. Disable(1)
+         means that learning is disabled. Secure(2) means that learning frames
+         are discarded."
+    ::= { gamMacConfigPortLearnEntry 2 }
+
+gamMacConfigPortLearnChangeAllowed OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If internal modules have changed the learned mode then the user is not
+         allowed to change it from this interface. This entry tells you if the
+         LearnMode can be changed (true) or not (false). This is a read only
+         entry - write is ignored."
+    ::= { gamMacConfigPortLearnEntry 3 }
+
+gamMacConfigVlanLearnTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMacConfigVlanLearnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents the learning mode of each vlan 1-4095"
+    ::= { gamMacConfig 5 }
+
+gamMacConfigVlanLearnEntry OBJECT-TYPE
+    SYNTAX      GAMMacConfigVlanLearnEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamMacConfigVlanLearnVlanId }
+    ::= { gamMacConfigVlanLearnTable 1 }
+
+GAMMacConfigVlanLearnEntry ::= SEQUENCE {
+    gamMacConfigVlanLearnVlanId  GAMVlan,
+    gamMacConfigVlanLearnMode    TruthValue
+}
+
+gamMacConfigVlanLearnVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Vlan id used for indexing."
+    ::= { gamMacConfigVlanLearnEntry 1 }
+
+gamMacConfigVlanLearnMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Learn mode of the VLAN, True = Enabled, False = Disabled"
+    ::= { gamMacConfigVlanLearnEntry 2 }
+
+gamMacStatus OBJECT IDENTIFIER
+    ::= { gamMacMibObjects 3 }
+
+gamMacStatusFdbTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMacStatusFdbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents all mac addresses in the FDB that are on
+         single-tagged VLAN. This table is kept for compatibility."
+    ::= { gamMacStatus 1 }
+
+gamMacStatusFdbEntry OBJECT-TYPE
+    SYNTAX      GAMMacStatusFdbEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamMacStatusFdbVlanId, gamMacStatusFdbMacAddress }
+    ::= { gamMacStatusFdbTable 1 }
+
+GAMMacStatusFdbEntry ::= SEQUENCE {
+    gamMacStatusFdbVlanId      GAMVlan,
+    gamMacStatusFdbMacAddress  MacAddress,
+    gamMacStatusFdbPortList    GAMPortList,
+    gamMacStatusFdbDynamic     GAMUnsigned8,
+    gamMacStatusFdbCopyToCpu   GAMUnsigned8
+}
+
+gamMacStatusFdbVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Vlan id used for indexing."
+    ::= { gamMacStatusFdbEntry 1 }
+
+gamMacStatusFdbMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address which this entry applies."
+    ::= { gamMacStatusFdbEntry 2 }
+
+gamMacStatusFdbPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "List of destination ports for which frames with this DMAC is forwarded
+         to."
+    ::= { gamMacStatusFdbEntry 3 }
+
+gamMacStatusFdbDynamic OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The entry is dynamically learned (True) or statically added (False)"
+    ::= { gamMacStatusFdbEntry 4 }
+
+gamMacStatusFdbCopyToCpu OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Copy this frame to the CPU (True) or not (False)"
+    ::= { gamMacStatusFdbEntry 5 }
+
+gamMacStatusFdbStaticTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMacStatusFdbStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents all static mac addresses in the FDB that are on
+         single-tagged VLAN. This table is kept for compatibility."
+    ::= { gamMacStatus 2 }
+
+gamMacStatusFdbStaticEntry OBJECT-TYPE
+    SYNTAX      GAMMacStatusFdbStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamMacStatusFdbStaticVlanId,
+                  gamMacStatusFdbStaticMacAddress }
+    ::= { gamMacStatusFdbStaticTable 1 }
+
+GAMMacStatusFdbStaticEntry ::= SEQUENCE {
+    gamMacStatusFdbStaticVlanId      GAMVlan,
+    gamMacStatusFdbStaticMacAddress  MacAddress,
+    gamMacStatusFdbStaticPortList    GAMPortList,
+    gamMacStatusFdbStaticDynamic     GAMUnsigned8,
+    gamMacStatusFdbStaticCopyToCpu   GAMUnsigned8
+}
+
+gamMacStatusFdbStaticVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Vlan id used for indexing."
+    ::= { gamMacStatusFdbStaticEntry 1 }
+
+gamMacStatusFdbStaticMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address which this entry applies."
+    ::= { gamMacStatusFdbStaticEntry 2 }
+
+gamMacStatusFdbStaticPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "List of destination ports for which frames with this DMAC is forwarded
+         to."
+    ::= { gamMacStatusFdbStaticEntry 3 }
+
+gamMacStatusFdbStaticDynamic OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The entry is dynamically learned (True) or statically added (False)"
+    ::= { gamMacStatusFdbStaticEntry 4 }
+
+gamMacStatusFdbStaticCopyToCpu OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Copy this frame to the CPU (True) or not (False)"
+    ::= { gamMacStatusFdbStaticEntry 5 }
+
+gamMacStatusFdbPortStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMacStatusFdbPortStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represent the statistics of the Port interfaces"
+    ::= { gamMacStatus 3 }
+
+gamMacStatusFdbPortStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMMacStatusFdbPortStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port has a number of learned addresses"
+    INDEX       { gamMacStatusFdbPortStatisticsIfIndex }
+    ::= { gamMacStatusFdbPortStatisticsTable 1 }
+
+GAMMacStatusFdbPortStatisticsEntry ::= SEQUENCE {
+    gamMacStatusFdbPortStatisticsIfIndex  GAMInterfaceIndex,
+    gamMacStatusFdbPortStatisticsDynamic  Unsigned32
+}
+
+gamMacStatusFdbPortStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Interface index."
+    ::= { gamMacStatusFdbPortStatisticsEntry 1 }
+
+gamMacStatusFdbPortStatisticsDynamic OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of dynamic learned addresses on the port"
+    ::= { gamMacStatusFdbPortStatisticsEntry 2 }
+
+gamMacStatusFdbStatistics OBJECT IDENTIFIER
+    ::= { gamMacStatus 4 }
+
+gamMacStatusFdbStatisticsTotalDynamic OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total dynamic learned addresses in the FDB"
+    ::= { gamMacStatusFdbStatistics 1 }
+
+gamMacStatusFdbStatisticsTotalStatic OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total static addresses in the FDB"
+    ::= { gamMacStatusFdbStatistics 2 }
+
+gamMacStatusFdb2TagsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMacStatusFdb2TagsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents all mac addresses in the FDB, on either
+         single-tagged or double-tagged VLANs."
+    ::= { gamMacStatus 11 }
+
+gamMacStatusFdb2TagsEntry OBJECT-TYPE
+    SYNTAX      GAMMacStatusFdb2TagsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamMacStatusFdb2TagsOuterVlanId,
+                  gamMacStatusFdb2TagsInnerVlanId,
+                  gamMacStatusFdb2TagsMacAddress }
+    ::= { gamMacStatusFdb2TagsTable 1 }
+
+GAMMacStatusFdb2TagsEntry ::= SEQUENCE {
+    gamMacStatusFdb2TagsOuterVlanId  GAMVlan,
+    gamMacStatusFdb2TagsInnerVlanId  GAMVlanOrZero,
+    gamMacStatusFdb2TagsMacAddress   MacAddress,
+    gamMacStatusFdb2TagsPortList     GAMPortList,
+    gamMacStatusFdb2TagsDynamic      GAMUnsigned8,
+    gamMacStatusFdb2TagsCopyToCpu    GAMUnsigned8
+}
+
+gamMacStatusFdb2TagsOuterVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Outer VLAN id used for indexing."
+    ::= { gamMacStatusFdb2TagsEntry 1 }
+
+gamMacStatusFdb2TagsInnerVlanId OBJECT-TYPE
+    SYNTAX      GAMVlanOrZero
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Inner VLAN id used for indexing. 0 means no inner tag (single-tagged
+         VID)"
+    ::= { gamMacStatusFdb2TagsEntry 2 }
+
+gamMacStatusFdb2TagsMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address which this entry applies."
+    ::= { gamMacStatusFdb2TagsEntry 3 }
+
+gamMacStatusFdb2TagsPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "List of destination ports for which frames with this DMAC is forwarded
+         to."
+    ::= { gamMacStatusFdb2TagsEntry 4 }
+
+gamMacStatusFdb2TagsDynamic OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The entry is dynamically learned (True) or statically added (False)"
+    ::= { gamMacStatusFdb2TagsEntry 5 }
+
+gamMacStatusFdb2TagsCopyToCpu OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Copy this frame to the CPU (True) or not (False)"
+    ::= { gamMacStatusFdb2TagsEntry 6 }
+
+gamMacStatusFdbStatic2TagsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMacStatusFdbStatic2TagsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents all static mac addresses in the FDB, on either
+         single-tagged or double-tagged VLANs."
+    ::= { gamMacStatus 12 }
+
+gamMacStatusFdbStatic2TagsEntry OBJECT-TYPE
+    SYNTAX      GAMMacStatusFdbStatic2TagsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamMacStatusFdbStatic2TagsOuterVlanId,
+                  gamMacStatusFdbStatic2TagsInnerVlanId,
+                  gamMacStatusFdbStatic2TagsMacAddress }
+    ::= { gamMacStatusFdbStatic2TagsTable 1 }
+
+GAMMacStatusFdbStatic2TagsEntry ::= SEQUENCE {
+    gamMacStatusFdbStatic2TagsOuterVlanId  GAMVlan,
+    gamMacStatusFdbStatic2TagsInnerVlanId  GAMVlanOrZero,
+    gamMacStatusFdbStatic2TagsMacAddress   MacAddress,
+    gamMacStatusFdbStatic2TagsPortList     GAMPortList,
+    gamMacStatusFdbStatic2TagsDynamic      GAMUnsigned8,
+    gamMacStatusFdbStatic2TagsCopyToCpu    GAMUnsigned8
+}
+
+gamMacStatusFdbStatic2TagsOuterVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Outer VLAN id used for indexing."
+    ::= { gamMacStatusFdbStatic2TagsEntry 1 }
+
+gamMacStatusFdbStatic2TagsInnerVlanId OBJECT-TYPE
+    SYNTAX      GAMVlanOrZero
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Inner VLAN id used for indexing. 0 means no inner tag (single-tagged
+         VID)"
+    ::= { gamMacStatusFdbStatic2TagsEntry 2 }
+
+gamMacStatusFdbStatic2TagsMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address which this entry applies."
+    ::= { gamMacStatusFdbStatic2TagsEntry 3 }
+
+gamMacStatusFdbStatic2TagsPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "List of destination ports for which frames with this DMAC is forwarded
+         to."
+    ::= { gamMacStatusFdbStatic2TagsEntry 4 }
+
+gamMacStatusFdbStatic2TagsDynamic OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The entry is dynamically learned (True) or statically added (False)"
+    ::= { gamMacStatusFdbStatic2TagsEntry 5 }
+
+gamMacStatusFdbStatic2TagsCopyToCpu OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Copy this frame to the CPU (True) or not (False)"
+    ::= { gamMacStatusFdbStatic2TagsEntry 6 }
+
+gamMacControl OBJECT IDENTIFIER
+    ::= { gamMacMibObjects 4 }
+
+gamMacControlFlushAll OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Flush all dynamic learned Mac addresses. Set the value to 'true' to
+         perform the action. Read will always return 'false'."
+    ::= { gamMacControl 1 }
+
+gamMacMibConformance OBJECT IDENTIFIER
+    ::= { gamMacMib 2 }
+
+gamMacMibCompliances OBJECT IDENTIFIER
+    ::= { gamMacMibConformance 1 }
+
+gamMacMibGroups OBJECT IDENTIFIER
+    ::= { gamMacMibConformance 2 }
+
+gamMacCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacCapabilitiesNonVolatileMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 1 }
+
+gamMacConfigFdbGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacConfigFdbGlobalAgeTime }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 2 }
+
+gamMacConfigFdbTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacConfigFdbVlanId, gamMacConfigFdbMacAddress,
+                  gamMacConfigFdbPortList, gamMacConfigFdbSr,
+                  gamMacConfigFdbPsfp, gamMacConfigFdbAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 3 }
+
+gamMacConfigFdbTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacConfigFdbTableRowEditorVlanId,
+                  gamMacConfigFdbTableRowEditorMacAddress,
+                  gamMacConfigFdbTableRowEditorPortList,
+                  gamMacConfigFdbTableRowEditorSr,
+                  gamMacConfigFdbTableRowEditorPsfp,
+                  gamMacConfigFdbTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 4 }
+
+gamMacConfigPortLearnInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacConfigPortLearnIfIndex,
+                  gamMacConfigPortLearnLearnMode,
+                  gamMacConfigPortLearnChangeAllowed }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 5 }
+
+gamMacConfigVlanLearnInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacConfigVlanLearnVlanId,
+                  gamMacConfigVlanLearnMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 6 }
+
+gamMacStatusFdbTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacStatusFdbVlanId, gamMacStatusFdbMacAddress,
+                  gamMacStatusFdbPortList, gamMacStatusFdbDynamic,
+                  gamMacStatusFdbCopyToCpu }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 7 }
+
+gamMacStatusFdbStaticTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacStatusFdbStaticVlanId,
+                  gamMacStatusFdbStaticMacAddress,
+                  gamMacStatusFdbStaticPortList,
+                  gamMacStatusFdbStaticDynamic,
+                  gamMacStatusFdbStaticCopyToCpu }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 8 }
+
+gamMacStatusFdbPortStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacStatusFdbPortStatisticsIfIndex,
+                  gamMacStatusFdbPortStatisticsDynamic }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 9 }
+
+gamMacStatusFdbStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacStatusFdbStatisticsTotalDynamic,
+                  gamMacStatusFdbStatisticsTotalStatic }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 10 }
+
+gamMacStatusFdb2TagsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacStatusFdb2TagsOuterVlanId,
+                  gamMacStatusFdb2TagsInnerVlanId,
+                  gamMacStatusFdb2TagsMacAddress,
+                  gamMacStatusFdb2TagsPortList,
+                  gamMacStatusFdb2TagsDynamic,
+                  gamMacStatusFdb2TagsCopyToCpu }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 11 }
+
+gamMacStatusFdbStatic2TagsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacStatusFdbStatic2TagsOuterVlanId,
+                  gamMacStatusFdbStatic2TagsInnerVlanId,
+                  gamMacStatusFdbStatic2TagsMacAddress,
+                  gamMacStatusFdbStatic2TagsPortList,
+                  gamMacStatusFdbStatic2TagsDynamic,
+                  gamMacStatusFdbStatic2TagsCopyToCpu }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 12 }
+
+gamMacControlInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMacControlFlushAll }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMacMibGroups 13 }
+
+gamMacMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamMacCapabilitiesInfoGroup,
+                       gamMacConfigFdbGlobalInfoGroup,
+                       gamMacConfigFdbTableInfoGroup,
+                       gamMacConfigFdbTableRowEditorInfoGroup,
+                       gamMacConfigPortLearnInfoGroup,
+                       gamMacConfigVlanLearnInfoGroup,
+                       gamMacStatusFdbTableInfoGroup,
+                       gamMacStatusFdbStaticTableInfoGroup,
+                       gamMacStatusFdbPortStatisticsInfoGroup,
+                       gamMacStatusFdbStatisticsInfoGroup,
+                       gamMacStatusFdb2TagsTableInfoGroup,
+                       gamMacStatusFdbStatic2TagsTableInfoGroup,
+                       gamMacControlInfoGroup }
+
+    ::= { gamMacMibCompliances 1 }
+
+END

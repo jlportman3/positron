@@ -1,0 +1,498 @@
+-- *****************************************************************
+-- ALARM-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-ALARM-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    DateAndTime FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    UUID FROM UUID-TC-MIB
+    ;
+
+gamAlarmMib MODULE-IDENTITY
+    LAST-UPDATED "201911050000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private MIB for Alarm"
+    REVISION    "201911050000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 145 }
+
+
+GAMAlarmCondState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The condition state."
+    SYNTAX      INTEGER { raising(0), clearing(1), changed(2),
+                          transient(3) }
+
+GAMAlarmCondType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The condition type."
+    SYNTAX      INTEGER { other(0), hwflt(1), swflt(2), fanflt(3),
+                          hightemp(4), thermalshutdown(5), restart(6),
+                          clkchange(7), linkdown(8), sfprmvd(9),
+                          sfpmismatch(10), outage(11), lowsnr(12),
+                          los(13), portmismatch(14), hwmismatch(15),
+                          swrevmismat(16), swdl(17), fwupg(18),
+                          lockoutconsole(19), lockouthost(20),
+                          lockoutglobal(21), lpbkfacility(22),
+                          lpbkterm(23) }
+
+GAMAlarmSeverity ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The condition severity."
+    SYNTAX      INTEGER { nr(0), na(1), mn(2), mj(3), cr(4) }
+
+gamAlarmMibObjects OBJECT IDENTIFIER
+    ::= { gamAlarmMib 1 }
+
+gamAlarmConfig OBJECT IDENTIFIER
+    ::= { gamAlarmMibObjects 2 }
+
+gamAlarmStatus OBJECT IDENTIFIER
+    ::= { gamAlarmMibObjects 3 }
+
+gamAlarmStatusActiveTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAlarmStatusActiveEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The active alarms table."
+    ::= { gamAlarmStatus 1 }
+
+gamAlarmStatusActiveEntry OBJECT-TYPE
+    SYNTAX      GAMAlarmStatusActiveEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row has a set of active alarm entry parameters."
+    INDEX       { gamAlarmStatusActiveIndex }
+    ::= { gamAlarmStatusActiveTable 1 }
+
+GAMAlarmStatusActiveEntry ::= SEQUENCE {
+    gamAlarmStatusActiveIndex            Unsigned32,
+    gamAlarmStatusActiveIfIndex          GAMInterfaceIndex,
+    gamAlarmStatusActiveUUID             UUID,
+    gamAlarmStatusActiveIfDescr          GAMDisplayString,
+    gamAlarmStatusActiveCondType         GAMAlarmCondType,
+    gamAlarmStatusActiveSwFaultFileName  GAMDisplayString,
+    gamAlarmStatusActiveSwFltLine        Unsigned32,
+    gamAlarmStatusActiveSwFltModuleId    Integer32,
+    gamAlarmStatusActiveHwFltId          Unsigned32,
+    gamAlarmStatusActiveSeverity         GAMAlarmSeverity,
+    gamAlarmStatusActiveServAff          TruthValue,
+    gamAlarmStatusActiveOccurTime        DateAndTime
+}
+
+gamAlarmStatusActiveIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The entry index."
+    ::= { gamAlarmStatusActiveEntry 1 }
+
+gamAlarmStatusActiveIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The interface index."
+    ::= { gamAlarmStatusActiveEntry 2 }
+
+gamAlarmStatusActiveUUID OBJECT-TYPE
+    SYNTAX      UUID
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Unique ID associated with this condition."
+    ::= { gamAlarmStatusActiveEntry 3 }
+
+gamAlarmStatusActiveIfDescr OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The interface description."
+    ::= { gamAlarmStatusActiveEntry 4 }
+
+gamAlarmStatusActiveCondType OBJECT-TYPE
+    SYNTAX      GAMAlarmCondType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The contidion type."
+    ::= { gamAlarmStatusActiveEntry 5 }
+
+gamAlarmStatusActiveSwFaultFileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..23))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The software fault file name. Only when condition type is SWFLT."
+    ::= { gamAlarmStatusActiveEntry 6 }
+
+gamAlarmStatusActiveSwFltLine OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The software fault line number. Only when condition type is SWFLT."
+    ::= { gamAlarmStatusActiveEntry 7 }
+
+gamAlarmStatusActiveSwFltModuleId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The software fault module ID. Only when condition type is SWFLT."
+    ::= { gamAlarmStatusActiveEntry 8 }
+
+gamAlarmStatusActiveHwFltId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hardware fault ID. Only when condition type is HWFLT."
+    ::= { gamAlarmStatusActiveEntry 9 }
+
+gamAlarmStatusActiveSeverity OBJECT-TYPE
+    SYNTAX      GAMAlarmSeverity
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The condition severity."
+    ::= { gamAlarmStatusActiveEntry 10 }
+
+gamAlarmStatusActiveServAff OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If set, indicate that this is condition is service affecting."
+    ::= { gamAlarmStatusActiveEntry 11 }
+
+gamAlarmStatusActiveOccurTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Occurance timestamp."
+    ::= { gamAlarmStatusActiveEntry 12 }
+
+gamAlarmStatusLogTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAlarmStatusLogEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The alarm logs table."
+    ::= { gamAlarmStatus 2 }
+
+gamAlarmStatusLogEntry OBJECT-TYPE
+    SYNTAX      GAMAlarmStatusLogEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row has a set of alarm log entry parameters."
+    INDEX       { gamAlarmStatusLogIndex }
+    ::= { gamAlarmStatusLogTable 1 }
+
+GAMAlarmStatusLogEntry ::= SEQUENCE {
+    gamAlarmStatusLogIndex            Unsigned32,
+    gamAlarmStatusLogIfIndex          GAMInterfaceIndex,
+    gamAlarmStatusLogUUID             UUID,
+    gamAlarmStatusLogIfDescr          GAMDisplayString,
+    gamAlarmStatusLogCondType         GAMAlarmCondType,
+    gamAlarmStatusLogSwFaultFileName  GAMDisplayString,
+    gamAlarmStatusLogSwFltLine        Unsigned32,
+    gamAlarmStatusLogSwFltModuleId    Integer32,
+    gamAlarmStatusLogHwFltId          Unsigned32,
+    gamAlarmStatusLogState            GAMAlarmCondState,
+    gamAlarmStatusLogSeverity         GAMAlarmSeverity,
+    gamAlarmStatusLogServAff          TruthValue,
+    gamAlarmStatusLogOccurTime        DateAndTime,
+    gamAlarmStatusLogReportTime       DateAndTime
+}
+
+gamAlarmStatusLogIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The entry index."
+    ::= { gamAlarmStatusLogEntry 1 }
+
+gamAlarmStatusLogIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The interface index."
+    ::= { gamAlarmStatusLogEntry 2 }
+
+gamAlarmStatusLogUUID OBJECT-TYPE
+    SYNTAX      UUID
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Unique ID associated with this condition."
+    ::= { gamAlarmStatusLogEntry 3 }
+
+gamAlarmStatusLogIfDescr OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..63))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The interface description."
+    ::= { gamAlarmStatusLogEntry 4 }
+
+gamAlarmStatusLogCondType OBJECT-TYPE
+    SYNTAX      GAMAlarmCondType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The contidion type."
+    ::= { gamAlarmStatusLogEntry 5 }
+
+gamAlarmStatusLogSwFaultFileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..23))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The software fault file name. Only when condition type is SWFLT."
+    ::= { gamAlarmStatusLogEntry 6 }
+
+gamAlarmStatusLogSwFltLine OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The software fault line number. Only when condition type is SWFLT."
+    ::= { gamAlarmStatusLogEntry 7 }
+
+gamAlarmStatusLogSwFltModuleId OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The software fault module ID. Only when condition type is SWFLT."
+    ::= { gamAlarmStatusLogEntry 8 }
+
+gamAlarmStatusLogHwFltId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hardware fault ID. Only when condition type is HWFLT."
+    ::= { gamAlarmStatusLogEntry 9 }
+
+gamAlarmStatusLogState OBJECT-TYPE
+    SYNTAX      GAMAlarmCondState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The condition state (raising, clearing, changed or transient)."
+    ::= { gamAlarmStatusLogEntry 10 }
+
+gamAlarmStatusLogSeverity OBJECT-TYPE
+    SYNTAX      GAMAlarmSeverity
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The condition severity."
+    ::= { gamAlarmStatusLogEntry 11 }
+
+gamAlarmStatusLogServAff OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If set, indicate that this is condition is service affecting."
+    ::= { gamAlarmStatusLogEntry 12 }
+
+gamAlarmStatusLogOccurTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Occurance timestamp."
+    ::= { gamAlarmStatusLogEntry 13 }
+
+gamAlarmStatusLogReportTime OBJECT-TYPE
+    SYNTAX      DateAndTime
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Report timestamp."
+    ::= { gamAlarmStatusLogEntry 14 }
+
+gamAlarmControl OBJECT IDENTIFIER
+    ::= { gamAlarmMibObjects 4 }
+
+gamAlarmControlActions OBJECT IDENTIFIER
+    ::= { gamAlarmControl 1 }
+
+gamAlarmControlActionsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Clear alarm log and history by setting to true."
+    ::= { gamAlarmControlActions 1 }
+
+gamAlarmTrap OBJECT IDENTIFIER
+    ::= { gamAlarmMibObjects 6 }
+
+gamAlarmTrapStatusActiveAdd NOTIFICATION-TYPE
+    OBJECTS     { gamAlarmStatusActiveIndex,
+                  gamAlarmStatusActiveIfIndex,
+                  gamAlarmStatusActiveUUID,
+                  gamAlarmStatusActiveIfDescr,
+                  gamAlarmStatusActiveCondType,
+                  gamAlarmStatusActiveSwFaultFileName,
+                  gamAlarmStatusActiveSwFltLine,
+                  gamAlarmStatusActiveSwFltModuleId,
+                  gamAlarmStatusActiveHwFltId,
+                  gamAlarmStatusActiveSeverity,
+                  gamAlarmStatusActiveServAff,
+                  gamAlarmStatusActiveOccurTime }
+    STATUS      current
+    DESCRIPTION
+        "This trap signals that a row has been added. The index(es) and value(s)
+         of the row is included in the trap."
+
+    ::= { gamAlarmTrap 1 }
+
+gamAlarmTrapStatusActiveMod NOTIFICATION-TYPE
+    OBJECTS     { gamAlarmStatusActiveIndex,
+                  gamAlarmStatusActiveIfIndex,
+                  gamAlarmStatusActiveUUID,
+                  gamAlarmStatusActiveIfDescr,
+                  gamAlarmStatusActiveCondType,
+                  gamAlarmStatusActiveSwFaultFileName,
+                  gamAlarmStatusActiveSwFltLine,
+                  gamAlarmStatusActiveSwFltModuleId,
+                  gamAlarmStatusActiveHwFltId,
+                  gamAlarmStatusActiveSeverity,
+                  gamAlarmStatusActiveServAff,
+                  gamAlarmStatusActiveOccurTime }
+    STATUS      current
+    DESCRIPTION
+        "This trap signals that one or more of the objects included in the trap
+          has been updated."
+
+    ::= { gamAlarmTrap 2 }
+
+gamAlarmTrapStatusActiveDel NOTIFICATION-TYPE
+    OBJECTS     { gamAlarmStatusActiveIndex }
+    STATUS      current
+    DESCRIPTION
+        "This trap signals that a row has been deleted. The index(es) of the
+         row is included in the trap."
+
+    ::= { gamAlarmTrap 3 }
+
+gamAlarmMibConformance OBJECT IDENTIFIER
+    ::= { gamAlarmMib 2 }
+
+gamAlarmMibCompliances OBJECT IDENTIFIER
+    ::= { gamAlarmMibConformance 1 }
+
+gamAlarmMibGroups OBJECT IDENTIFIER
+    ::= { gamAlarmMibConformance 2 }
+
+gamAlarmStatusActiveInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAlarmStatusActiveIndex,
+                  gamAlarmStatusActiveIfIndex,
+                  gamAlarmStatusActiveUUID,
+                  gamAlarmStatusActiveIfDescr,
+                  gamAlarmStatusActiveCondType,
+                  gamAlarmStatusActiveSwFaultFileName,
+                  gamAlarmStatusActiveSwFltLine,
+                  gamAlarmStatusActiveSwFltModuleId,
+                  gamAlarmStatusActiveHwFltId,
+                  gamAlarmStatusActiveSeverity,
+                  gamAlarmStatusActiveServAff,
+                  gamAlarmStatusActiveOccurTime }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAlarmMibGroups 1 }
+
+gamAlarmStatusLogTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAlarmStatusLogIndex, gamAlarmStatusLogIfIndex,
+                  gamAlarmStatusLogUUID, gamAlarmStatusLogIfDescr,
+                  gamAlarmStatusLogCondType,
+                  gamAlarmStatusLogSwFaultFileName,
+                  gamAlarmStatusLogSwFltLine,
+                  gamAlarmStatusLogSwFltModuleId,
+                  gamAlarmStatusLogHwFltId, gamAlarmStatusLogState,
+                  gamAlarmStatusLogSeverity, gamAlarmStatusLogServAff,
+                  gamAlarmStatusLogOccurTime,
+                  gamAlarmStatusLogReportTime }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAlarmMibGroups 2 }
+
+gamAlarmControlActionsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAlarmControlActionsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAlarmMibGroups 3 }
+
+gamAlarmTrapStatusActiveAddInfoGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { gamAlarmTrapStatusActiveAdd }
+    STATUS      current
+    DESCRIPTION
+        "Information group containing a trap."
+    ::= { gamAlarmMibGroups 4 }
+
+gamAlarmTrapStatusActiveModInfoGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { gamAlarmTrapStatusActiveMod }
+    STATUS      current
+    DESCRIPTION
+        "Information group containing a trap."
+    ::= { gamAlarmMibGroups 5 }
+
+gamAlarmTrapStatusActiveDelInfoGroup NOTIFICATION-GROUP
+    NOTIFICATIONS { gamAlarmTrapStatusActiveDel }
+    STATUS      current
+    DESCRIPTION
+        "Information group containing a trap."
+    ::= { gamAlarmMibGroups 6 }
+
+gamAlarmMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamAlarmStatusActiveInfoGroup,
+                       gamAlarmStatusLogTableInfoGroup,
+                       gamAlarmControlActionsInfoGroup,
+                       gamAlarmTrapStatusActiveAddInfoGroup,
+                       gamAlarmTrapStatusActiveModInfoGroup,
+                       gamAlarmTrapStatusActiveDelInfoGroup }
+
+    ::= { gamAlarmMibCompliances 1 }
+
+END

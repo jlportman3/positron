@@ -1,0 +1,380 @@
+-- *****************************************************************
+-- VOICE-VLAN-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-VOICE-VLAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMVlan FROM GAM-TC
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamVoiceVlanMib MODULE-IDENTITY
+    LAST-UPDATED "201508250000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the Voice VLAN MIB."
+    REVISION    "201508250000Z"
+    DESCRIPTION
+        "Replace the SYNTAX of vtssVoiceVlanConfigOuiTableRowEditorPrefix from
+         'OCTET STRING (SIZE(3..3))' to 'OCTET STRING (SIZE(3))' according to
+         RFC2578."
+    REVISION    "201503250000Z"
+    DESCRIPTION
+        "Change syntax type of VoiceVlanConfigGlobalsMgmtVlanId."
+    REVISION    "201409160000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { gamMgmt 70 }
+
+
+GAMVoiceVlanPortDiscoveryProtocol ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates per port Voice VLAN discovery protocol."
+    SYNTAX      INTEGER { oui(0), lldp(1), both(2) }
+
+GAMVoiceVlanPortManagementType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates per port Voice VLAN function administrative
+         type."
+    SYNTAX      INTEGER { disabled(0), forced(1), automatic(2) }
+
+gamVoiceVlanMibObjects OBJECT IDENTIFIER
+    ::= { gamVoiceVlanMib 1 }
+
+gamVoiceVlanCapabilities OBJECT IDENTIFIER
+    ::= { gamVoiceVlanMibObjects 1 }
+
+gamVoiceVlanCapabilitiesSupportLldpDiscovery OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The capability to support voice device discovery from LLDP
+         notification."
+    ::= { gamVoiceVlanCapabilities 1 }
+
+gamVoiceVlanCapabilitiesMinAgeTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum time value in second for aging telephony OUI sources in
+         voice VLAN."
+    ::= { gamVoiceVlanCapabilities 2 }
+
+gamVoiceVlanCapabilitiesMaxAgeTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum time value in second for aging telephony OUI sources in
+         voice VLAN."
+    ::= { gamVoiceVlanCapabilities 3 }
+
+gamVoiceVlanCapabilitiesMaxTrafficClass OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum allowed CoS (Class of Service) value to be used in
+         forwarding voice VLAN traffic."
+    ::= { gamVoiceVlanCapabilities 4 }
+
+gamVoiceVlanCapabilitiesMaxOuiEntryCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of telephony OUI entry registration."
+    ::= { gamVoiceVlanCapabilities 5 }
+
+gamVoiceVlanConfig OBJECT IDENTIFIER
+    ::= { gamVoiceVlanMibObjects 2 }
+
+gamVoiceVlanConfigGlobals OBJECT IDENTIFIER
+    ::= { gamVoiceVlanConfig 1 }
+
+gamVoiceVlanConfigGlobalsMgmt OBJECT IDENTIFIER
+    ::= { gamVoiceVlanConfigGlobals 1 }
+
+gamVoiceVlanConfigGlobalsMgmtAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control for system wide voice VLAN function, TRUE is to
+         enable the voice VLAN function and FALSE is to disable it."
+    ::= { gamVoiceVlanConfigGlobalsMgmt 1 }
+
+gamVoiceVlanConfigGlobalsMgmtVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "VLAN ID, which should be unique in the system, for voice VLAN."
+    ::= { gamVoiceVlanConfigGlobalsMgmt 2 }
+
+gamVoiceVlanConfigGlobalsMgmtAgingTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "MAC address aging time (T) for telephony OUI source registrated by
+         voice VLAN. The actual timing in purging the specific entry ranges from
+         T to 2T."
+    ::= { gamVoiceVlanConfigGlobalsMgmt 3 }
+
+gamVoiceVlanConfigGlobalsMgmtTrafficClass OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Traffic class value used in frame CoS queuing insides voice VLAN. All
+         kinds of traffic on voice VLAN apply this traffic class."
+    ::= { gamVoiceVlanConfigGlobalsMgmt 4 }
+
+gamVoiceVlanConfigInterface OBJECT IDENTIFIER
+    ::= { gamVoiceVlanConfig 2 }
+
+gamVoiceVlanConfigInterfacePortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVoiceVlanConfigInterfacePortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing per port voice VLAN functions."
+    ::= { gamVoiceVlanConfigInterface 1 }
+
+gamVoiceVlanConfigInterfacePortEntry OBJECT-TYPE
+    SYNTAX      GAMVoiceVlanConfigInterfacePortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamVoiceVlanConfigInterfacePortIfIndex }
+    ::= { gamVoiceVlanConfigInterfacePortTable 1 }
+
+GAMVoiceVlanConfigInterfacePortEntry ::= SEQUENCE {
+    gamVoiceVlanConfigInterfacePortIfIndex            GAMInterfaceIndex,
+    gamVoiceVlanConfigInterfacePortMode               GAMVoiceVlanPortManagementType,
+    gamVoiceVlanConfigInterfacePortDiscoveryProtocol  GAMVoiceVlanPortDiscoveryProtocol,
+    gamVoiceVlanConfigInterfacePortSecured            TruthValue
+}
+
+gamVoiceVlanConfigInterfacePortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the Voice VLAN port."
+    ::= { gamVoiceVlanConfigInterfacePortEntry 1 }
+
+gamVoiceVlanConfigInterfacePortMode OBJECT-TYPE
+    SYNTAX      GAMVoiceVlanPortManagementType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Management mode of the specific port in voice VLAN. 'disabled' will
+         disjoin the port from voice VLAN. 'forced' will force the port to join
+         voice VLAN. 'automatic' will join the port in voice VLAN upon detecting
+         attached VoIP devices by using DiscoveryProtocol parameter."
+    ::= { gamVoiceVlanConfigInterfacePortEntry 2 }
+
+gamVoiceVlanConfigInterfacePortDiscoveryProtocol OBJECT-TYPE
+    SYNTAX      GAMVoiceVlanPortDiscoveryProtocol
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the protocol for detecting attached VoIP devices. It only works
+         when 'automatic' is set in Mode parameter, and voice VLAN will restart
+         automatic detecting process upon changing the protocol. When 'oui' is
+         given, voice VLAN performs VoIP device detection based on checking
+         telephony OUI settings via new MAC address notification. When 'lldp' is
+         given, voice VLAN performs VoIP device detection based on LLDP
+         notifications.When 'both' is given, voice VLAN performs VoIP device
+         detection based on either new MAC address notification or LLDP
+         notifications.
+         
+         In addition, the first come notification will be first served."
+    ::= { gamVoiceVlanConfigInterfacePortEntry 3 }
+
+gamVoiceVlanConfigInterfacePortSecured OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Manage the security control of this port interface in voice VLAN, TRUE
+         is to enable the security control and FALSE is to disable it. When it
+         is disabled, all the traffic in voice VLAN will be permit. When it is
+         enabled, all non-telephonic MAC addresses in the voice VLAN will be
+         blocked for 10 seconds and thus the traffic from these senders will be
+         deny."
+    ::= { gamVoiceVlanConfigInterfacePortEntry 4 }
+
+gamVoiceVlanConfigOui OBJECT IDENTIFIER
+    ::= { gamVoiceVlanConfig 3 }
+
+gamVoiceVlanConfigOuiTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVoiceVlanConfigOuiEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing the telephony OUI settings that will be
+         used for voice VLAN functions."
+    ::= { gamVoiceVlanConfigOui 1 }
+
+gamVoiceVlanConfigOuiEntry OBJECT-TYPE
+    SYNTAX      GAMVoiceVlanConfigOuiEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamVoiceVlanConfigOuiPrefix }
+    ::= { gamVoiceVlanConfigOuiTable 1 }
+
+GAMVoiceVlanConfigOuiEntry ::= SEQUENCE {
+    gamVoiceVlanConfigOuiPrefix       OCTET STRING,
+    gamVoiceVlanConfigOuiDescription  GAMDisplayString,
+    gamVoiceVlanConfigOuiAction       GAMRowEditorState
+}
+
+gamVoiceVlanConfigOuiPrefix OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(3))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Address prefix of the telephony OUI. A leading 3 bytes index used to
+         denote whether specific MAC address is presenting a voice device."
+    ::= { gamVoiceVlanConfigOuiEntry 1 }
+
+gamVoiceVlanConfigOuiDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The description for the specific telephony OUI."
+    ::= { gamVoiceVlanConfigOuiEntry 2 }
+
+gamVoiceVlanConfigOuiAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVoiceVlanConfigOuiEntry 100 }
+
+gamVoiceVlanConfigOuiTableRowEditor OBJECT IDENTIFIER
+    ::= { gamVoiceVlanConfigOui 2 }
+
+gamVoiceVlanConfigOuiTableRowEditorPrefix OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(3))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Address prefix of the telephony OUI. A leading 3 bytes index used to
+         denote whether specific MAC address is presenting a voice device."
+    ::= { gamVoiceVlanConfigOuiTableRowEditor 1 }
+
+gamVoiceVlanConfigOuiTableRowEditorDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The description for the specific telephony OUI."
+    ::= { gamVoiceVlanConfigOuiTableRowEditor 2 }
+
+gamVoiceVlanConfigOuiTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVoiceVlanConfigOuiTableRowEditor 100 }
+
+gamVoiceVlanMibConformance OBJECT IDENTIFIER
+    ::= { gamVoiceVlanMib 2 }
+
+gamVoiceVlanMibCompliances OBJECT IDENTIFIER
+    ::= { gamVoiceVlanMibConformance 1 }
+
+gamVoiceVlanMibGroups OBJECT IDENTIFIER
+    ::= { gamVoiceVlanMibConformance 2 }
+
+gamVoiceVlanCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVoiceVlanCapabilitiesSupportLldpDiscovery,
+                  gamVoiceVlanCapabilitiesMinAgeTime,
+                  gamVoiceVlanCapabilitiesMaxAgeTime,
+                  gamVoiceVlanCapabilitiesMaxTrafficClass,
+                  gamVoiceVlanCapabilitiesMaxOuiEntryCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVoiceVlanMibGroups 1 }
+
+gamVoiceVlanConfigGlobalsMgmtInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVoiceVlanConfigGlobalsMgmtAdminState,
+                  gamVoiceVlanConfigGlobalsMgmtVlanId,
+                  gamVoiceVlanConfigGlobalsMgmtAgingTime,
+                  gamVoiceVlanConfigGlobalsMgmtTrafficClass }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVoiceVlanMibGroups 2 }
+
+gamVoiceVlanConfigInterfacePortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVoiceVlanConfigInterfacePortIfIndex,
+                  gamVoiceVlanConfigInterfacePortMode,
+                  gamVoiceVlanConfigInterfacePortDiscoveryProtocol,
+                  gamVoiceVlanConfigInterfacePortSecured }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVoiceVlanMibGroups 3 }
+
+gamVoiceVlanConfigOuiTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVoiceVlanConfigOuiPrefix,
+                  gamVoiceVlanConfigOuiDescription,
+                  gamVoiceVlanConfigOuiAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVoiceVlanMibGroups 4 }
+
+gamVoiceVlanConfigOuiTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVoiceVlanConfigOuiTableRowEditorPrefix,
+                  gamVoiceVlanConfigOuiTableRowEditorDescription,
+                  gamVoiceVlanConfigOuiTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVoiceVlanMibGroups 5 }
+
+gamVoiceVlanMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamVoiceVlanCapabilitiesInfoGroup,
+                       gamVoiceVlanConfigGlobalsMgmtInfoGroup,
+                       gamVoiceVlanConfigInterfacePortTableInfoGroup,
+                       gamVoiceVlanConfigOuiTableInfoGroup,
+                       gamVoiceVlanConfigOuiTableRowEditorInfoGroup }
+
+    ::= { gamVoiceVlanMibCompliances 1 }
+
+END

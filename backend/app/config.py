@@ -58,9 +58,17 @@ class Settings(BaseSettings):
     celery_result_backend: Optional[str] = None
     
     # Security
-    cors_origins: List[str] = ["http://localhost:3000"]
+    cors_origins: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
+        "http://10.0.60.38:3002",
+        "http://10.0.60.38:3001",
+        "http://10.0.60.38:3000"
+    ]
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
+    algorithm: str = "HS256"
     
     # GAM Device Defaults
     default_management_vlan: int = 4093

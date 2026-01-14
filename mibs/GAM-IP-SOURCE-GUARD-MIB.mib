@@ -1,0 +1,430 @@
+-- *****************************************************************
+-- IP-SOURCE-GUARD-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-IP-SOURCE-GUARD-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMVlan FROM GAM-TC
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamIpSourceGuardMib MODULE-IDENTITY
+    LAST-UPDATED "201412080000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the IP source guard MIB"
+    REVISION    "201412080000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 64 }
+
+
+gamIpSourceGuardMibObjects OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardMib 1 }
+
+gamIpSourceGuardCapabilities OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardMibObjects 1 }
+
+gamIpSourceGuardCapabilitiesStaticIpMask OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If FALSE, the IP mask of static binding table is only allowed to be
+         configured as 255.255.255.255."
+    ::= { gamIpSourceGuardCapabilities 1 }
+
+gamIpSourceGuardCapabilitiesStaticMacAddress OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If TRUE, the MAC address of static binding table is configurable."
+    ::= { gamIpSourceGuardCapabilities 2 }
+
+gamIpSourceGuardConfig OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardMibObjects 2 }
+
+gamIpSourceGuardConfigGlobals OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardConfig 1 }
+
+gamIpSourceGuardConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global mode of IP source guard. TRUE is to enable IP source guard and
+         FALSE is to disable it."
+    ::= { gamIpSourceGuardConfigGlobals 1 }
+
+gamIpSourceGuardConfigInterface OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardConfig 2 }
+
+gamIpSourceGuardConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpSourceGuardConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of IP source guard port configuration parameters."
+    ::= { gamIpSourceGuardConfigInterface 1 }
+
+gamIpSourceGuardConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMIpSourceGuardConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port has a set of parameters."
+    INDEX       { gamIpSourceGuardConfigInterfaceIfIndex }
+    ::= { gamIpSourceGuardConfigInterfaceTable 1 }
+
+GAMIpSourceGuardConfigInterfaceEntry ::= SEQUENCE {
+    gamIpSourceGuardConfigInterfaceIfIndex            GAMInterfaceIndex,
+    gamIpSourceGuardConfigInterfaceMode               TruthValue,
+    gamIpSourceGuardConfigInterfaceDynamicEntryCount  Unsigned32
+}
+
+gamIpSourceGuardConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamIpSourceGuardConfigInterfaceEntry 1 }
+
+gamIpSourceGuardConfigInterfaceMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Port mode of IP source guard. TURE is to enable IP source guard on the
+         port and FALSE is to disable it on the port."
+    ::= { gamIpSourceGuardConfigInterfaceEntry 2 }
+
+gamIpSourceGuardConfigInterfaceDynamicEntryCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The dynamic entry count is the max number of dynamic entries allowed on
+         the port."
+    ::= { gamIpSourceGuardConfigInterfaceEntry 3 }
+
+gamIpSourceGuardConfigStatic OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardConfig 3 }
+
+gamIpSourceGuardConfigStaticTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpSourceGuardConfigStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing the static binding table of IP source
+         guard."
+    ::= { gamIpSourceGuardConfigStatic 1 }
+
+gamIpSourceGuardConfigStaticEntry OBJECT-TYPE
+    SYNTAX      GAMIpSourceGuardConfigStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamIpSourceGuardConfigStaticIfIndex,
+                  gamIpSourceGuardConfigStaticVlanId,
+                  gamIpSourceGuardConfigStaticIpAddress,
+                  gamIpSourceGuardConfigStaticIpMask }
+    ::= { gamIpSourceGuardConfigStaticTable 1 }
+
+GAMIpSourceGuardConfigStaticEntry ::= SEQUENCE {
+    gamIpSourceGuardConfigStaticIfIndex     GAMInterfaceIndex,
+    gamIpSourceGuardConfigStaticVlanId      GAMVlan,
+    gamIpSourceGuardConfigStaticIpAddress   IpAddress,
+    gamIpSourceGuardConfigStaticIpMask      IpAddress,
+    gamIpSourceGuardConfigStaticMacAddress  MacAddress,
+    gamIpSourceGuardConfigStaticAction      GAMRowEditorState
+}
+
+gamIpSourceGuardConfigStaticIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamIpSourceGuardConfigStaticEntry 1 }
+
+gamIpSourceGuardConfigStaticVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The VLAN ID."
+    ::= { gamIpSourceGuardConfigStaticEntry 2 }
+
+gamIpSourceGuardConfigStaticIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned IP address."
+    ::= { gamIpSourceGuardConfigStaticEntry 3 }
+
+gamIpSourceGuardConfigStaticIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned network mask."
+    ::= { gamIpSourceGuardConfigStaticEntry 4 }
+
+gamIpSourceGuardConfigStaticMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Assigned MAC Address.
+         
+         This object is only available if the capability object
+         'gamIpSourceGuardCapabilitiesStaticMacAddress' is True."
+    ::= { gamIpSourceGuardConfigStaticEntry 5 }
+
+gamIpSourceGuardConfigStaticAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamIpSourceGuardConfigStaticEntry 100 }
+
+gamIpSourceGuardConfigStaticTableRowEditor OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardConfigStatic 2 }
+
+gamIpSourceGuardConfigStaticTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamIpSourceGuardConfigStaticTableRowEditor 1 }
+
+gamIpSourceGuardConfigStaticTableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VLAN ID."
+    ::= { gamIpSourceGuardConfigStaticTableRowEditor 2 }
+
+gamIpSourceGuardConfigStaticTableRowEditorIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Assigned IP address."
+    ::= { gamIpSourceGuardConfigStaticTableRowEditor 3 }
+
+gamIpSourceGuardConfigStaticTableRowEditorIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Assigned network mask."
+    ::= { gamIpSourceGuardConfigStaticTableRowEditor 4 }
+
+gamIpSourceGuardConfigStaticTableRowEditorMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Assigned MAC Address.
+         
+         This object is only available if the capability object
+         'gamIpSourceGuardCapabilitiesStaticMacAddress' is True."
+    ::= { gamIpSourceGuardConfigStaticTableRowEditor 5 }
+
+gamIpSourceGuardConfigStaticTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamIpSourceGuardConfigStaticTableRowEditor 100 }
+
+gamIpSourceGuardStatus OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardMibObjects 3 }
+
+gamIpSourceGuardStatusDynamicTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpSourceGuardStatusDynamicEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table provided dynamic binding table of IP source guard."
+    ::= { gamIpSourceGuardStatus 1 }
+
+gamIpSourceGuardStatusDynamicEntry OBJECT-TYPE
+    SYNTAX      GAMIpSourceGuardStatusDynamicEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamIpSourceGuardStatusDynamicIfIndex,
+                  gamIpSourceGuardStatusDynamicVlanId,
+                  gamIpSourceGuardStatusDynamicIpAddress }
+    ::= { gamIpSourceGuardStatusDynamicTable 1 }
+
+GAMIpSourceGuardStatusDynamicEntry ::= SEQUENCE {
+    gamIpSourceGuardStatusDynamicIfIndex     GAMInterfaceIndex,
+    gamIpSourceGuardStatusDynamicVlanId      GAMVlan,
+    gamIpSourceGuardStatusDynamicIpAddress   IpAddress,
+    gamIpSourceGuardStatusDynamicMacAddress  MacAddress
+}
+
+gamIpSourceGuardStatusDynamicIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamIpSourceGuardStatusDynamicEntry 1 }
+
+gamIpSourceGuardStatusDynamicVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The VLAN ID."
+    ::= { gamIpSourceGuardStatusDynamicEntry 2 }
+
+gamIpSourceGuardStatusDynamicIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Learned IP address."
+    ::= { gamIpSourceGuardStatusDynamicEntry 3 }
+
+gamIpSourceGuardStatusDynamicMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Learned MAC Address."
+    ::= { gamIpSourceGuardStatusDynamicEntry 4 }
+
+gamIpSourceGuardControl OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardMibObjects 4 }
+
+gamIpSourceGuardControlTranslate OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardControl 1 }
+
+gamIpSourceGuardControlTranslateTranslateDynamicToStatic OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Translate all the current dynamic entries to static ones. Set it as
+         TRUE to do the action."
+    ::= { gamIpSourceGuardControlTranslate 1 }
+
+gamIpSourceGuardMibConformance OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardMib 2 }
+
+gamIpSourceGuardMibCompliances OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardMibConformance 1 }
+
+gamIpSourceGuardMibGroups OBJECT IDENTIFIER
+    ::= { gamIpSourceGuardMibConformance 2 }
+
+gamIpSourceGuardCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpSourceGuardCapabilitiesStaticIpMask,
+                  gamIpSourceGuardCapabilitiesStaticMacAddress }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpSourceGuardMibGroups 1 }
+
+gamIpSourceGuardConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpSourceGuardConfigGlobalsMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpSourceGuardMibGroups 2 }
+
+gamIpSourceGuardConfigInterfaceInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpSourceGuardConfigInterfaceIfIndex,
+                  gamIpSourceGuardConfigInterfaceMode,
+                  gamIpSourceGuardConfigInterfaceDynamicEntryCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpSourceGuardMibGroups 3 }
+
+gamIpSourceGuardConfigStaticTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpSourceGuardConfigStaticIfIndex,
+                  gamIpSourceGuardConfigStaticVlanId,
+                  gamIpSourceGuardConfigStaticIpAddress,
+                  gamIpSourceGuardConfigStaticIpMask,
+                  gamIpSourceGuardConfigStaticMacAddress,
+                  gamIpSourceGuardConfigStaticAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpSourceGuardMibGroups 4 }
+
+gamIpSourceGuardConfigStaticTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpSourceGuardConfigStaticTableRowEditorIfIndex,
+                  gamIpSourceGuardConfigStaticTableRowEditorVlanId,
+                  gamIpSourceGuardConfigStaticTableRowEditorIpAddress,
+                  gamIpSourceGuardConfigStaticTableRowEditorIpMask,
+                  gamIpSourceGuardConfigStaticTableRowEditorMacAddress,
+                  gamIpSourceGuardConfigStaticTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpSourceGuardMibGroups 5 }
+
+gamIpSourceGuardStatusDynamicInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpSourceGuardStatusDynamicIfIndex,
+                  gamIpSourceGuardStatusDynamicVlanId,
+                  gamIpSourceGuardStatusDynamicIpAddress,
+                  gamIpSourceGuardStatusDynamicMacAddress }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpSourceGuardMibGroups 6 }
+
+gamIpSourceGuardControlTranslateInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamIpSourceGuardControlTranslateTranslateDynamicToStatic }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpSourceGuardMibGroups 7 }
+
+gamIpSourceGuardMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamIpSourceGuardCapabilitiesInfoGroup,
+                       gamIpSourceGuardConfigGlobalsInfoGroup,
+                       gamIpSourceGuardConfigInterfaceInfoGroup,
+                       gamIpSourceGuardConfigStaticTableInfoGroup,
+                       gamIpSourceGuardConfigStaticTableRowEditorInfoGroup,
+                       gamIpSourceGuardStatusDynamicInfoGroup,
+                       gamIpSourceGuardControlTranslateInfoGroup }
+
+    ::= { gamIpSourceGuardMibCompliances 1 }
+
+END

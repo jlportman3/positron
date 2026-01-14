@@ -1,0 +1,77 @@
+{
+  "total_files": 12,
+  "files": [
+    {
+      "filename": "PAS - COAX Mixing QAM and Ghn.pdf",
+      "total_pages": 3,
+      "size_bytes": 235751,
+      "size_mb": 0.22
+    },
+    {
+      "filename": "PAS - GAM Basic Troubleshooting Guide.pdf",
+      "total_pages": 9,
+      "size_bytes": 1276318,
+      "size_mb": 1.22
+    },
+    {
+      "filename": "PAS - GAM CLI guide.pdf",
+      "total_pages": 139,
+      "size_bytes": 1663639,
+      "size_mb": 1.59
+    },
+    {
+      "filename": "PAS - GAM IGMP snooping guide.pdf",
+      "total_pages": 10,
+      "size_bytes": 1033094,
+      "size_mb": 0.99
+    },
+    {
+      "filename": "PAS - GAM Json API.pdf",
+      "total_pages": 66,
+      "size_bytes": 841074,
+      "size_mb": 0.8
+    },
+    {
+      "filename": "PAS - GAM Software upgrade procedure v1.8.2.pdf",
+      "total_pages": 10,
+      "size_bytes": 1780390,
+      "size_mb": 1.7
+    },
+    {
+      "filename": "PAS - GAM Software upgrade procedure.pdf",
+      "total_pages": 10,
+      "size_bytes": 1780390,
+      "size_mb": 1.7
+    },
+    {
+      "filename": "PAS - GAM VLAN configuration guide.pdf",
+      "total_pages": 8,
+      "size_bytes": 614994,
+      "size_mb": 0.59
+    },
+    {
+      "filename": "PAS - GAM powering from coax plant with 90Vac .pdf",
+      "total_pages": 6,
+      "size_bytes": 715317,
+      "size_mb": 0.68
+    },
+    {
+      "filename": "PAS - GAM quick start guide.pdf",
+      "total_pages": 36,
+      "size_bytes": 4592124,
+      "size_mb": 4.38
+    },
+    {
+      "filename": "PAS - GAM-Installation and Activation Guide-180-0186-001-R03.pdf",
+      "total_pages": 90,
+      "size_bytes": 2766476,
+      "size_mb": 2.64
+    },
+    {
+      "filename": "PAS - SFP adapters commonly used with GAM.pdf",
+      "total_pages": 1,
+      "size_bytes": 520013,
+      "size_mb": 0.5
+    }
+  ]
+}

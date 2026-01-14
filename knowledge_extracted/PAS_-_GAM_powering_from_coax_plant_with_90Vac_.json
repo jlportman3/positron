@@ -1,0 +1,15 @@
+{
+  "metadata": {
+    "filename": "PAS - GAM powering from coax plant with 90Vac .pdf",
+    "total_pages": 6,
+    "size_bytes": 715317,
+    "size_mb": 0.68
+  },
+  "chunks": [
+    {
+      "chunk_id": 1,
+      "pages": "1-6",
+      "content": "--- Page 1 ---\n© Positron Access Solutions –2021 \nPowering the Positron GAM \nfrom the Coaxial OSP with 90Vac \nFebruary 2023\n\n--- Page 2 ---\n© 2023 Positron Access Solutions•The Positron GAM -4-CX-AC is a new GAM based on the popular GAM -4-CX\n•Itnow embeds a90-220Vac power supplyExtracting 90Vac power from Coax OSP\n2\n90-220Vac to 12Vdc \npower supply of the \nGAM\nIP68 AC -power \nadapter plug\n\n\n--- Page 3 ---\n© 2023 Positron Access SolutionsStep 1: prepare the GAM for installation\n3\nThe GAM -4-CX-AC comes \nwith an IP68 AC power plug \nthat can accommodate either \na “standard” 3 -wire power \ncord or an RG -6 power cord\n\n\n--- Page 4 ---\n© 2023 Positron Access SolutionsStep 2: attach the Coaxial AC cable option kit to the GAM\n4\nInsert the end of the Coaxial \nAC cable option kit to the \ncorresponding connector of \nthe GAM -4-CX-AC and \ntighten securely to avoid \nwater infiltration\n\n\n--- Page 5 ---\n© 2023 Positron Access SolutionsStep 3: attach the Coaxial AC cable to the Power Extractor\n5Attach the F -type connected oftheRG-6coax\ncable to the Power Extractor\nPositron recommends the following brands / \nmodels for the Power Extractor. Others may be \nusable:\n•Antronix : MGPI -2101PT -C\n•Cabletronix : CTPI\n•Taikan :DC-PI (series 55)\nNote: make sure to properly attach a ground \nwire to the grounding lug of the GAM\nGrounding lug\n\n\n--- Page 6 ---\n© 2023 Positron Access Solutions\nwww.positronaccess.com\n"
+    }
+  ]
+}

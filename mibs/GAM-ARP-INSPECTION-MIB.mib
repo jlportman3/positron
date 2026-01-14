@@ -1,0 +1,505 @@
+-- *****************************************************************
+-- ARP-INSPECTION-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-ARP-INSPECTION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamArpInspectionMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the ARP Inspection MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 63 }
+
+
+GAMArpInspectionLogType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the ARP entry log type."
+    SYNTAX      INTEGER { none(0), deny(1), permit(2), all(3) }
+
+GAMArpInspectionRegisterStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the ARP entry registration type."
+    SYNTAX      INTEGER { static(0), dynamic(1) }
+
+gamArpInspectionMibObjects OBJECT IDENTIFIER
+    ::= { gamArpInspectionMib 1 }
+
+gamArpInspectionConfig OBJECT IDENTIFIER
+    ::= { gamArpInspectionMibObjects 2 }
+
+gamArpInspectionConfigGlobals OBJECT IDENTIFIER
+    ::= { gamArpInspectionConfig 1 }
+
+gamArpInspectionConfigGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the ARP Inspection global functionality."
+    ::= { gamArpInspectionConfigGlobals 1 }
+
+gamArpInspectionConfigPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMArpInspectionConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing ARP Inspection per port basis"
+    ::= { gamArpInspectionConfig 2 }
+
+gamArpInspectionConfigPortEntry OBJECT-TYPE
+    SYNTAX      GAMArpInspectionConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port has a set of parameters"
+    INDEX       { gamArpInspectionConfigPortIfIndex }
+    ::= { gamArpInspectionConfigPortTable 1 }
+
+GAMArpInspectionConfigPortEntry ::= SEQUENCE {
+    gamArpInspectionConfigPortIfIndex    GAMInterfaceIndex,
+    gamArpInspectionConfigPortMode       TruthValue,
+    gamArpInspectionConfigPortCheckVlan  TruthValue,
+    gamArpInspectionConfigPortLogType    GAMArpInspectionLogType
+}
+
+gamArpInspectionConfigPortIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamArpInspectionConfigPortEntry 1 }
+
+gamArpInspectionConfigPortMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the ARP Inspection per-port functionality. Only when
+         both Global Mode and Port Mode on a given port are enabled, ARP
+         Inspection is enabled on this given port."
+    ::= { gamArpInspectionConfigPortEntry 2 }
+
+gamArpInspectionConfigPortCheckVlan OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable the ARP Inspection VLAN checking will log the inspected entries
+         by referring to arpInspectionVlanConfigTable setting. Disable the ARP
+         Inspection VLAN checking will log the inspected entries by referring to
+         arpInspectionPortConfigTable setting."
+    ::= { gamArpInspectionConfigPortEntry 3 }
+
+gamArpInspectionConfigPortLogType OBJECT-TYPE
+    SYNTAX      GAMArpInspectionLogType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The capability to log the inspected entries per port basis. none(0)
+         will log nothing. deny(1) will log the denied entries. permit(2) will
+         log the permitted entries. all(3) will log all kinds of inspected
+         entries."
+    ::= { gamArpInspectionConfigPortEntry 4 }
+
+gamArpInspectionConfigVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMArpInspectionConfigVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing ARP Inspection per VLAN basis"
+    ::= { gamArpInspectionConfig 3 }
+
+gamArpInspectionConfigVlanEntry OBJECT-TYPE
+    SYNTAX      GAMArpInspectionConfigVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each VLAN has a set of parameters"
+    INDEX       { gamArpInspectionConfigVlanVlanId }
+    ::= { gamArpInspectionConfigVlanTable 1 }
+
+GAMArpInspectionConfigVlanEntry ::= SEQUENCE {
+    gamArpInspectionConfigVlanVlanId   Integer32,
+    gamArpInspectionConfigVlanLogType  GAMArpInspectionLogType,
+    gamArpInspectionConfigVlanAction   GAMRowEditorState
+}
+
+gamArpInspectionConfigVlanVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The VID of the VLAN."
+    ::= { gamArpInspectionConfigVlanEntry 1 }
+
+gamArpInspectionConfigVlanLogType OBJECT-TYPE
+    SYNTAX      GAMArpInspectionLogType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The capability to log the inspected entries per VLAN basis. none(0)
+         will log nothing. deny(1) will log the denied entries. permit(2) will
+         log the permitted entries. all(3) will log all kinds of inspected
+         entries."
+    ::= { gamArpInspectionConfigVlanEntry 2 }
+
+gamArpInspectionConfigVlanAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamArpInspectionConfigVlanEntry 100 }
+
+gamArpInspectionConfigVlanTableRowEditor OBJECT IDENTIFIER
+    ::= { gamArpInspectionConfig 4 }
+
+gamArpInspectionConfigVlanTableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VID of the VLAN."
+    ::= { gamArpInspectionConfigVlanTableRowEditor 1 }
+
+gamArpInspectionConfigVlanTableRowEditorLogType OBJECT-TYPE
+    SYNTAX      GAMArpInspectionLogType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The capability to log the inspected entries per VLAN basis. none(0)
+         will log nothing. deny(1) will log the denied entries. permit(2) will
+         log the permitted entries. all(3) will log all kinds of inspected
+         entries."
+    ::= { gamArpInspectionConfigVlanTableRowEditor 2 }
+
+gamArpInspectionConfigVlanTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamArpInspectionConfigVlanTableRowEditor 100 }
+
+gamArpInspectionConfigStaticTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMArpInspectionConfigStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing static ARP Inspection configuration"
+    ::= { gamArpInspectionConfig 5 }
+
+gamArpInspectionConfigStaticEntry OBJECT-TYPE
+    SYNTAX      GAMArpInspectionConfigStaticEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamArpInspectionConfigStaticIfIndex,
+                  gamArpInspectionConfigStaticVlanId,
+                  gamArpInspectionConfigStaticMacAddress,
+                  gamArpInspectionConfigStaticIpAddress }
+    ::= { gamArpInspectionConfigStaticTable 1 }
+
+GAMArpInspectionConfigStaticEntry ::= SEQUENCE {
+    gamArpInspectionConfigStaticIfIndex     GAMInterfaceIndex,
+    gamArpInspectionConfigStaticVlanId      Integer32,
+    gamArpInspectionConfigStaticMacAddress  MacAddress,
+    gamArpInspectionConfigStaticIpAddress   IpAddress,
+    gamArpInspectionConfigStaticAction      GAMRowEditorState
+}
+
+gamArpInspectionConfigStaticIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamArpInspectionConfigStaticEntry 1 }
+
+gamArpInspectionConfigStaticVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The VID of the VLAN."
+    ::= { gamArpInspectionConfigStaticEntry 2 }
+
+gamArpInspectionConfigStaticMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned MAC address."
+    ::= { gamArpInspectionConfigStaticEntry 3 }
+
+gamArpInspectionConfigStaticIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned IPv4 address."
+    ::= { gamArpInspectionConfigStaticEntry 4 }
+
+gamArpInspectionConfigStaticAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamArpInspectionConfigStaticEntry 100 }
+
+gamArpInspectionConfigStaticTableRowEditor OBJECT IDENTIFIER
+    ::= { gamArpInspectionConfig 6 }
+
+gamArpInspectionConfigStaticTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamArpInspectionConfigStaticTableRowEditor 1 }
+
+gamArpInspectionConfigStaticTableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VID of the VLAN."
+    ::= { gamArpInspectionConfigStaticTableRowEditor 2 }
+
+gamArpInspectionConfigStaticTableRowEditorMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Assigned MAC address."
+    ::= { gamArpInspectionConfigStaticTableRowEditor 3 }
+
+gamArpInspectionConfigStaticTableRowEditorIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Assigned IPv4 address."
+    ::= { gamArpInspectionConfigStaticTableRowEditor 4 }
+
+gamArpInspectionConfigStaticTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamArpInspectionConfigStaticTableRowEditor 100 }
+
+gamArpInspectionStatus OBJECT IDENTIFIER
+    ::= { gamArpInspectionMibObjects 3 }
+
+gamArpInspectionStatusDynamicAddressTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMArpInspectionStatusDynamicAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying all ARP Inspection entries"
+    ::= { gamArpInspectionStatus 1 }
+
+gamArpInspectionStatusDynamicAddressEntry OBJECT-TYPE
+    SYNTAX      GAMArpInspectionStatusDynamicAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamArpInspectionStatusDynamicAddressIfIndex,
+                  gamArpInspectionStatusDynamicAddressVlanId,
+                  gamArpInspectionStatusDynamicAddressMacAddress,
+                  gamArpInspectionStatusDynamicAddressIpAddress }
+    ::= { gamArpInspectionStatusDynamicAddressTable 1 }
+
+GAMArpInspectionStatusDynamicAddressEntry ::= SEQUENCE {
+    gamArpInspectionStatusDynamicAddressIfIndex     GAMInterfaceIndex,
+    gamArpInspectionStatusDynamicAddressVlanId      Integer32,
+    gamArpInspectionStatusDynamicAddressMacAddress  MacAddress,
+    gamArpInspectionStatusDynamicAddressIpAddress   IpAddress,
+    gamArpInspectionStatusDynamicAddressType        GAMArpInspectionRegisterStatus
+}
+
+gamArpInspectionStatusDynamicAddressIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamArpInspectionStatusDynamicAddressEntry 1 }
+
+gamArpInspectionStatusDynamicAddressVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The VID of the VLAN."
+    ::= { gamArpInspectionStatusDynamicAddressEntry 2 }
+
+gamArpInspectionStatusDynamicAddressMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned MAC address."
+    ::= { gamArpInspectionStatusDynamicAddressEntry 3 }
+
+gamArpInspectionStatusDynamicAddressIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned IPv4 address."
+    ::= { gamArpInspectionStatusDynamicAddressEntry 4 }
+
+gamArpInspectionStatusDynamicAddressType OBJECT-TYPE
+    SYNTAX      GAMArpInspectionRegisterStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Either static(0) or dynamic(1) for the specific ARP entry."
+    ::= { gamArpInspectionStatusDynamicAddressEntry 5 }
+
+gamArpInspectionControl OBJECT IDENTIFIER
+    ::= { gamArpInspectionMibObjects 4 }
+
+gamArpInspectionControlGlobals OBJECT IDENTIFIER
+    ::= { gamArpInspectionControl 1 }
+
+gamArpInspectionControlGlobalsTranslateDynamicToStatic OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "To trigger the control action (only) when TRUE."
+    ::= { gamArpInspectionControlGlobals 1 }
+
+gamArpInspectionMibConformance OBJECT IDENTIFIER
+    ::= { gamArpInspectionMib 2 }
+
+gamArpInspectionMibCompliances OBJECT IDENTIFIER
+    ::= { gamArpInspectionMibConformance 1 }
+
+gamArpInspectionMibGroups OBJECT IDENTIFIER
+    ::= { gamArpInspectionMibConformance 2 }
+
+gamArpInspectionConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamArpInspectionConfigGlobalsAdminState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamArpInspectionMibGroups 1 }
+
+gamArpInspectionConfigPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamArpInspectionConfigPortIfIndex,
+                  gamArpInspectionConfigPortMode,
+                  gamArpInspectionConfigPortCheckVlan,
+                  gamArpInspectionConfigPortLogType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamArpInspectionMibGroups 2 }
+
+gamArpInspectionConfigVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamArpInspectionConfigVlanVlanId,
+                  gamArpInspectionConfigVlanLogType,
+                  gamArpInspectionConfigVlanAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamArpInspectionMibGroups 3 }
+
+gamArpInspectionConfigVlanTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamArpInspectionConfigVlanTableRowEditorVlanId,
+                  gamArpInspectionConfigVlanTableRowEditorLogType,
+                  gamArpInspectionConfigVlanTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamArpInspectionMibGroups 4 }
+
+gamArpInspectionConfigStaticTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamArpInspectionConfigStaticIfIndex,
+                  gamArpInspectionConfigStaticVlanId,
+                  gamArpInspectionConfigStaticMacAddress,
+                  gamArpInspectionConfigStaticIpAddress,
+                  gamArpInspectionConfigStaticAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamArpInspectionMibGroups 5 }
+
+gamArpInspectionConfigStaticTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamArpInspectionConfigStaticTableRowEditorIfIndex,
+                  gamArpInspectionConfigStaticTableRowEditorVlanId,
+                  gamArpInspectionConfigStaticTableRowEditorMacAddress,
+                  gamArpInspectionConfigStaticTableRowEditorIpAddress,
+                  gamArpInspectionConfigStaticTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamArpInspectionMibGroups 6 }
+
+gamArpInspectionStatusDynamicAddressTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamArpInspectionStatusDynamicAddressIfIndex,
+                  gamArpInspectionStatusDynamicAddressVlanId,
+                  gamArpInspectionStatusDynamicAddressMacAddress,
+                  gamArpInspectionStatusDynamicAddressIpAddress,
+                  gamArpInspectionStatusDynamicAddressType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamArpInspectionMibGroups 7 }
+
+gamArpInspectionControlGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamArpInspectionControlGlobalsTranslateDynamicToStatic }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamArpInspectionMibGroups 8 }
+
+gamArpInspectionMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamArpInspectionConfigGlobalsInfoGroup,
+                       gamArpInspectionConfigPortTableInfoGroup,
+                       gamArpInspectionConfigVlanTableInfoGroup,
+                       gamArpInspectionConfigVlanTableRowEditorInfoGroup,
+                       gamArpInspectionConfigStaticTableInfoGroup,
+                       gamArpInspectionConfigStaticTableRowEditorInfoGroup,
+                       gamArpInspectionStatusDynamicAddressTableInfoGroup,
+                       gamArpInspectionControlGlobalsInfoGroup }
+
+    ::= { gamArpInspectionMibCompliances 1 }
+
+END

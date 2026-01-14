@@ -1,0 +1,1727 @@
+-- *****************************************************************
+-- IPMC-SNOOPING-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-IPMC-SNOOPING-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMPortList FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamIpmcSnoopingMib MODULE-IDENTITY
+    LAST-UPDATED "201612130000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the IPMC Snooping MIB"
+    REVISION    "201612130000Z"
+    DESCRIPTION
+        "Removed the add/delete methods for VLAN interfaces from IGMP/MLD"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 69 }
+
+
+GAMIpmcSnoopingIgmpGroupSrcListGroupFilterModeEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the group filter mode for a IGMP group
+         address."
+    SYNTAX      INTEGER { exclude(0), include(1), none(2) }
+
+GAMIpmcSnoopingIgmpGroupSrcListSourceTypeEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the source filtering type from IGMP
+         snooping."
+    SYNTAX      INTEGER { deny(0), permit(1) }
+
+GAMIpmcSnoopingIgmpInterfaceCompatibilityEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the version compatibility for IGMP snooping
+         VLAN interface."
+    SYNTAX      INTEGER { auto(0), igmpv1(1), igmpv2(2), igmpv3(3) }
+
+GAMIpmcSnoopingIgmpRouterPortStatusEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the router port status from IGMP snooping."
+    SYNTAX      INTEGER { none(0), static(1), dynamic(2), both(3) }
+
+GAMIpmcSnoopingIgmpVlanStatusQuerierStatusEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the querier status for IGMP snooping VLAN
+         interface."
+    SYNTAX      INTEGER { disabled(0), initial(1), idle(2), active(3) }
+
+GAMIpmcSnoopingMldGroupSrcListGroupFilterModeEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the group filter mode for a MLD group
+         address."
+    SYNTAX      INTEGER { exclude(0), include(1), none(2) }
+
+GAMIpmcSnoopingMldGroupSrcListSourceEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the source filtering type from MLD snooping."
+    SYNTAX      INTEGER { deny(0), permit(1) }
+
+GAMIpmcSnoopingMldInterfaceCompatibilityEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the version compatibility for MLD snooping
+         VLAN interface."
+    SYNTAX      INTEGER { auto(0), mldv1(1), mldv2(2) }
+
+GAMIpmcSnoopingMldRouterPortStatusEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the router port status from MLD snooping."
+    SYNTAX      INTEGER { none(0), static(1), dynamic(2), both(3) }
+
+GAMIpmcSnoopingMldVlanStatusQuerierStatusEnum ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the querier status for MLD snooping VLAN
+         interface."
+    SYNTAX      INTEGER { disabled(0), initial(1), idle(2), active(3) }
+
+gamIpmcSnoopingMibObjects OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingMib 1 }
+
+gamIpmcSnoopingConfig OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingMibObjects 2 }
+
+gamIpmcSnoopingConfigIgmpGlobals OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingConfig 1 }
+
+gamIpmcSnoopingConfigIgmpGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the IGMP snooping global functionality."
+    ::= { gamIpmcSnoopingConfigIgmpGlobals 1 }
+
+gamIpmcSnoopingConfigIgmpGlobalsUnregisteredFlooding OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the control for flooding unregistered IPv4 multicast
+         traffic."
+    ::= { gamIpmcSnoopingConfigIgmpGlobals 2 }
+
+gamIpmcSnoopingConfigIgmpGlobalsSsmRangeAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The address prefix value defined for IGMP SSM service model."
+    ::= { gamIpmcSnoopingConfigIgmpGlobals 3 }
+
+gamIpmcSnoopingConfigIgmpGlobalsSsmRangeMask OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The address prefix length defined for IGMP SSM service model."
+    ::= { gamIpmcSnoopingConfigIgmpGlobals 4 }
+
+gamIpmcSnoopingConfigIgmpGlobalsProxy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the IGMP proxy functionality."
+    ::= { gamIpmcSnoopingConfigIgmpGlobals 5 }
+
+gamIpmcSnoopingConfigIgmpGlobalsLeaveProxy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the IGMP leave-proxy functionality."
+    ::= { gamIpmcSnoopingConfigIgmpGlobals 6 }
+
+gamIpmcSnoopingConfigIgmpPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingConfigIgmpPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing extra IGMP snooping helper features per
+         port basis"
+    ::= { gamIpmcSnoopingConfig 2 }
+
+gamIpmcSnoopingConfigIgmpPortEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingConfigIgmpPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port has a set of parameters"
+    INDEX       { gamIpmcSnoopingConfigIgmpPortPortIndex }
+    ::= { gamIpmcSnoopingConfigIgmpPortTable 1 }
+
+GAMIpmcSnoopingConfigIgmpPortEntry ::= SEQUENCE {
+    gamIpmcSnoopingConfigIgmpPortPortIndex         GAMInterfaceIndex,
+    gamIpmcSnoopingConfigIgmpPortAsRouterPort      TruthValue,
+    gamIpmcSnoopingConfigIgmpPortDoFastLeave       TruthValue,
+    gamIpmcSnoopingConfigIgmpPortThrottlingNumber  Integer32,
+    gamIpmcSnoopingConfigIgmpPortFilteringProfile  GAMDisplayString
+}
+
+gamIpmcSnoopingConfigIgmpPortPortIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamIpmcSnoopingConfigIgmpPortEntry 1 }
+
+gamIpmcSnoopingConfigIgmpPortAsRouterPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the IGMP static router port functionality."
+    ::= { gamIpmcSnoopingConfigIgmpPortEntry 2 }
+
+gamIpmcSnoopingConfigIgmpPortDoFastLeave OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the IGMP fast leave functionality."
+    ::= { gamIpmcSnoopingConfigIgmpPortEntry 3 }
+
+gamIpmcSnoopingConfigIgmpPortThrottlingNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of groups to be registered on the specific port."
+    ::= { gamIpmcSnoopingConfigIgmpPortEntry 4 }
+
+gamIpmcSnoopingConfigIgmpPortFilteringProfile OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The profile used for IGMP filtering per-port basis."
+    ::= { gamIpmcSnoopingConfigIgmpPortEntry 5 }
+
+gamIpmcSnoopingConfigIgmpInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingConfigIgmpInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing IGMP Snooping VLAN interface entries."
+    ::= { gamIpmcSnoopingConfig 3 }
+
+gamIpmcSnoopingConfigIgmpInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingConfigIgmpInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamIpmcSnoopingConfigIgmpInterfaceIfIndex }
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceTable 1 }
+
+GAMIpmcSnoopingConfigIgmpInterfaceEntry ::= SEQUENCE {
+    gamIpmcSnoopingConfigIgmpInterfaceIfIndex          GAMInterfaceIndex,
+    gamIpmcSnoopingConfigIgmpInterfaceAdminState       TruthValue,
+    gamIpmcSnoopingConfigIgmpInterfaceQuerierElection  TruthValue,
+    gamIpmcSnoopingConfigIgmpInterfaceQuerierAddress   IpAddress,
+    gamIpmcSnoopingConfigIgmpInterfaceCompatibility    GAMIpmcSnoopingIgmpInterfaceCompatibilityEnum,
+    gamIpmcSnoopingConfigIgmpInterfacePriority         GAMUnsigned8,
+    gamIpmcSnoopingConfigIgmpInterfaceRv               Unsigned32,
+    gamIpmcSnoopingConfigIgmpInterfaceQi               Unsigned32,
+    gamIpmcSnoopingConfigIgmpInterfaceQri              Unsigned32,
+    gamIpmcSnoopingConfigIgmpInterfaceLmqi             Unsigned32,
+    gamIpmcSnoopingConfigIgmpInterfaceUri              Unsigned32
+}
+
+gamIpmcSnoopingConfigIgmpInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceEntry 1 }
+
+gamIpmcSnoopingConfigIgmpInterfaceAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the IGMP snooping per-VLAN functionality."
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceEntry 2 }
+
+gamIpmcSnoopingConfigIgmpInterfaceQuerierElection OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the capability to run IGMP Querier election per-VLAN
+         basis."
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceEntry 3 }
+
+gamIpmcSnoopingConfigIgmpInterfaceQuerierAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The static IPv4 source address of the specific IGMP interface for
+         seding IGMP Query message with respect to IGMP Querier election."
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceEntry 4 }
+
+gamIpmcSnoopingConfigIgmpInterfaceCompatibility OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingIgmpInterfaceCompatibilityEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The compatibility control for IGMP snooping to run the corresponding
+         protocol version."
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceEntry 5 }
+
+gamIpmcSnoopingConfigIgmpInterfacePriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting is used for prioritizing the IGMP control frames to be
+         sent for IGMP snooping."
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceEntry 6 }
+
+gamIpmcSnoopingConfigIgmpInterfaceRv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting Robustness Variable is used to control IGMP protocol stack
+         as stated in RFC-3376 8.1."
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceEntry 7 }
+
+gamIpmcSnoopingConfigIgmpInterfaceQi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting Query Interval is used to control IGMP protocol stack as
+         stated in RFC-3376 8.2."
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceEntry 8 }
+
+gamIpmcSnoopingConfigIgmpInterfaceQri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting Query Response Intervalis used to control IGMP protocol
+         stack as stated in RFC-3376 8.3."
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceEntry 9 }
+
+gamIpmcSnoopingConfigIgmpInterfaceLmqi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting Last Member Query Interval is used to control IGMP
+         protocol stack as stated in RFC-3376 8.8."
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceEntry 10 }
+
+gamIpmcSnoopingConfigIgmpInterfaceUri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting Unsolicited Report Interval is used to control IGMP
+         protocol stack as stated in RFC-3376 8.11."
+    ::= { gamIpmcSnoopingConfigIgmpInterfaceEntry 11 }
+
+gamIpmcSnoopingConfigMldGlobals OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingConfig 5 }
+
+gamIpmcSnoopingConfigMldGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the MLD snooping global functionality."
+    ::= { gamIpmcSnoopingConfigMldGlobals 1 }
+
+gamIpmcSnoopingConfigMldGlobalsUnregisteredFlooding OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the control for flooding unregistered IPv6 multicast
+         traffic."
+    ::= { gamIpmcSnoopingConfigMldGlobals 2 }
+
+gamIpmcSnoopingConfigMldGlobalsSsmRangeAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The address prefix value defined for MLD SSM service model."
+    ::= { gamIpmcSnoopingConfigMldGlobals 3 }
+
+gamIpmcSnoopingConfigMldGlobalsSsmRangeMask OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The address prefix length defined for MLD SSM service model."
+    ::= { gamIpmcSnoopingConfigMldGlobals 4 }
+
+gamIpmcSnoopingConfigMldGlobalsProxy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the MLD proxy functionality."
+    ::= { gamIpmcSnoopingConfigMldGlobals 5 }
+
+gamIpmcSnoopingConfigMldGlobalsLeaveProxy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the MLD leave-proxy functionality."
+    ::= { gamIpmcSnoopingConfigMldGlobals 6 }
+
+gamIpmcSnoopingConfigMldPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingConfigMldPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing extra MLD snooping helper features per
+         port basis"
+    ::= { gamIpmcSnoopingConfig 6 }
+
+gamIpmcSnoopingConfigMldPortEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingConfigMldPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port has a set of parameters"
+    INDEX       { gamIpmcSnoopingConfigMldPortPortIndex }
+    ::= { gamIpmcSnoopingConfigMldPortTable 1 }
+
+GAMIpmcSnoopingConfigMldPortEntry ::= SEQUENCE {
+    gamIpmcSnoopingConfigMldPortPortIndex         GAMInterfaceIndex,
+    gamIpmcSnoopingConfigMldPortAsRouterPort      TruthValue,
+    gamIpmcSnoopingConfigMldPortDoFastLeave       TruthValue,
+    gamIpmcSnoopingConfigMldPortThrottlingNumber  Integer32,
+    gamIpmcSnoopingConfigMldPortFilteringProfile  GAMDisplayString
+}
+
+gamIpmcSnoopingConfigMldPortPortIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamIpmcSnoopingConfigMldPortEntry 1 }
+
+gamIpmcSnoopingConfigMldPortAsRouterPort OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the MLD static router port functionality."
+    ::= { gamIpmcSnoopingConfigMldPortEntry 2 }
+
+gamIpmcSnoopingConfigMldPortDoFastLeave OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the MLD fast leave functionality."
+    ::= { gamIpmcSnoopingConfigMldPortEntry 3 }
+
+gamIpmcSnoopingConfigMldPortThrottlingNumber OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of groups to be registered on the specific port."
+    ::= { gamIpmcSnoopingConfigMldPortEntry 4 }
+
+gamIpmcSnoopingConfigMldPortFilteringProfile OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The profile used for MLD filtering per-port basis."
+    ::= { gamIpmcSnoopingConfigMldPortEntry 5 }
+
+gamIpmcSnoopingConfigMldInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingConfigMldInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing MLD Snooping VLAN interface entries."
+    ::= { gamIpmcSnoopingConfig 7 }
+
+gamIpmcSnoopingConfigMldInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingConfigMldInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamIpmcSnoopingConfigMldInterfaceIfIndex }
+    ::= { gamIpmcSnoopingConfigMldInterfaceTable 1 }
+
+GAMIpmcSnoopingConfigMldInterfaceEntry ::= SEQUENCE {
+    gamIpmcSnoopingConfigMldInterfaceIfIndex          GAMInterfaceIndex,
+    gamIpmcSnoopingConfigMldInterfaceAdminState       TruthValue,
+    gamIpmcSnoopingConfigMldInterfaceQuerierElection  TruthValue,
+    gamIpmcSnoopingConfigMldInterfaceCompatibility    GAMIpmcSnoopingMldInterfaceCompatibilityEnum,
+    gamIpmcSnoopingConfigMldInterfacePriority         GAMUnsigned8,
+    gamIpmcSnoopingConfigMldInterfaceRv               Unsigned32,
+    gamIpmcSnoopingConfigMldInterfaceQi               Unsigned32,
+    gamIpmcSnoopingConfigMldInterfaceQri              Unsigned32,
+    gamIpmcSnoopingConfigMldInterfaceLlqi             Unsigned32,
+    gamIpmcSnoopingConfigMldInterfaceUri              Unsigned32
+}
+
+gamIpmcSnoopingConfigMldInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamIpmcSnoopingConfigMldInterfaceEntry 1 }
+
+gamIpmcSnoopingConfigMldInterfaceAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the MLD snooping per-VLAN functionality."
+    ::= { gamIpmcSnoopingConfigMldInterfaceEntry 2 }
+
+gamIpmcSnoopingConfigMldInterfaceQuerierElection OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the capability to run MLD Querier election per-VLAN
+         basis."
+    ::= { gamIpmcSnoopingConfigMldInterfaceEntry 3 }
+
+gamIpmcSnoopingConfigMldInterfaceCompatibility OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingMldInterfaceCompatibilityEnum
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The compatibility control for MLD snooping to run the corresponding
+         protocol version."
+    ::= { gamIpmcSnoopingConfigMldInterfaceEntry 4 }
+
+gamIpmcSnoopingConfigMldInterfacePriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting is used for prioritizing the MLD control frames to be sent
+         for MLD snooping."
+    ::= { gamIpmcSnoopingConfigMldInterfaceEntry 5 }
+
+gamIpmcSnoopingConfigMldInterfaceRv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting Robustness Variableis used to control MLD protocol stack
+         as stated in RFC-3810 9.1."
+    ::= { gamIpmcSnoopingConfigMldInterfaceEntry 6 }
+
+gamIpmcSnoopingConfigMldInterfaceQi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting Query Intervalis used to control MLD protocol stack as
+         stated in RFC-3810 9.2."
+    ::= { gamIpmcSnoopingConfigMldInterfaceEntry 7 }
+
+gamIpmcSnoopingConfigMldInterfaceQri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting Query Response Intervalis used to control MLD protocol
+         stack as stated in RFC-3810 9.3."
+    ::= { gamIpmcSnoopingConfigMldInterfaceEntry 8 }
+
+gamIpmcSnoopingConfigMldInterfaceLlqi OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting Last Listener Query Interval is used to control MLD
+         protocol stack as stated in RFC-3810 9.8."
+    ::= { gamIpmcSnoopingConfigMldInterfaceEntry 9 }
+
+gamIpmcSnoopingConfigMldInterfaceUri OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This setting Unsolicited Report Intervalis used to control MLD protocol
+         stack as stated in RFC-3810 9.11."
+    ::= { gamIpmcSnoopingConfigMldInterfaceEntry 10 }
+
+gamIpmcSnoopingStatus OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingMibObjects 3 }
+
+gamIpmcSnoopingStatusGroupAddressCount OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingStatus 1 }
+
+gamIpmcSnoopingStatusGroupAddressCountFromIgmp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote the total number of registered multicast group
+         address from IGMP snooping."
+    ::= { gamIpmcSnoopingStatusGroupAddressCount 1 }
+
+gamIpmcSnoopingStatusGroupAddressCountFromMld OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote the total number of registered multicast group
+         address from MLD snooping."
+    ::= { gamIpmcSnoopingStatusGroupAddressCount 2 }
+
+gamIpmcSnoopingStatusIgmpRouterPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingStatusIgmpRouterPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying the router port status from IGMP
+         snooping configuration."
+    ::= { gamIpmcSnoopingStatus 2 }
+
+gamIpmcSnoopingStatusIgmpRouterPortEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingStatusIgmpRouterPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamIpmcSnoopingStatusIgmpRouterPortPortIndex }
+    ::= { gamIpmcSnoopingStatusIgmpRouterPortTable 1 }
+
+GAMIpmcSnoopingStatusIgmpRouterPortEntry ::= SEQUENCE {
+    gamIpmcSnoopingStatusIgmpRouterPortPortIndex  GAMInterfaceIndex,
+    gamIpmcSnoopingStatusIgmpRouterPortStatus     GAMIpmcSnoopingIgmpRouterPortStatusEnum
+}
+
+gamIpmcSnoopingStatusIgmpRouterPortPortIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamIpmcSnoopingStatusIgmpRouterPortEntry 1 }
+
+gamIpmcSnoopingStatusIgmpRouterPortStatus OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingIgmpRouterPortStatusEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IGMP snooping router port status."
+    ::= { gamIpmcSnoopingStatusIgmpRouterPortEntry 2 }
+
+gamIpmcSnoopingStatusIgmpVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingStatusIgmpVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying the per VLAN interface status in IGMP
+         snooping configuration."
+    ::= { gamIpmcSnoopingStatus 3 }
+
+gamIpmcSnoopingStatusIgmpVlanEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingStatusIgmpVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamIpmcSnoopingStatusIgmpVlanIfIndex }
+    ::= { gamIpmcSnoopingStatusIgmpVlanTable 1 }
+
+GAMIpmcSnoopingStatusIgmpVlanEntry ::= SEQUENCE {
+    gamIpmcSnoopingStatusIgmpVlanIfIndex                 GAMInterfaceIndex,
+    gamIpmcSnoopingStatusIgmpVlanQuerierStatus           GAMIpmcSnoopingIgmpVlanStatusQuerierStatusEnum,
+    gamIpmcSnoopingStatusIgmpVlanActiveQuerierAddress    IpAddress,
+    gamIpmcSnoopingStatusIgmpVlanQuerierUptime           Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanQueryInterval           Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanStartupQueryCount       Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanQuerierExpiryTime       Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanQuerierVersion          GAMUnsigned8,
+    gamIpmcSnoopingStatusIgmpVlanQuerierPresentTimeout   Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanHostVersion             GAMUnsigned8,
+    gamIpmcSnoopingStatusIgmpVlanHostPresentTimeout      Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanCounterTxQuery          Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanCounterTxSpecificQuery  Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanCounterRxQuery          Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanCounterRxV1Join         Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanCounterRxV2Join         Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanCounterRxV2Leave        Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanCounterRxV3Join         Unsigned32,
+    gamIpmcSnoopingStatusIgmpVlanCounterRxErrors         Unsigned32
+}
+
+gamIpmcSnoopingStatusIgmpVlanIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 1 }
+
+gamIpmcSnoopingStatusIgmpVlanQuerierStatus OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingIgmpVlanStatusQuerierStatusEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IGMP Querier status of the specific VLAN interface."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 2 }
+
+gamIpmcSnoopingStatusIgmpVlanActiveQuerierAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The active IGMP Querier address on the specific VLAN interface."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 3 }
+
+gamIpmcSnoopingStatusIgmpVlanQuerierUptime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the in operation timer for the specific interface act as a
+         IGMP Querier."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 4 }
+
+gamIpmcSnoopingStatusIgmpVlanQueryInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.2."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 5 }
+
+gamIpmcSnoopingStatusIgmpVlanStartupQueryCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.7."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 6 }
+
+gamIpmcSnoopingStatusIgmpVlanQuerierExpiryTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.5."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 7 }
+
+gamIpmcSnoopingStatusIgmpVlanQuerierVersion OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current IGMP version that the IGMP interface should
+         behave in running IGMP protocol as a router."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 8 }
+
+gamIpmcSnoopingStatusIgmpVlanQuerierPresentTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.12."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 9 }
+
+gamIpmcSnoopingStatusIgmpVlanHostVersion OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current IGMP version that the IGMP interface should
+         behave in running IGMP protocol as a host."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 10 }
+
+gamIpmcSnoopingStatusIgmpVlanHostPresentTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This setting is used to control IGMP protocol stack as stated in
+         RFC-3376 8.13."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 11 }
+
+gamIpmcSnoopingStatusIgmpVlanCounterTxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific IGMP interface for
+         transmitting IGMP Query control frames."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 12 }
+
+gamIpmcSnoopingStatusIgmpVlanCounterTxSpecificQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific IGMP interface for
+         transmitting IGMP Specific Query control frames."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 13 }
+
+gamIpmcSnoopingStatusIgmpVlanCounterRxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMP Query control frames."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 14 }
+
+gamIpmcSnoopingStatusIgmpVlanCounterRxV1Join OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv1 Join control frames."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 15 }
+
+gamIpmcSnoopingStatusIgmpVlanCounterRxV2Join OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv2 Join control frames."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 16 }
+
+gamIpmcSnoopingStatusIgmpVlanCounterRxV2Leave OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv2 Leave control frames."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 17 }
+
+gamIpmcSnoopingStatusIgmpVlanCounterRxV3Join OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific IGMP interface for
+         receiving IGMPv3 Join control frames."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 18 }
+
+gamIpmcSnoopingStatusIgmpVlanCounterRxErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific IGMP interface for
+         receiving invalid IGMP control frames."
+    ::= { gamIpmcSnoopingStatusIgmpVlanEntry 19 }
+
+gamIpmcSnoopingStatusIgmpGroupAddressTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingStatusIgmpGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying the registered IPv4 multicast group
+         address status from IGMP snooping."
+    ::= { gamIpmcSnoopingStatus 4 }
+
+gamIpmcSnoopingStatusIgmpGroupAddressEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingStatusIgmpGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamIpmcSnoopingStatusIgmpGroupAddressIfIndex,
+                  gamIpmcSnoopingStatusIgmpGroupAddressGroupAddress }
+    ::= { gamIpmcSnoopingStatusIgmpGroupAddressTable 1 }
+
+GAMIpmcSnoopingStatusIgmpGroupAddressEntry ::= SEQUENCE {
+    gamIpmcSnoopingStatusIgmpGroupAddressIfIndex         GAMInterfaceIndex,
+    gamIpmcSnoopingStatusIgmpGroupAddressGroupAddress    IpAddress,
+    gamIpmcSnoopingStatusIgmpGroupAddressMemberPorts     GAMPortList,
+    gamIpmcSnoopingStatusIgmpGroupAddressHardwareSwitch  TruthValue
+}
+
+gamIpmcSnoopingStatusIgmpGroupAddressIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamIpmcSnoopingStatusIgmpGroupAddressEntry 1 }
+
+gamIpmcSnoopingStatusIgmpGroupAddressGroupAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned IPv4 multicast address."
+    ::= { gamIpmcSnoopingStatusIgmpGroupAddressEntry 2 }
+
+gamIpmcSnoopingStatusIgmpGroupAddressMemberPorts OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote the memberships of the registered multicast group
+         address from IGMP snooping."
+    ::= { gamIpmcSnoopingStatusIgmpGroupAddressEntry 3 }
+
+gamIpmcSnoopingStatusIgmpGroupAddressHardwareSwitch OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote whether the multicast traffic destined to the
+         registered group address could be forwarding by switch hardware or not."
+    ::= { gamIpmcSnoopingStatusIgmpGroupAddressEntry 4 }
+
+gamIpmcSnoopingStatusIgmpGroupSrcListTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingStatusIgmpGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying the address SFM (a.k.a Source List
+         Multicast) status in source list of the registered IPv4 multicast group
+         from IGMP snooping."
+    ::= { gamIpmcSnoopingStatus 5 }
+
+gamIpmcSnoopingStatusIgmpGroupSrcListEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingStatusIgmpGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamIpmcSnoopingStatusIgmpGroupSrcListIfIndex,
+                  gamIpmcSnoopingStatusIgmpGroupSrcListGroupAddress,
+                  gamIpmcSnoopingStatusIgmpGroupSrcListPortIndex,
+                  gamIpmcSnoopingStatusIgmpGroupSrcListHostAddress }
+    ::= { gamIpmcSnoopingStatusIgmpGroupSrcListTable 1 }
+
+GAMIpmcSnoopingStatusIgmpGroupSrcListEntry ::= SEQUENCE {
+    gamIpmcSnoopingStatusIgmpGroupSrcListIfIndex          GAMInterfaceIndex,
+    gamIpmcSnoopingStatusIgmpGroupSrcListGroupAddress     IpAddress,
+    gamIpmcSnoopingStatusIgmpGroupSrcListPortIndex        GAMInterfaceIndex,
+    gamIpmcSnoopingStatusIgmpGroupSrcListHostAddress      IpAddress,
+    gamIpmcSnoopingStatusIgmpGroupSrcListGroupFilterMode  GAMIpmcSnoopingIgmpGroupSrcListGroupFilterModeEnum,
+    gamIpmcSnoopingStatusIgmpGroupSrcListFilterTimer      Unsigned32,
+    gamIpmcSnoopingStatusIgmpGroupSrcListSourceType       GAMIpmcSnoopingIgmpGroupSrcListSourceTypeEnum,
+    gamIpmcSnoopingStatusIgmpGroupSrcListSourceTimer      Unsigned32,
+    gamIpmcSnoopingStatusIgmpGroupSrcListHardwareFilter   TruthValue
+}
+
+gamIpmcSnoopingStatusIgmpGroupSrcListIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamIpmcSnoopingStatusIgmpGroupSrcListEntry 1 }
+
+gamIpmcSnoopingStatusIgmpGroupSrcListGroupAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned IPv4 multicast address."
+    ::= { gamIpmcSnoopingStatusIgmpGroupSrcListEntry 2 }
+
+gamIpmcSnoopingStatusIgmpGroupSrcListPortIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamIpmcSnoopingStatusIgmpGroupSrcListEntry 3 }
+
+gamIpmcSnoopingStatusIgmpGroupSrcListHostAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned IPv4 source address."
+    ::= { gamIpmcSnoopingStatusIgmpGroupSrcListEntry 4 }
+
+gamIpmcSnoopingStatusIgmpGroupSrcListGroupFilterMode OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingIgmpGroupSrcListGroupFilterModeEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote the source filtering mode of the specific
+         registered multicast group address from IGMP snooping."
+    ::= { gamIpmcSnoopingStatusIgmpGroupSrcListEntry 5 }
+
+gamIpmcSnoopingStatusIgmpGroupSrcListFilterTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to count down the timer for the specific multicast group's
+         filtering mode transition."
+    ::= { gamIpmcSnoopingStatusIgmpGroupSrcListEntry 6 }
+
+gamIpmcSnoopingStatusIgmpGroupSrcListSourceType OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingIgmpGroupSrcListSourceTypeEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote the filtering type of the specific source address
+         in multicasting to the registered group address."
+    ::= { gamIpmcSnoopingStatusIgmpGroupSrcListEntry 7 }
+
+gamIpmcSnoopingStatusIgmpGroupSrcListSourceTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to count down the timer for purging the specific source
+         address from the registered multicast group's source list."
+    ::= { gamIpmcSnoopingStatusIgmpGroupSrcListEntry 8 }
+
+gamIpmcSnoopingStatusIgmpGroupSrcListHardwareFilter OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote whether the traffic destined to the multicast
+         group address from the specific source address could be forwarding by
+         switch hardware or not."
+    ::= { gamIpmcSnoopingStatusIgmpGroupSrcListEntry 9 }
+
+gamIpmcSnoopingStatusMldRouterPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingStatusMldRouterPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying the router port status from MLD snooping
+         configuration."
+    ::= { gamIpmcSnoopingStatus 6 }
+
+gamIpmcSnoopingStatusMldRouterPortEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingStatusMldRouterPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamIpmcSnoopingStatusMldRouterPortPortIndex }
+    ::= { gamIpmcSnoopingStatusMldRouterPortTable 1 }
+
+GAMIpmcSnoopingStatusMldRouterPortEntry ::= SEQUENCE {
+    gamIpmcSnoopingStatusMldRouterPortPortIndex  GAMInterfaceIndex,
+    gamIpmcSnoopingStatusMldRouterPortStatus     GAMIpmcSnoopingMldRouterPortStatusEnum
+}
+
+gamIpmcSnoopingStatusMldRouterPortPortIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamIpmcSnoopingStatusMldRouterPortEntry 1 }
+
+gamIpmcSnoopingStatusMldRouterPortStatus OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingMldRouterPortStatusEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MLD snooping router port status."
+    ::= { gamIpmcSnoopingStatusMldRouterPortEntry 2 }
+
+gamIpmcSnoopingStatusMldVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingStatusMldVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying the per VLAN interface status in MLD
+         snooping configuration."
+    ::= { gamIpmcSnoopingStatus 7 }
+
+gamIpmcSnoopingStatusMldVlanEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingStatusMldVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamIpmcSnoopingStatusMldVlanIfIndex }
+    ::= { gamIpmcSnoopingStatusMldVlanTable 1 }
+
+GAMIpmcSnoopingStatusMldVlanEntry ::= SEQUENCE {
+    gamIpmcSnoopingStatusMldVlanIfIndex                 GAMInterfaceIndex,
+    gamIpmcSnoopingStatusMldVlanQuerierStatus           GAMIpmcSnoopingMldVlanStatusQuerierStatusEnum,
+    gamIpmcSnoopingStatusMldVlanActiveQuerierAddress    InetAddressIPv6,
+    gamIpmcSnoopingStatusMldVlanQuerierUptime           Unsigned32,
+    gamIpmcSnoopingStatusMldVlanQueryInterval           Unsigned32,
+    gamIpmcSnoopingStatusMldVlanStartupQueryCount       Unsigned32,
+    gamIpmcSnoopingStatusMldVlanQuerierExpiryTime       Unsigned32,
+    gamIpmcSnoopingStatusMldVlanQuerierVersion          GAMUnsigned8,
+    gamIpmcSnoopingStatusMldVlanQuerierPresentTimeout   Unsigned32,
+    gamIpmcSnoopingStatusMldVlanHostVersion             GAMUnsigned8,
+    gamIpmcSnoopingStatusMldVlanHostPresentTimeout      Unsigned32,
+    gamIpmcSnoopingStatusMldVlanCounterTxQuery          Unsigned32,
+    gamIpmcSnoopingStatusMldVlanCounterTxSpecificQuery  Unsigned32,
+    gamIpmcSnoopingStatusMldVlanCounterRxQuery          Unsigned32,
+    gamIpmcSnoopingStatusMldVlanCounterRxV1Report       Unsigned32,
+    gamIpmcSnoopingStatusMldVlanCounterRxV1Done         Unsigned32,
+    gamIpmcSnoopingStatusMldVlanCounterRxV2Report       Unsigned32,
+    gamIpmcSnoopingStatusMldVlanCounterRxErrors         Unsigned32
+}
+
+gamIpmcSnoopingStatusMldVlanIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 1 }
+
+gamIpmcSnoopingStatusMldVlanQuerierStatus OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingMldVlanStatusQuerierStatusEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MLD Querier status of the specific VLAN interface."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 2 }
+
+gamIpmcSnoopingStatusMldVlanActiveQuerierAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The active MLD Querier address on the specific VLAN interface."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 3 }
+
+gamIpmcSnoopingStatusMldVlanQuerierUptime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the in operation timer for the specific interface act as a
+         MLD Querier."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 4 }
+
+gamIpmcSnoopingStatusMldVlanQueryInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.2."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 5 }
+
+gamIpmcSnoopingStatusMldVlanStartupQueryCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.7."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 6 }
+
+gamIpmcSnoopingStatusMldVlanQuerierExpiryTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.5."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 7 }
+
+gamIpmcSnoopingStatusMldVlanQuerierVersion OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current MLD version that the MLD interface should
+         behave in running MLD protocol as a router."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 8 }
+
+gamIpmcSnoopingStatusMldVlanQuerierPresentTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.12."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 9 }
+
+gamIpmcSnoopingStatusMldVlanHostVersion OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current MLD version that the MLD interface should
+         behave in running MLD protocol as a host."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 10 }
+
+gamIpmcSnoopingStatusMldVlanHostPresentTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This setting is used to control MLD protocol stack as stated in
+         RFC-3810 9.13."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 11 }
+
+gamIpmcSnoopingStatusMldVlanCounterTxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific MLD interface for
+         transmitting MLD Query control frames."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 12 }
+
+gamIpmcSnoopingStatusMldVlanCounterTxSpecificQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific MLD interface for
+         transmitting MLD Specific Query control frames."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 13 }
+
+gamIpmcSnoopingStatusMldVlanCounterRxQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLD Query control frames."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 14 }
+
+gamIpmcSnoopingStatusMldVlanCounterRxV1Report OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLDv1 Report control frames."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 15 }
+
+gamIpmcSnoopingStatusMldVlanCounterRxV1Done OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLDv1 Done control frames."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 16 }
+
+gamIpmcSnoopingStatusMldVlanCounterRxV2Report OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific MLD interface for
+         receiving MLDv2 Report control frames."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 17 }
+
+gamIpmcSnoopingStatusMldVlanCounterRxErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It presents the current packet count on the specific MLD interface for
+         receiving invalid MLD control frames."
+    ::= { gamIpmcSnoopingStatusMldVlanEntry 18 }
+
+gamIpmcSnoopingStatusMldGroupAddressTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingStatusMldGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying the registered IPv6 multicast group
+         address status from MLD snooping."
+    ::= { gamIpmcSnoopingStatus 8 }
+
+gamIpmcSnoopingStatusMldGroupAddressEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingStatusMldGroupAddressEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamIpmcSnoopingStatusMldGroupAddressIfIndex,
+                  gamIpmcSnoopingStatusMldGroupAddressGroupAddress }
+    ::= { gamIpmcSnoopingStatusMldGroupAddressTable 1 }
+
+GAMIpmcSnoopingStatusMldGroupAddressEntry ::= SEQUENCE {
+    gamIpmcSnoopingStatusMldGroupAddressIfIndex         GAMInterfaceIndex,
+    gamIpmcSnoopingStatusMldGroupAddressGroupAddress    InetAddressIPv6,
+    gamIpmcSnoopingStatusMldGroupAddressMemberPorts     GAMPortList,
+    gamIpmcSnoopingStatusMldGroupAddressHardwareSwitch  TruthValue
+}
+
+gamIpmcSnoopingStatusMldGroupAddressIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamIpmcSnoopingStatusMldGroupAddressEntry 1 }
+
+gamIpmcSnoopingStatusMldGroupAddressGroupAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned IPv6 multicast address."
+    ::= { gamIpmcSnoopingStatusMldGroupAddressEntry 2 }
+
+gamIpmcSnoopingStatusMldGroupAddressMemberPorts OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote the memberships of the registered multicast group
+         address from MLD snooping."
+    ::= { gamIpmcSnoopingStatusMldGroupAddressEntry 3 }
+
+gamIpmcSnoopingStatusMldGroupAddressHardwareSwitch OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote whether the multicast traffic destined to the
+         registered group address could be forwarding by switch hardware or not."
+    ::= { gamIpmcSnoopingStatusMldGroupAddressEntry 4 }
+
+gamIpmcSnoopingStatusMldGroupSrcListTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcSnoopingStatusMldGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying the address SFM (a.k.a Source List
+         Multicast) status in source list of the registered IPv6 multicast group
+         from MLD snooping."
+    ::= { gamIpmcSnoopingStatus 9 }
+
+gamIpmcSnoopingStatusMldGroupSrcListEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingStatusMldGroupSrcListEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamIpmcSnoopingStatusMldGroupSrcListIfIndex,
+                  gamIpmcSnoopingStatusMldGroupSrcListGroupAddress,
+                  gamIpmcSnoopingStatusMldGroupSrcListPortIndex,
+                  gamIpmcSnoopingStatusMldGroupSrcListHostAddress }
+    ::= { gamIpmcSnoopingStatusMldGroupSrcListTable 1 }
+
+GAMIpmcSnoopingStatusMldGroupSrcListEntry ::= SEQUENCE {
+    gamIpmcSnoopingStatusMldGroupSrcListIfIndex          GAMInterfaceIndex,
+    gamIpmcSnoopingStatusMldGroupSrcListGroupAddress     InetAddressIPv6,
+    gamIpmcSnoopingStatusMldGroupSrcListPortIndex        GAMInterfaceIndex,
+    gamIpmcSnoopingStatusMldGroupSrcListHostAddress      InetAddressIPv6,
+    gamIpmcSnoopingStatusMldGroupSrcListGroupFilterMode  GAMIpmcSnoopingMldGroupSrcListGroupFilterModeEnum,
+    gamIpmcSnoopingStatusMldGroupSrcListFilterTimer      Unsigned32,
+    gamIpmcSnoopingStatusMldGroupSrcListSourceType       GAMIpmcSnoopingMldGroupSrcListSourceEnum,
+    gamIpmcSnoopingStatusMldGroupSrcListSourceTimer      Unsigned32,
+    gamIpmcSnoopingStatusMldGroupSrcListHardwareFilter   TruthValue
+}
+
+gamIpmcSnoopingStatusMldGroupSrcListIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamIpmcSnoopingStatusMldGroupSrcListEntry 1 }
+
+gamIpmcSnoopingStatusMldGroupSrcListGroupAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned IPv6 multicast address."
+    ::= { gamIpmcSnoopingStatusMldGroupSrcListEntry 2 }
+
+gamIpmcSnoopingStatusMldGroupSrcListPortIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamIpmcSnoopingStatusMldGroupSrcListEntry 3 }
+
+gamIpmcSnoopingStatusMldGroupSrcListHostAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Assigned IPv6 source address."
+    ::= { gamIpmcSnoopingStatusMldGroupSrcListEntry 4 }
+
+gamIpmcSnoopingStatusMldGroupSrcListGroupFilterMode OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingMldGroupSrcListGroupFilterModeEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote the source filtering mode of the specific
+         registered multicast group address from MLD snooping."
+    ::= { gamIpmcSnoopingStatusMldGroupSrcListEntry 5 }
+
+gamIpmcSnoopingStatusMldGroupSrcListFilterTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to count down the timer for the specific multicast group's
+         filtering mode transition."
+    ::= { gamIpmcSnoopingStatusMldGroupSrcListEntry 6 }
+
+gamIpmcSnoopingStatusMldGroupSrcListSourceType OBJECT-TYPE
+    SYNTAX      GAMIpmcSnoopingMldGroupSrcListSourceEnum
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote the filtering type of the specific source address
+         in multicasting to the registered group address."
+    ::= { gamIpmcSnoopingStatusMldGroupSrcListEntry 7 }
+
+gamIpmcSnoopingStatusMldGroupSrcListSourceTimer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to count down the timer for purging the specific source
+         address from the registered multicast group's source list."
+    ::= { gamIpmcSnoopingStatusMldGroupSrcListEntry 8 }
+
+gamIpmcSnoopingStatusMldGroupSrcListHardwareFilter OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "It is used to denote whether the traffic destined to the multicast
+         group address from the specific source address could be forwarding by
+         switch hardware or not."
+    ::= { gamIpmcSnoopingStatusMldGroupSrcListEntry 9 }
+
+gamIpmcSnoopingControl OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingMibObjects 4 }
+
+gamIpmcSnoopingControlStatistics OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingControl 1 }
+
+gamIpmcSnoopingControlStatisticsIgmpClearByIfIndex OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingControlStatistics 1 }
+
+gamIpmcSnoopingControlStatisticsIgmpClearByIfIndexIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamIpmcSnoopingControlStatisticsIgmpClearByIfIndex 1 }
+
+gamIpmcSnoopingControlStatisticsMldClearByIfIndex OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingControlStatistics 2 }
+
+gamIpmcSnoopingControlStatisticsMldClearByIfIndexIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamIpmcSnoopingControlStatisticsMldClearByIfIndex 1 }
+
+gamIpmcSnoopingMibConformance OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingMib 2 }
+
+gamIpmcSnoopingMibCompliances OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingMibConformance 1 }
+
+gamIpmcSnoopingMibGroups OBJECT IDENTIFIER
+    ::= { gamIpmcSnoopingMibConformance 2 }
+
+gamIpmcSnoopingConfigIgmpGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingConfigIgmpGlobalsAdminState,
+                  gamIpmcSnoopingConfigIgmpGlobalsUnregisteredFlooding,
+                  gamIpmcSnoopingConfigIgmpGlobalsSsmRangeAddress,
+                  gamIpmcSnoopingConfigIgmpGlobalsSsmRangeMask,
+                  gamIpmcSnoopingConfigIgmpGlobalsProxy,
+                  gamIpmcSnoopingConfigIgmpGlobalsLeaveProxy }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 1 }
+
+gamIpmcSnoopingConfigIgmpPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingConfigIgmpPortPortIndex,
+                  gamIpmcSnoopingConfigIgmpPortAsRouterPort,
+                  gamIpmcSnoopingConfigIgmpPortDoFastLeave,
+                  gamIpmcSnoopingConfigIgmpPortThrottlingNumber,
+                  gamIpmcSnoopingConfigIgmpPortFilteringProfile }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 2 }
+
+gamIpmcSnoopingConfigIgmpInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingConfigIgmpInterfaceIfIndex,
+                  gamIpmcSnoopingConfigIgmpInterfaceAdminState,
+                  gamIpmcSnoopingConfigIgmpInterfaceQuerierElection,
+                  gamIpmcSnoopingConfigIgmpInterfaceQuerierAddress,
+                  gamIpmcSnoopingConfigIgmpInterfaceCompatibility,
+                  gamIpmcSnoopingConfigIgmpInterfacePriority,
+                  gamIpmcSnoopingConfigIgmpInterfaceRv,
+                  gamIpmcSnoopingConfigIgmpInterfaceQi,
+                  gamIpmcSnoopingConfigIgmpInterfaceQri,
+                  gamIpmcSnoopingConfigIgmpInterfaceLmqi,
+                  gamIpmcSnoopingConfigIgmpInterfaceUri }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 3 }
+
+gamIpmcSnoopingConfigMldGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingConfigMldGlobalsAdminState,
+                  gamIpmcSnoopingConfigMldGlobalsUnregisteredFlooding,
+                  gamIpmcSnoopingConfigMldGlobalsSsmRangeAddress,
+                  gamIpmcSnoopingConfigMldGlobalsSsmRangeMask,
+                  gamIpmcSnoopingConfigMldGlobalsProxy,
+                  gamIpmcSnoopingConfigMldGlobalsLeaveProxy }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 4 }
+
+gamIpmcSnoopingConfigMldPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingConfigMldPortPortIndex,
+                  gamIpmcSnoopingConfigMldPortAsRouterPort,
+                  gamIpmcSnoopingConfigMldPortDoFastLeave,
+                  gamIpmcSnoopingConfigMldPortThrottlingNumber,
+                  gamIpmcSnoopingConfigMldPortFilteringProfile }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 5 }
+
+gamIpmcSnoopingConfigMldInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingConfigMldInterfaceIfIndex,
+                  gamIpmcSnoopingConfigMldInterfaceAdminState,
+                  gamIpmcSnoopingConfigMldInterfaceQuerierElection,
+                  gamIpmcSnoopingConfigMldInterfaceCompatibility,
+                  gamIpmcSnoopingConfigMldInterfacePriority,
+                  gamIpmcSnoopingConfigMldInterfaceRv,
+                  gamIpmcSnoopingConfigMldInterfaceQi,
+                  gamIpmcSnoopingConfigMldInterfaceQri,
+                  gamIpmcSnoopingConfigMldInterfaceLlqi,
+                  gamIpmcSnoopingConfigMldInterfaceUri }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 6 }
+
+gamIpmcSnoopingStatusGroupAddressCountInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingStatusGroupAddressCountFromIgmp,
+                  gamIpmcSnoopingStatusGroupAddressCountFromMld }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 7 }
+
+gamIpmcSnoopingStatusIgmpRouterPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingStatusIgmpRouterPortPortIndex,
+                  gamIpmcSnoopingStatusIgmpRouterPortStatus }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 8 }
+
+gamIpmcSnoopingStatusIgmpVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingStatusIgmpVlanIfIndex,
+                  gamIpmcSnoopingStatusIgmpVlanQuerierStatus,
+                  gamIpmcSnoopingStatusIgmpVlanActiveQuerierAddress,
+                  gamIpmcSnoopingStatusIgmpVlanQuerierUptime,
+                  gamIpmcSnoopingStatusIgmpVlanQueryInterval,
+                  gamIpmcSnoopingStatusIgmpVlanStartupQueryCount,
+                  gamIpmcSnoopingStatusIgmpVlanQuerierExpiryTime,
+                  gamIpmcSnoopingStatusIgmpVlanQuerierVersion,
+                  gamIpmcSnoopingStatusIgmpVlanQuerierPresentTimeout,
+                  gamIpmcSnoopingStatusIgmpVlanHostVersion,
+                  gamIpmcSnoopingStatusIgmpVlanHostPresentTimeout,
+                  gamIpmcSnoopingStatusIgmpVlanCounterTxQuery,
+                  gamIpmcSnoopingStatusIgmpVlanCounterTxSpecificQuery,
+                  gamIpmcSnoopingStatusIgmpVlanCounterRxQuery,
+                  gamIpmcSnoopingStatusIgmpVlanCounterRxV1Join,
+                  gamIpmcSnoopingStatusIgmpVlanCounterRxV2Join,
+                  gamIpmcSnoopingStatusIgmpVlanCounterRxV2Leave,
+                  gamIpmcSnoopingStatusIgmpVlanCounterRxV3Join,
+                  gamIpmcSnoopingStatusIgmpVlanCounterRxErrors }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 9 }
+
+gamIpmcSnoopingStatusIgmpGroupAddressTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingStatusIgmpGroupAddressIfIndex,
+                  gamIpmcSnoopingStatusIgmpGroupAddressGroupAddress,
+                  gamIpmcSnoopingStatusIgmpGroupAddressMemberPorts,
+                  gamIpmcSnoopingStatusIgmpGroupAddressHardwareSwitch }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 10 }
+
+gamIpmcSnoopingStatusIgmpGroupSrcListTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingStatusIgmpGroupSrcListIfIndex,
+                  gamIpmcSnoopingStatusIgmpGroupSrcListGroupAddress,
+                  gamIpmcSnoopingStatusIgmpGroupSrcListPortIndex,
+                  gamIpmcSnoopingStatusIgmpGroupSrcListHostAddress,
+                  gamIpmcSnoopingStatusIgmpGroupSrcListGroupFilterMode,
+                  gamIpmcSnoopingStatusIgmpGroupSrcListFilterTimer,
+                  gamIpmcSnoopingStatusIgmpGroupSrcListSourceType,
+                  gamIpmcSnoopingStatusIgmpGroupSrcListSourceTimer,
+                  gamIpmcSnoopingStatusIgmpGroupSrcListHardwareFilter }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 11 }
+
+gamIpmcSnoopingStatusMldRouterPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingStatusMldRouterPortPortIndex,
+                  gamIpmcSnoopingStatusMldRouterPortStatus }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 12 }
+
+gamIpmcSnoopingStatusMldVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingStatusMldVlanIfIndex,
+                  gamIpmcSnoopingStatusMldVlanQuerierStatus,
+                  gamIpmcSnoopingStatusMldVlanActiveQuerierAddress,
+                  gamIpmcSnoopingStatusMldVlanQuerierUptime,
+                  gamIpmcSnoopingStatusMldVlanQueryInterval,
+                  gamIpmcSnoopingStatusMldVlanStartupQueryCount,
+                  gamIpmcSnoopingStatusMldVlanQuerierExpiryTime,
+                  gamIpmcSnoopingStatusMldVlanQuerierVersion,
+                  gamIpmcSnoopingStatusMldVlanQuerierPresentTimeout,
+                  gamIpmcSnoopingStatusMldVlanHostVersion,
+                  gamIpmcSnoopingStatusMldVlanHostPresentTimeout,
+                  gamIpmcSnoopingStatusMldVlanCounterTxQuery,
+                  gamIpmcSnoopingStatusMldVlanCounterTxSpecificQuery,
+                  gamIpmcSnoopingStatusMldVlanCounterRxQuery,
+                  gamIpmcSnoopingStatusMldVlanCounterRxV1Report,
+                  gamIpmcSnoopingStatusMldVlanCounterRxV1Done,
+                  gamIpmcSnoopingStatusMldVlanCounterRxV2Report,
+                  gamIpmcSnoopingStatusMldVlanCounterRxErrors }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 13 }
+
+gamIpmcSnoopingStatusMldGroupAddressTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingStatusMldGroupAddressIfIndex,
+                  gamIpmcSnoopingStatusMldGroupAddressGroupAddress,
+                  gamIpmcSnoopingStatusMldGroupAddressMemberPorts,
+                  gamIpmcSnoopingStatusMldGroupAddressHardwareSwitch }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 14 }
+
+gamIpmcSnoopingStatusMldGroupSrcListTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcSnoopingStatusMldGroupSrcListIfIndex,
+                  gamIpmcSnoopingStatusMldGroupSrcListGroupAddress,
+                  gamIpmcSnoopingStatusMldGroupSrcListPortIndex,
+                  gamIpmcSnoopingStatusMldGroupSrcListHostAddress,
+                  gamIpmcSnoopingStatusMldGroupSrcListGroupFilterMode,
+                  gamIpmcSnoopingStatusMldGroupSrcListFilterTimer,
+                  gamIpmcSnoopingStatusMldGroupSrcListSourceType,
+                  gamIpmcSnoopingStatusMldGroupSrcListSourceTimer,
+                  gamIpmcSnoopingStatusMldGroupSrcListHardwareFilter }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 15 }
+
+gamIpmcSnoopingControlStatisticsIgmpClearByIfIndexInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamIpmcSnoopingControlStatisticsIgmpClearByIfIndexIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 16 }
+
+gamIpmcSnoopingControlStatisticsMldClearByIfIndexInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamIpmcSnoopingControlStatisticsMldClearByIfIndexIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcSnoopingMibGroups 17 }
+
+gamIpmcSnoopingMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamIpmcSnoopingConfigIgmpGlobalsInfoGroup,
+                       gamIpmcSnoopingConfigIgmpPortTableInfoGroup,
+                       gamIpmcSnoopingConfigIgmpInterfaceTableInfoGroup,
+                       gamIpmcSnoopingConfigMldGlobalsInfoGroup,
+                       gamIpmcSnoopingConfigMldPortTableInfoGroup,
+                       gamIpmcSnoopingConfigMldInterfaceTableInfoGroup,
+                       gamIpmcSnoopingStatusGroupAddressCountInfoGroup,
+                       gamIpmcSnoopingStatusIgmpRouterPortTableInfoGroup,
+                       gamIpmcSnoopingStatusIgmpVlanTableInfoGroup,
+                       gamIpmcSnoopingStatusIgmpGroupAddressTableInfoGroup,
+                       gamIpmcSnoopingStatusIgmpGroupSrcListTableInfoGroup,
+                       gamIpmcSnoopingStatusMldRouterPortTableInfoGroup,
+                       gamIpmcSnoopingStatusMldVlanTableInfoGroup,
+                       gamIpmcSnoopingStatusMldGroupAddressTableInfoGroup,
+                       gamIpmcSnoopingStatusMldGroupSrcListTableInfoGroup,
+                       gamIpmcSnoopingControlStatisticsIgmpClearByIfIndexInfoGroup,
+                       gamIpmcSnoopingControlStatisticsMldClearByIfIndexInfoGroup }
+
+    ::= { gamIpmcSnoopingMibCompliances 1 }
+
+END

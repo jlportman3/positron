@@ -1,0 +1,125 @@
+-- *****************************************************************
+-- NTP-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-NTP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInetAddress FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamNtpMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of NTP"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 57 }
+
+
+gamNtpMibObjects OBJECT IDENTIFIER
+    ::= { gamNtpMib 1 }
+
+gamNtpConfig OBJECT IDENTIFIER
+    ::= { gamNtpMibObjects 2 }
+
+gamNtpConfigGlobals OBJECT IDENTIFIER
+    ::= { gamNtpConfig 1 }
+
+gamNtpConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global config mode of NTP. true is to enable NTP function in the system
+         and false is to disable it."
+    ::= { gamNtpConfigGlobals 1 }
+
+gamNtpConfigServerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMNtpConfigServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of NTP server."
+    ::= { gamNtpConfig 2 }
+
+gamNtpConfigServerEntry OBJECT-TYPE
+    SYNTAX      GAMNtpConfigServerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each server has a set of parameters."
+    INDEX       { gamNtpConfigServerIndex }
+    ::= { gamNtpConfigServerTable 1 }
+
+GAMNtpConfigServerEntry ::= SEQUENCE {
+    gamNtpConfigServerIndex    Integer32,
+    gamNtpConfigServerAddress  GAMInetAddress
+}
+
+gamNtpConfigServerIndex OBJECT-TYPE
+    SYNTAX      Integer32 (1..5)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The index of NTP servers."
+    ::= { gamNtpConfigServerEntry 1 }
+
+gamNtpConfigServerAddress OBJECT-TYPE
+    SYNTAX      GAMInetAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Internet address of a NTP server."
+    ::= { gamNtpConfigServerEntry 2 }
+
+gamNtpMibConformance OBJECT IDENTIFIER
+    ::= { gamNtpMib 2 }
+
+gamNtpMibCompliances OBJECT IDENTIFIER
+    ::= { gamNtpMibConformance 1 }
+
+gamNtpMibGroups OBJECT IDENTIFIER
+    ::= { gamNtpMibConformance 2 }
+
+gamNtpConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamNtpConfigGlobalsMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamNtpMibGroups 1 }
+
+gamNtpConfigServerTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamNtpConfigServerIndex, gamNtpConfigServerAddress }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamNtpMibGroups 2 }
+
+gamNtpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamNtpConfigGlobalsInfoGroup,
+                       gamNtpConfigServerTableInfoGroup }
+
+    ::= { gamNtpMibCompliances 1 }
+
+END

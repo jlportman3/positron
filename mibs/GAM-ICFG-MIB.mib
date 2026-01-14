@@ -1,0 +1,351 @@
+-- *****************************************************************
+-- ICFG-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-ICFG-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamIcfgMib MODULE-IDENTITY
+    LAST-UPDATED "201605090000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of ICFG"
+    REVISION    "201605090000Z"
+    DESCRIPTION
+        "Add support for allocated/free flash size"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 101 }
+
+
+GAMIcfgConfigStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of configuration."
+    SYNTAX      INTEGER { none(0), success(1), inProgress(2),
+                          errOtherInProcessing(3), errNoSuchFile(4),
+                          errSameSrcDst(5), errPermissionDenied(6),
+                          errLoadSrc(7), errSaveDst(8) }
+
+GAMIcfgConfigType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of configuration."
+    SYNTAX      INTEGER { none(0), runningConfig(1), startupConfig(2),
+                          configFile(3) }
+
+GAMIcfgReloadDefault ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the type of reload default."
+    SYNTAX      INTEGER { none(0), default(1), defaultKeepIp(2) }
+
+gamIcfgMibObjects OBJECT IDENTIFIER
+    ::= { gamIcfgMib 1 }
+
+gamIcfgStatus OBJECT IDENTIFIER
+    ::= { gamIcfgMibObjects 3 }
+
+gamIcfgStatusFileStatistics OBJECT IDENTIFIER
+    ::= { gamIcfgStatus 1 }
+
+gamIcfgStatusFileStatisticsNumberOfFiles OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of files in flash."
+    ::= { gamIcfgStatusFileStatistics 1 }
+
+gamIcfgStatusFileStatisticsTotalBytes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Total number of bytes used by all files in flash."
+    ::= { gamIcfgStatusFileStatistics 2 }
+
+gamIcfgStatusFileStatisticsFlashSizeBytes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Flash file system size in bytes."
+    ::= { gamIcfgStatusFileStatistics 3 }
+
+gamIcfgStatusFileStatisticsFlashFreeBytes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Flash file system number of free bytes."
+    ::= { gamIcfgStatusFileStatistics 4 }
+
+gamIcfgStatusFileTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIcfgStatusFileEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of status of files in flash."
+    ::= { gamIcfgStatus 2 }
+
+gamIcfgStatusFileEntry OBJECT-TYPE
+    SYNTAX      GAMIcfgStatusFileEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of file status."
+    INDEX       { gamIcfgStatusFileFileNo }
+    ::= { gamIcfgStatusFileTable 1 }
+
+GAMIcfgStatusFileEntry ::= SEQUENCE {
+    gamIcfgStatusFileFileNo        Integer32,
+    gamIcfgStatusFileFileName      GAMDisplayString,
+    gamIcfgStatusFileBytes         Unsigned32,
+    gamIcfgStatusFileModifiedTime  GAMDisplayString,
+    gamIcfgStatusFileAttribute     GAMDisplayString
+}
+
+gamIcfgStatusFileFileNo OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The number of File. The number starts from 1."
+    ::= { gamIcfgStatusFileEntry 1 }
+
+gamIcfgStatusFileFileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "File name."
+    ::= { gamIcfgStatusFileEntry 2 }
+
+gamIcfgStatusFileBytes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of bytes of the file."
+    ::= { gamIcfgStatusFileEntry 3 }
+
+gamIcfgStatusFileModifiedTime OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..39))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Last modified time of the file."
+    ::= { gamIcfgStatusFileEntry 4 }
+
+gamIcfgStatusFileAttribute OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..15))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "File attribute in the format of 'rw'. 'r' presents readable while 'w'
+         presents writable."
+    ::= { gamIcfgStatusFileEntry 5 }
+
+gamIcfgStatusCopyConfig OBJECT IDENTIFIER
+    ::= { gamIcfgStatus 3 }
+
+gamIcfgStatusCopyConfigStatus OBJECT-TYPE
+    SYNTAX      GAMIcfgConfigStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The status indicates the status of current copy operation. none(0)
+         means no copy operation. success(1) means copy operation is successful.
+         inProgress(2) means current copy operation is in progress.
+         errOtherInProcessing(3) means copy operation is failed due to other in
+         processing. errNoSuchFile(4) means copy operation is failed due to file
+         not existing. errSameSrcDst(5) means copy operation is failed due to
+         the source and destination are the same. errPermissionDenied(6) means
+         copy operation is failed due to the destination is not permitted to
+         modify. errLoadSrc(7) means copy operation is failed due to the error
+         to load source file. errSaveDst(8) means copy operation is failed due
+         to the error to save or commit destination."
+    ::= { gamIcfgStatusCopyConfig 1 }
+
+gamIcfgControl OBJECT IDENTIFIER
+    ::= { gamIcfgMibObjects 4 }
+
+gamIcfgControlGlobals OBJECT IDENTIFIER
+    ::= { gamIcfgControl 1 }
+
+gamIcfgControlGlobalsReloadDefault OBJECT-TYPE
+    SYNTAX      GAMIcfgReloadDefault
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Reset system to default. none(0) is to do nothing. default(1) is to
+         reset the whole system to default. defaultKeepIp(2) is to reset system
+         to default, but keep IP address of VLAN 1."
+    ::= { gamIcfgControlGlobals 1 }
+
+gamIcfgControlGlobalsDeleteFile OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Delete file in flash. The format is flash:filename. Where
+         'default-config' is read-only and not allowed to be deleted."
+    ::= { gamIcfgControlGlobals 2 }
+
+gamIcfgControlCopyConfig OBJECT IDENTIFIER
+    ::= { gamIcfgControl 2 }
+
+gamIcfgControlCopyConfigCopy OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action to do copy or not. true is to do the copy operation. false is to
+         do nothing"
+    ::= { gamIcfgControlCopyConfig 1 }
+
+gamIcfgControlCopyConfigSourceConfigType OBJECT-TYPE
+    SYNTAX      GAMIcfgConfigType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Source configuration type. none(0) means no configuration file.
+         runningConfig(1) means running configuration. startupConfig(2) means
+         startup configuration file in flash. configFile(3) is the configuration
+         file specified in SourceConfigFile."
+    ::= { gamIcfgControlCopyConfig 2 }
+
+gamIcfgControlCopyConfigSourceConfigFile OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Source configuration file. If the configuration file is in flash then
+         the format is flash:'filename'. If the configuration file is from
+         tftp/ftp/http/https then the format is
+         <proto>://server[:port]/path-to-file."
+    ::= { gamIcfgControlCopyConfig 3 }
+
+gamIcfgControlCopyConfigDestinationConfigType OBJECT-TYPE
+    SYNTAX      GAMIcfgConfigType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Source configuration type. none(0) means no configuration file.
+         runningConfig(1) means running configuration. startupConfig(2) means
+         startup configuration file in flash. configFile(3) is the configuration
+         file specified in DestinationConfigFile."
+    ::= { gamIcfgControlCopyConfig 4 }
+
+gamIcfgControlCopyConfigDestinationConfigFile OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..127))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Destination configuration file. If the configuration file is in flash
+         then the format is flash:filename. If the configuration file is to
+         tftp/ftp the format is <proto>://server[:port]/filename_with_path.
+         Where 'default-config' is read-only and not allowed to be deleted."
+    ::= { gamIcfgControlCopyConfig 5 }
+
+gamIcfgControlCopyConfigMerge OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This flag works only if DestinationConfigType is runningConfig(1). true
+         is to merge the source configuration into the current running
+         configuration. false is to replace the current running configuration
+         with the source configuration."
+    ::= { gamIcfgControlCopyConfig 6 }
+
+gamIcfgMibConformance OBJECT IDENTIFIER
+    ::= { gamIcfgMib 2 }
+
+gamIcfgMibCompliances OBJECT IDENTIFIER
+    ::= { gamIcfgMibConformance 1 }
+
+gamIcfgMibGroups OBJECT IDENTIFIER
+    ::= { gamIcfgMibConformance 2 }
+
+gamIcfgStatusFileStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIcfgStatusFileStatisticsNumberOfFiles,
+                  gamIcfgStatusFileStatisticsTotalBytes,
+                  gamIcfgStatusFileStatisticsFlashSizeBytes,
+                  gamIcfgStatusFileStatisticsFlashFreeBytes }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIcfgMibGroups 1 }
+
+gamIcfgStatusFileTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIcfgStatusFileFileNo, gamIcfgStatusFileFileName,
+                  gamIcfgStatusFileBytes,
+                  gamIcfgStatusFileModifiedTime,
+                  gamIcfgStatusFileAttribute }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIcfgMibGroups 2 }
+
+gamIcfgStatusCopyConfigInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIcfgStatusCopyConfigStatus }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIcfgMibGroups 3 }
+
+gamIcfgControlGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIcfgControlGlobalsReloadDefault,
+                  gamIcfgControlGlobalsDeleteFile }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIcfgMibGroups 4 }
+
+gamIcfgControlCopyConfigInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIcfgControlCopyConfigCopy,
+                  gamIcfgControlCopyConfigSourceConfigType,
+                  gamIcfgControlCopyConfigSourceConfigFile,
+                  gamIcfgControlCopyConfigDestinationConfigType,
+                  gamIcfgControlCopyConfigDestinationConfigFile,
+                  gamIcfgControlCopyConfigMerge }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIcfgMibGroups 5 }
+
+gamIcfgMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamIcfgStatusFileStatisticsInfoGroup,
+                       gamIcfgStatusFileTableInfoGroup,
+                       gamIcfgStatusCopyConfigInfoGroup,
+                       gamIcfgControlGlobalsInfoGroup,
+                       gamIcfgControlCopyConfigInfoGroup }
+
+    ::= { gamIcfgMibCompliances 1 }
+
+END

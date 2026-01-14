@@ -1,0 +1,73 @@
+-- *****************************************************************
+-- SSH-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-SSH-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamSshMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the SSH MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 49 }
+
+
+gamSshMibObjects OBJECT IDENTIFIER
+    ::= { gamSshMib 1 }
+
+gamSshConfig OBJECT IDENTIFIER
+    ::= { gamSshMibObjects 2 }
+
+gamSshConfigGlobals OBJECT IDENTIFIER
+    ::= { gamSshConfig 1 }
+
+gamSshConfigGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the SSH functionality."
+    ::= { gamSshConfigGlobals 1 }
+
+gamSshMibConformance OBJECT IDENTIFIER
+    ::= { gamSshMib 2 }
+
+gamSshMibCompliances OBJECT IDENTIFIER
+    ::= { gamSshMibConformance 1 }
+
+gamSshMibGroups OBJECT IDENTIFIER
+    ::= { gamSshMibConformance 2 }
+
+gamSshConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamSshConfigGlobalsAdminState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamSshMibGroups 1 }
+
+gamSshMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamSshConfigGlobalsInfoGroup }
+
+    ::= { gamSshMibCompliances 1 }
+
+END

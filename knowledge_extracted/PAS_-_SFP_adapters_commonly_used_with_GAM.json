@@ -1,0 +1,15 @@
+{
+  "metadata": {
+    "filename": "PAS - SFP adapters commonly used with GAM.pdf",
+    "total_pages": 1,
+    "size_bytes": 520013,
+    "size_mb": 0.5
+  },
+  "chunks": [
+    {
+      "chunk_id": 1,
+      "pages": "1-1",
+      "content": "--- Page 1 ---\n \nSFP/SFP+ modules used with GAM \nGAM supports any generic MSA-compliant 1G/10G, here is a list of the most common models:  \n \nSPF (1G) Copper (100m) \nBrand: FS \nModel: SFP-GB-GE-T \nFS SFP-GB-GE-T 1000BASE-T RJ45 SFP Transceiver Module - FS.com  \n \n \nSPF+ (10G) Copper (30m) \nBrand: FS \nModel: SFP-10G-T  \nCisco SFP-10G-T-X Compatible 10GBASE-T SFP+ Copper RJ-45 30m Optical Transceiver Module  \n \n \nSPF (1G) Fiber (550m) \nBrand: FS \nModel: SFP1G-SX-85  \nGeneric 1000BASE-SX SFP Transceiver Module - FS.com  \n \nSPF (1G) Fiber (10Km) \nBrand: FS \nModel: SFP1G-LX-31  \nGeneric 1000BASE-LX/LH SFP Transceiver Module - FS.com  \n \nSPF+ (10G) Fiber (300m) \nBrand: FS \nModel: SFP-10GSR-85  \nFS SFP-10GSR-85 10GBASE-SR SFP+ Transceiver Module - FS.com  \n \n \nSPF+ (10G) Fiber \nCISCO-MERAKI : (N/M): MA-SFP-10GB-SR  P/N: A30-22060-C (FTLX8574D3BCL-CS) \nhttps://meraki.cisco.com/product/switches/switches-accessories/switches-accessories-sfp-plus/10-gbe-\nsfp-sr-fiber-transceiver/ \n \nSPF (1G) Fiber \nAruba 1G SFP LC SX 500m P/N: 1990-4395 \nhttps://buy.hpe.com/us/en/options/transceivers/transceivers/networking-sfp-mini-gbic-form-\nfactor/aruba-sfp-sx-transceivers/p/1009432145 \n \nSPF+ (10G) Fiber \nAruba 10G SFP+ LC SR 300m P/N: 1990-4635 \nhttps://buy.hpe.com/ca/en/options/transceivers/transceivers/networking-sfp-form-factor/hpe-aruba-\nnetworking-10g-sfp-lc-sr-300m-om3-mmf-transceiver/p/j9150d  \n \n \n"
+    }
+  ]
+}

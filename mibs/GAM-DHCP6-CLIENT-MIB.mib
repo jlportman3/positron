@@ -1,0 +1,536 @@
+-- *****************************************************************
+-- DHCP6-CLIENT-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-DHCP6-CLIENT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Counter64 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamDhcp6ClientMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the DHCPv6 Client MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 126 }
+
+
+gamDhcp6ClientMibObjects OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientMib 1 }
+
+gamDhcp6ClientCapabilities OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientMibObjects 1 }
+
+gamDhcp6ClientCapabilitiesMaxNumberOfInterfaces OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of DHCPv6 client interfaces supported by the device."
+    ::= { gamDhcp6ClientCapabilities 1 }
+
+gamDhcp6ClientConfig OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientMibObjects 2 }
+
+gamDhcp6ClientConfigInterface OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientConfig 1 }
+
+gamDhcp6ClientConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcp6ClientConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing DHCPv6 client interface entries."
+    ::= { gamDhcp6ClientConfigInterface 1 }
+
+gamDhcp6ClientConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMDhcp6ClientConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamDhcp6ClientConfigInterfaceIfIndex }
+    ::= { gamDhcp6ClientConfigInterfaceTable 1 }
+
+GAMDhcp6ClientConfigInterfaceEntry ::= SEQUENCE {
+    gamDhcp6ClientConfigInterfaceIfIndex      GAMInterfaceIndex,
+    gamDhcp6ClientConfigInterfaceRapidCommit  TruthValue,
+    gamDhcp6ClientConfigInterfaceAction       GAMRowEditorState
+}
+
+gamDhcp6ClientConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamDhcp6ClientConfigInterfaceEntry 1 }
+
+gamDhcp6ClientConfigInterfaceRapidCommit OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the rapid-commit capability in DHCPv6 message exchanges."
+    ::= { gamDhcp6ClientConfigInterfaceEntry 2 }
+
+gamDhcp6ClientConfigInterfaceAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamDhcp6ClientConfigInterfaceEntry 100 }
+
+gamDhcp6ClientConfigInterfaceTableRowEditor OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientConfigInterface 2 }
+
+gamDhcp6ClientConfigInterfaceTableRowEditorIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamDhcp6ClientConfigInterfaceTableRowEditor 1 }
+
+gamDhcp6ClientConfigInterfaceTableRowEditorRapidCommit OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the rapid-commit capability in DHCPv6 message exchanges."
+    ::= { gamDhcp6ClientConfigInterfaceTableRowEditor 2 }
+
+gamDhcp6ClientConfigInterfaceTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamDhcp6ClientConfigInterfaceTableRowEditor 100 }
+
+gamDhcp6ClientStatus OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientMibObjects 3 }
+
+gamDhcp6ClientStatusInterface OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientStatus 1 }
+
+gamDhcp6ClientStatusInterfaceInformationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcp6ClientStatusInterfaceInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying per DHCPv6 client interface information
+         derived from DHCPv6 server."
+    ::= { gamDhcp6ClientStatusInterface 1 }
+
+gamDhcp6ClientStatusInterfaceInformationEntry OBJECT-TYPE
+    SYNTAX      GAMDhcp6ClientStatusInterfaceInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamDhcp6ClientStatusInterfaceInformationIfIndex }
+    ::= { gamDhcp6ClientStatusInterfaceInformationTable 1 }
+
+GAMDhcp6ClientStatusInterfaceInformationEntry ::= SEQUENCE {
+    gamDhcp6ClientStatusInterfaceInformationIfIndex            GAMInterfaceIndex,
+    gamDhcp6ClientStatusInterfaceInformationAddress            InetAddressIPv6,
+    gamDhcp6ClientStatusInterfaceInformationServerAddress      InetAddressIPv6,
+    gamDhcp6ClientStatusInterfaceInformationDnsServerAddress   InetAddressIPv6,
+    gamDhcp6ClientStatusInterfaceInformationPreferredLifetime  Counter64,
+    gamDhcp6ClientStatusInterfaceInformationValidLifetime      Counter64,
+    gamDhcp6ClientStatusInterfaceInformationT1                 Counter64,
+    gamDhcp6ClientStatusInterfaceInformationT2                 Counter64
+}
+
+gamDhcp6ClientStatusInterfaceInformationIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamDhcp6ClientStatusInterfaceInformationEntry 1 }
+
+gamDhcp6ClientStatusInterfaceInformationAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IPv6 address determined from DHCPv6 for this interface."
+    ::= { gamDhcp6ClientStatusInterfaceInformationEntry 2 }
+
+gamDhcp6ClientStatusInterfaceInformationServerAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The IPv6 address of the bounded DHCPv6 server for this interface."
+    ::= { gamDhcp6ClientStatusInterfaceInformationEntry 3 }
+
+gamDhcp6ClientStatusInterfaceInformationDnsServerAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The DNS server address retrieved from DHCPv6."
+    ::= { gamDhcp6ClientStatusInterfaceInformationEntry 4 }
+
+gamDhcp6ClientStatusInterfaceInformationPreferredLifetime OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The recorded Preferred-Lifetime for the DHCPv6 client interface. From
+         RFC-4862 and RFC-3315: It is the preferred lifetime for the IPv6
+         address, expressed in units of seconds. When the preferred lifetime
+         expires, the address becomes deprecated."
+    ::= { gamDhcp6ClientStatusInterfaceInformationEntry 5 }
+
+gamDhcp6ClientStatusInterfaceInformationValidLifetime OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The recorded Valid-Lifetime for the DHCPv6 client interface. From
+         RFC-4862 and RFC-3315: It is the valid lifetime for the IPv6 address,
+         expressed in units of seconds. The valid lifetime must be greater than
+         or equal to the preferred lifetime. When the valid lifetime expires,
+         the address becomes invalid."
+    ::= { gamDhcp6ClientStatusInterfaceInformationEntry 6 }
+
+gamDhcp6ClientStatusInterfaceInformationT1 OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The recorded T1 for the DHCPv6 client interface. From RFC-3315: It is
+         the time at which the client contacts the server from which the address
+         is obtained to extend the lifetimes of the non-temporary address
+         assigned; T1 is a time duration relative to the current time expressed
+         in units of seconds."
+    ::= { gamDhcp6ClientStatusInterfaceInformationEntry 7 }
+
+gamDhcp6ClientStatusInterfaceInformationT2 OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The recorded T2 for the DHCPv6 client interface. From RFC-3315: It is
+         the time at which the client contacts any available server to extend
+         the lifetimes of the non-temporary address assigned; T2 is a time
+         duration relative to the current time expressed in units of seconds."
+    ::= { gamDhcp6ClientStatusInterfaceInformationEntry 8 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcp6ClientStatusInterfaceStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying per DHCPv6 client interface control
+         message statistics in DHCPv6 message exchanges."
+    ::= { gamDhcp6ClientStatusInterface 2 }
+
+gamDhcp6ClientStatusInterfaceStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMDhcp6ClientStatusInterfaceStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of counters."
+    INDEX       { gamDhcp6ClientStatusInterfaceStatisticsIfIndex }
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsTable 1 }
+
+GAMDhcp6ClientStatusInterfaceStatisticsEntry ::= SEQUENCE {
+    gamDhcp6ClientStatusInterfaceStatisticsIfIndex        GAMInterfaceIndex,
+    gamDhcp6ClientStatusInterfaceStatisticsTxSolicit      Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsTxRequest      Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsTxConfirm      Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsTxRenew        Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsTxRebind       Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsTxRelease      Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsTxDecline      Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsTxInfoRequest  Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsTxError        Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsTxDrop         Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsTxUnknown      Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsRxAdvertise    Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsRxReply        Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsRxReconfigure  Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsRxError        Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsRxDrop         Unsigned32,
+    gamDhcp6ClientStatusInterfaceStatisticsRxUnknown      Unsigned32
+}
+
+gamDhcp6ClientStatusInterfaceStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 1 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTxSolicit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted DHCPv6 SOLICIT message count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 2 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTxRequest OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted DHCPv6 REQUEST message count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 3 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTxConfirm OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted DHCPv6 CONFIRM message count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 4 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTxRenew OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted DHCPv6 RENEW message count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 5 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTxRebind OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted DHCPv6 REBIND message count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 6 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTxRelease OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted DHCPv6 RELEASE message count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 7 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTxDecline OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted DHCPv6 DECLINE message count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 8 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTxInfoRequest OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted DHCPv6 INFORMATION-REQUEST message count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 9 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTxError OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted DHCPv6 message error count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 10 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTxDrop OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted DHCPv6 message drop count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 11 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTxUnknown OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Transmitted DHCPv6 unknown message type count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 12 }
+
+gamDhcp6ClientStatusInterfaceStatisticsRxAdvertise OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received DHCPv6 ADVERTISE message count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 13 }
+
+gamDhcp6ClientStatusInterfaceStatisticsRxReply OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received DHCPv6 REPLY message count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 14 }
+
+gamDhcp6ClientStatusInterfaceStatisticsRxReconfigure OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received DHCPv6 RECONFIGURE message count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 15 }
+
+gamDhcp6ClientStatusInterfaceStatisticsRxError OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received DHCPv6 message error count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 16 }
+
+gamDhcp6ClientStatusInterfaceStatisticsRxDrop OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received DHCPv6 message drop count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 17 }
+
+gamDhcp6ClientStatusInterfaceStatisticsRxUnknown OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Received DHCPv6 unknown message type count."
+    ::= { gamDhcp6ClientStatusInterfaceStatisticsEntry 18 }
+
+gamDhcp6ClientControl OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientMibObjects 4 }
+
+gamDhcp6ClientControlInterface OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientControl 1 }
+
+gamDhcp6ClientControlInterfaceRestart OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientControlInterface 1 }
+
+gamDhcp6ClientControlInterfaceRestartIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the VLAN interface."
+    ::= { gamDhcp6ClientControlInterfaceRestart 1 }
+
+gamDhcp6ClientMibConformance OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientMib 2 }
+
+gamDhcp6ClientMibCompliances OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientMibConformance 1 }
+
+gamDhcp6ClientMibGroups OBJECT IDENTIFIER
+    ::= { gamDhcp6ClientMibConformance 2 }
+
+gamDhcp6ClientCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcp6ClientCapabilitiesMaxNumberOfInterfaces }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcp6ClientMibGroups 1 }
+
+gamDhcp6ClientConfigInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcp6ClientConfigInterfaceIfIndex,
+                  gamDhcp6ClientConfigInterfaceRapidCommit,
+                  gamDhcp6ClientConfigInterfaceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcp6ClientMibGroups 2 }
+
+gamDhcp6ClientConfigInterfaceTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamDhcp6ClientConfigInterfaceTableRowEditorIfIndex,
+                  gamDhcp6ClientConfigInterfaceTableRowEditorRapidCommit,
+                  gamDhcp6ClientConfigInterfaceTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcp6ClientMibGroups 3 }
+
+gamDhcp6ClientStatusInterfaceInformationTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcp6ClientStatusInterfaceInformationIfIndex,
+                  gamDhcp6ClientStatusInterfaceInformationAddress,
+                  gamDhcp6ClientStatusInterfaceInformationServerAddress,
+                  gamDhcp6ClientStatusInterfaceInformationDnsServerAddress,
+                  gamDhcp6ClientStatusInterfaceInformationPreferredLifetime,
+                  gamDhcp6ClientStatusInterfaceInformationValidLifetime,
+                  gamDhcp6ClientStatusInterfaceInformationT1,
+                  gamDhcp6ClientStatusInterfaceInformationT2 }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcp6ClientMibGroups 4 }
+
+gamDhcp6ClientStatusInterfaceStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcp6ClientStatusInterfaceStatisticsIfIndex,
+                  gamDhcp6ClientStatusInterfaceStatisticsTxSolicit,
+                  gamDhcp6ClientStatusInterfaceStatisticsTxRequest,
+                  gamDhcp6ClientStatusInterfaceStatisticsTxConfirm,
+                  gamDhcp6ClientStatusInterfaceStatisticsTxRenew,
+                  gamDhcp6ClientStatusInterfaceStatisticsTxRebind,
+                  gamDhcp6ClientStatusInterfaceStatisticsTxRelease,
+                  gamDhcp6ClientStatusInterfaceStatisticsTxDecline,
+                  gamDhcp6ClientStatusInterfaceStatisticsTxInfoRequest,
+                  gamDhcp6ClientStatusInterfaceStatisticsTxError,
+                  gamDhcp6ClientStatusInterfaceStatisticsTxDrop,
+                  gamDhcp6ClientStatusInterfaceStatisticsTxUnknown,
+                  gamDhcp6ClientStatusInterfaceStatisticsRxAdvertise,
+                  gamDhcp6ClientStatusInterfaceStatisticsRxReply,
+                  gamDhcp6ClientStatusInterfaceStatisticsRxReconfigure,
+                  gamDhcp6ClientStatusInterfaceStatisticsRxError,
+                  gamDhcp6ClientStatusInterfaceStatisticsRxDrop,
+                  gamDhcp6ClientStatusInterfaceStatisticsRxUnknown }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcp6ClientMibGroups 5 }
+
+gamDhcp6ClientControlInterfaceRestartInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcp6ClientControlInterfaceRestartIfIndex }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcp6ClientMibGroups 6 }
+
+gamDhcp6ClientMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamDhcp6ClientCapabilitiesInfoGroup,
+                       gamDhcp6ClientConfigInterfaceTableInfoGroup,
+                       gamDhcp6ClientConfigInterfaceTableRowEditorInfoGroup,
+                       gamDhcp6ClientStatusInterfaceInformationTableInfoGroup,
+                       gamDhcp6ClientStatusInterfaceStatisticsTableInfoGroup,
+                       gamDhcp6ClientControlInterfaceRestartInfoGroup }
+
+    ::= { gamDhcp6ClientMibCompliances 1 }
+
+END

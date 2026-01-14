@@ -1,0 +1,1211 @@
+-- *****************************************************************
+-- RFC2544-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-RFC2544-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    GAMVlanOrZero FROM GAM-TC
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamRfc2544Mib MODULE-IDENTITY
+    LAST-UPDATED "201711270000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the RFC2544 MIB"
+    REVISION    "201711270000Z"
+    DESCRIPTION
+        "Extend Rfc2544TestStatus"
+    REVISION    "201510200000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 110 }
+
+
+GAMRfc2544TestStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates the test status."
+    SYNTAX      INTEGER { inactive(0), executing(1), cancelling(2),
+                          cancelled(3), passed(4), failed(5),
+                          failing(6) }
+
+gamRfc2544MibObjects OBJECT IDENTIFIER
+    ::= { gamRfc2544Mib 1 }
+
+gamRfc2544Capabilities OBJECT IDENTIFIER
+    ::= { gamRfc2544MibObjects 1 }
+
+gamRfc2544CapabilitiesProfileCntMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of profiles that can be defined and saved to non-volatile
+         memory."
+    ::= { gamRfc2544Capabilities 1 }
+
+gamRfc2544CapabilitiesReportCntMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of reports that can be saved to non-volatile memory."
+    ::= { gamRfc2544Capabilities 2 }
+
+gamRfc2544CapabilitiesConcurrentTestMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of concurrently running tests."
+    ::= { gamRfc2544Capabilities 3 }
+
+gamRfc2544Config OBJECT IDENTIFIER
+    ::= { gamRfc2544MibObjects 2 }
+
+gamRfc2544ConfigProfile OBJECT IDENTIFIER
+    ::= { gamRfc2544Config 3 }
+
+gamRfc2544ConfigProfileTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMRfc2544ConfigProfileEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing RFC2544 profile entries."
+    ::= { gamRfc2544ConfigProfile 1 }
+
+gamRfc2544ConfigProfileEntry OBJECT-TYPE
+    SYNTAX      GAMRfc2544ConfigProfileEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamRfc2544ConfigProfileName }
+    ::= { gamRfc2544ConfigProfileTable 1 }
+
+GAMRfc2544ConfigProfileEntry ::= SEQUENCE {
+    gamRfc2544ConfigProfileName                GAMDisplayString,
+    gamRfc2544ConfigProfileDescription         GAMDisplayString,
+    gamRfc2544ConfigProfileDstOamAware         TruthValue,
+    gamRfc2544ConfigProfileVlanId              GAMVlanOrZero,
+    gamRfc2544ConfigProfileVlanPcp             Unsigned32,
+    gamRfc2544ConfigProfileVlanDei             GAMUnsigned8,
+    gamRfc2544ConfigProfileEgressInterface     GAMInterfaceIndex,
+    gamRfc2544ConfigProfileMegLevel            Unsigned32,
+    gamRfc2544ConfigProfileDmac                MacAddress,
+    gamRfc2544ConfigProfileFrameSize64         TruthValue,
+    gamRfc2544ConfigProfileFrameSize128        TruthValue,
+    gamRfc2544ConfigProfileFrameSize256        TruthValue,
+    gamRfc2544ConfigProfileFrameSize512        TruthValue,
+    gamRfc2544ConfigProfileFrameSize1024       TruthValue,
+    gamRfc2544ConfigProfileFrameSize1280       TruthValue,
+    gamRfc2544ConfigProfileFrameSize1518       TruthValue,
+    gamRfc2544ConfigProfileFrameSize2000       TruthValue,
+    gamRfc2544ConfigProfileFrameSize9600       TruthValue,
+    gamRfc2544ConfigProfileDwellTime           Unsigned32,
+    gamRfc2544ConfigProfileSequenceCheck       TruthValue,
+    gamRfc2544ConfigProfileTpEnable            TruthValue,
+    gamRfc2544ConfigProfileTpTrialDuration     Unsigned32,
+    gamRfc2544ConfigProfileTpRateMin           Unsigned32,
+    gamRfc2544ConfigProfileTpRateMax           Unsigned32,
+    gamRfc2544ConfigProfileTpRateStep          Unsigned32,
+    gamRfc2544ConfigProfileTpAllowedFrameLoss  Unsigned32,
+    gamRfc2544ConfigProfileLaEnable            TruthValue,
+    gamRfc2544ConfigProfileLaTrialDuration     Unsigned32,
+    gamRfc2544ConfigProfileLaDmInterval        Unsigned32,
+    gamRfc2544ConfigProfileLaAllowedFrameLoss  Unsigned32,
+    gamRfc2544ConfigProfileFlEnable            TruthValue,
+    gamRfc2544ConfigProfileFlTrialDuration     Unsigned32,
+    gamRfc2544ConfigProfileFlRateMin           Unsigned32,
+    gamRfc2544ConfigProfileFlRateMax           Unsigned32,
+    gamRfc2544ConfigProfileFlRateStep          Unsigned32,
+    gamRfc2544ConfigProfileBbEnable            TruthValue,
+    gamRfc2544ConfigProfileBbTrialDuration     Unsigned32,
+    gamRfc2544ConfigProfileBbTrialCnt          Unsigned32,
+    gamRfc2544ConfigProfileAction              GAMRowEditorState
+}
+
+gamRfc2544ConfigProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of the RFC2544 profile."
+    ::= { gamRfc2544ConfigProfileEntry 1 }
+
+gamRfc2544ConfigProfileDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The description of the RFC2544 profile."
+    ::= { gamRfc2544ConfigProfileEntry 2 }
+
+gamRfc2544ConfigProfileDstOamAware OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "TRUE if DST is OAM aware."
+    ::= { gamRfc2544ConfigProfileEntry 3 }
+
+gamRfc2544ConfigProfileVlanId OBJECT-TYPE
+    SYNTAX      GAMVlanOrZero
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "0 (zero) means Port Down-MEP and anything else means VLAN Down-MEP."
+    ::= { gamRfc2544ConfigProfileEntry 4 }
+
+gamRfc2544ConfigProfileVlanPcp OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The PCP value used in VLAN Down-MEPs."
+    ::= { gamRfc2544ConfigProfileEntry 5 }
+
+gamRfc2544ConfigProfileVlanDei OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..1)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The DEI value used in VLAN Down-MEPs."
+    ::= { gamRfc2544ConfigProfileEntry 6 }
+
+gamRfc2544ConfigProfileEgressInterface OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The interface on which to generate traffic."
+    ::= { gamRfc2544ConfigProfileEntry 7 }
+
+gamRfc2544ConfigProfileMegLevel OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The MEG level (0 - 7) used in the generated OAM frames."
+    ::= { gamRfc2544ConfigProfileEntry 8 }
+
+gamRfc2544ConfigProfileDmac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address used in the generated frames."
+    ::= { gamRfc2544ConfigProfileEntry 9 }
+
+gamRfc2544ConfigProfileFrameSize64 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 64-byte frames."
+    ::= { gamRfc2544ConfigProfileEntry 10 }
+
+gamRfc2544ConfigProfileFrameSize128 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 128-byte frames."
+    ::= { gamRfc2544ConfigProfileEntry 11 }
+
+gamRfc2544ConfigProfileFrameSize256 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 256-byte frames."
+    ::= { gamRfc2544ConfigProfileEntry 12 }
+
+gamRfc2544ConfigProfileFrameSize512 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 512-byte frames."
+    ::= { gamRfc2544ConfigProfileEntry 13 }
+
+gamRfc2544ConfigProfileFrameSize1024 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 1024-byte frames."
+    ::= { gamRfc2544ConfigProfileEntry 14 }
+
+gamRfc2544ConfigProfileFrameSize1280 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 1280-byte frames."
+    ::= { gamRfc2544ConfigProfileEntry 15 }
+
+gamRfc2544ConfigProfileFrameSize1518 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 1518-byte frames."
+    ::= { gamRfc2544ConfigProfileEntry 16 }
+
+gamRfc2544ConfigProfileFrameSize2000 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 2000-byte frames."
+    ::= { gamRfc2544ConfigProfileEntry 17 }
+
+gamRfc2544ConfigProfileFrameSize9600 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 9600-byte frames."
+    ::= { gamRfc2544ConfigProfileEntry 18 }
+
+gamRfc2544ConfigProfileDwellTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The time (in milliseconds) to wait after each trial for the system to
+         settle before acquiring counters and other statistics from hardware.
+         
+         The dwell time must be divisible by 1000."
+    ::= { gamRfc2544ConfigProfileEntry 30 }
+
+gamRfc2544ConfigProfileSequenceCheck OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When TRUE, generated OAM frames are sequence numbered, and looped
+         frames are checked for correct order upon reception."
+    ::= { gamRfc2544ConfigProfileEntry 31 }
+
+gamRfc2544ConfigProfileTpEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether the throughput test is enabled or not."
+    ::= { gamRfc2544ConfigProfileEntry 100 }
+
+gamRfc2544ConfigProfileTpTrialDuration OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time - in seconds - to run one trial."
+    ::= { gamRfc2544ConfigProfileEntry 101 }
+
+gamRfc2544ConfigProfileTpRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Minimum rate measured in permille of the line rate."
+    ::= { gamRfc2544ConfigProfileEntry 102 }
+
+gamRfc2544ConfigProfileTpRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum rate measured in permille of the line rate."
+    ::= { gamRfc2544ConfigProfileEntry 103 }
+
+gamRfc2544ConfigProfileTpRateStep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The step to change rate between trials, measured in permille of the
+         line rate."
+    ::= { gamRfc2544ConfigProfileEntry 104 }
+
+gamRfc2544ConfigProfileTpAllowedFrameLoss OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Allowable frame loss (in permille) for the test to be considered
+         passed."
+    ::= { gamRfc2544ConfigProfileEntry 105 }
+
+gamRfc2544ConfigProfileLaEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether the latency test is enabled or not."
+    ::= { gamRfc2544ConfigProfileEntry 200 }
+
+gamRfc2544ConfigProfileLaTrialDuration OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time - in seconds - to run one trial."
+    ::= { gamRfc2544ConfigProfileEntry 201 }
+
+gamRfc2544ConfigProfileLaDmInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Delay measurement interval, that is, the time (in milliseconds) between
+         transmission of a Y.1731 1DM/DMM test frame.
+         
+         The interval must be divisible by 1000.."
+    ::= { gamRfc2544ConfigProfileEntry 202 }
+
+gamRfc2544ConfigProfileLaAllowedFrameLoss OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Allowable frame loss (in permille) for the test to be considered
+         passed."
+    ::= { gamRfc2544ConfigProfileEntry 203 }
+
+gamRfc2544ConfigProfileFlEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether the frame loss test is enabled or not."
+    ::= { gamRfc2544ConfigProfileEntry 300 }
+
+gamRfc2544ConfigProfileFlTrialDuration OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time - in seconds - to run one trial."
+    ::= { gamRfc2544ConfigProfileEntry 301 }
+
+gamRfc2544ConfigProfileFlRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Minimum rate measured in permille of the line rate."
+    ::= { gamRfc2544ConfigProfileEntry 302 }
+
+gamRfc2544ConfigProfileFlRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum rate measured in permille of the line rate."
+    ::= { gamRfc2544ConfigProfileEntry 303 }
+
+gamRfc2544ConfigProfileFlRateStep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The step to change rate between trials, measured in permille of the
+         line rate."
+    ::= { gamRfc2544ConfigProfileEntry 304 }
+
+gamRfc2544ConfigProfileBbEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether the frame loss test is enabled or not."
+    ::= { gamRfc2544ConfigProfileEntry 400 }
+
+gamRfc2544ConfigProfileBbTrialDuration OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time - in milliseconds - to run one trial."
+    ::= { gamRfc2544ConfigProfileEntry 401 }
+
+gamRfc2544ConfigProfileBbTrialCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of times the trial will be executed."
+    ::= { gamRfc2544ConfigProfileEntry 402 }
+
+gamRfc2544ConfigProfileAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamRfc2544ConfigProfileEntry 10000 }
+
+gamRfc2544ConfigProfileTableRowEditor OBJECT IDENTIFIER
+    ::= { gamRfc2544ConfigProfile 2 }
+
+gamRfc2544ConfigProfileTableRowEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the RFC2544 profile."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 1 }
+
+gamRfc2544ConfigProfileTableRowEditorDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The description of the RFC2544 profile."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 2 }
+
+gamRfc2544ConfigProfileTableRowEditorDstOamAware OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "TRUE if DST is OAM aware."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 3 }
+
+gamRfc2544ConfigProfileTableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      GAMVlanOrZero
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "0 (zero) means Port Down-MEP and anything else means VLAN Down-MEP."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 4 }
+
+gamRfc2544ConfigProfileTableRowEditorVlanPcp OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The PCP value used in VLAN Down-MEPs."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 5 }
+
+gamRfc2544ConfigProfileTableRowEditorVlanDei OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..1)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The DEI value used in VLAN Down-MEPs."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 6 }
+
+gamRfc2544ConfigProfileTableRowEditorEgressInterface OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The interface on which to generate traffic."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 7 }
+
+gamRfc2544ConfigProfileTableRowEditorMegLevel OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The MEG level (0 - 7) used in the generated OAM frames."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 8 }
+
+gamRfc2544ConfigProfileTableRowEditorDmac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address used in the generated frames."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 9 }
+
+gamRfc2544ConfigProfileTableRowEditorFrameSize64 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 64-byte frames."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 10 }
+
+gamRfc2544ConfigProfileTableRowEditorFrameSize128 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 128-byte frames."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 11 }
+
+gamRfc2544ConfigProfileTableRowEditorFrameSize256 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 256-byte frames."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 12 }
+
+gamRfc2544ConfigProfileTableRowEditorFrameSize512 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 512-byte frames."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 13 }
+
+gamRfc2544ConfigProfileTableRowEditorFrameSize1024 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 1024-byte frames."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 14 }
+
+gamRfc2544ConfigProfileTableRowEditorFrameSize1280 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 1280-byte frames."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 15 }
+
+gamRfc2544ConfigProfileTableRowEditorFrameSize1518 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 1518-byte frames."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 16 }
+
+gamRfc2544ConfigProfileTableRowEditorFrameSize2000 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 2000-byte frames."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 17 }
+
+gamRfc2544ConfigProfileTableRowEditorFrameSize9600 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable test with 9600-byte frames."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 18 }
+
+gamRfc2544ConfigProfileTableRowEditorDwellTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The time (in milliseconds) to wait after each trial for the system to
+         settle before acquiring counters and other statistics from hardware.
+         
+         The dwell time must be divisible by 1000."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 30 }
+
+gamRfc2544ConfigProfileTableRowEditorSequenceCheck OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When TRUE, generated OAM frames are sequence numbered, and looped
+         frames are checked for correct order upon reception."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 31 }
+
+gamRfc2544ConfigProfileTableRowEditorTpEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether the throughput test is enabled or not."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 100 }
+
+gamRfc2544ConfigProfileTableRowEditorTpTrialDuration OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time - in seconds - to run one trial."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 101 }
+
+gamRfc2544ConfigProfileTableRowEditorTpRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Minimum rate measured in permille of the line rate."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 102 }
+
+gamRfc2544ConfigProfileTableRowEditorTpRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum rate measured in permille of the line rate."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 103 }
+
+gamRfc2544ConfigProfileTableRowEditorTpRateStep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The step to change rate between trials, measured in permille of the
+         line rate."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 104 }
+
+gamRfc2544ConfigProfileTableRowEditorTpAllowedFrameLoss OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Allowable frame loss (in permille) for the test to be considered
+         passed."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 105 }
+
+gamRfc2544ConfigProfileTableRowEditorLaEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether the latency test is enabled or not."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 200 }
+
+gamRfc2544ConfigProfileTableRowEditorLaTrialDuration OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time - in seconds - to run one trial."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 201 }
+
+gamRfc2544ConfigProfileTableRowEditorLaDmInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Delay measurement interval, that is, the time (in milliseconds) between
+         transmission of a Y.1731 1DM/DMM test frame.
+         
+         The interval must be divisible by 1000.."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 202 }
+
+gamRfc2544ConfigProfileTableRowEditorLaAllowedFrameLoss OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Allowable frame loss (in permille) for the test to be considered
+         passed."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 203 }
+
+gamRfc2544ConfigProfileTableRowEditorFlEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether the frame loss test is enabled or not."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 300 }
+
+gamRfc2544ConfigProfileTableRowEditorFlTrialDuration OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time - in seconds - to run one trial."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 301 }
+
+gamRfc2544ConfigProfileTableRowEditorFlRateMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Minimum rate measured in permille of the line rate."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 302 }
+
+gamRfc2544ConfigProfileTableRowEditorFlRateMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum rate measured in permille of the line rate."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 303 }
+
+gamRfc2544ConfigProfileTableRowEditorFlRateStep OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The step to change rate between trials, measured in permille of the
+         line rate."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 304 }
+
+gamRfc2544ConfigProfileTableRowEditorBbEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether the frame loss test is enabled or not."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 400 }
+
+gamRfc2544ConfigProfileTableRowEditorBbTrialDuration OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time - in milliseconds - to run one trial."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 401 }
+
+gamRfc2544ConfigProfileTableRowEditorBbTrialCnt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of times the trial will be executed."
+    ::= { gamRfc2544ConfigProfileTableRowEditor 402 }
+
+gamRfc2544ConfigProfileTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamRfc2544ConfigProfileTableRowEditor 10000 }
+
+gamRfc2544Status OBJECT IDENTIFIER
+    ::= { gamRfc2544MibObjects 3 }
+
+gamRfc2544StatusReport OBJECT IDENTIFIER
+    ::= { gamRfc2544Status 3 }
+
+gamRfc2544StatusReportTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMRfc2544StatusReportEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains report information and is ordered by report name."
+    ::= { gamRfc2544StatusReport 1 }
+
+gamRfc2544StatusReportEntry OBJECT-TYPE
+    SYNTAX      GAMRfc2544StatusReportEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamRfc2544StatusReportName }
+    ::= { gamRfc2544StatusReportTable 1 }
+
+GAMRfc2544StatusReportEntry ::= SEQUENCE {
+    gamRfc2544StatusReportName          GAMDisplayString,
+    gamRfc2544StatusReportDescription   GAMDisplayString,
+    gamRfc2544StatusReportCreationTime  GAMDisplayString,
+    gamRfc2544StatusReportStatus        GAMRfc2544TestStatus,
+    gamRfc2544StatusReportPath          GAMDisplayString
+}
+
+gamRfc2544StatusReportName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of the RFC2544 test report."
+    ::= { gamRfc2544StatusReportEntry 1 }
+
+gamRfc2544StatusReportDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The description of the RFC2544 test report."
+    ::= { gamRfc2544StatusReportEntry 2 }
+
+gamRfc2544StatusReportCreationTime OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..25))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Time of creation of this report."
+    ::= { gamRfc2544StatusReportEntry 3 }
+
+gamRfc2544StatusReportStatus OBJECT-TYPE
+    SYNTAX      GAMRfc2544TestStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Execution status of this report."
+    ::= { gamRfc2544StatusReportEntry 4 }
+
+gamRfc2544StatusReportPath OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the file system location to retrieve this report."
+    ::= { gamRfc2544StatusReportEntry 5 }
+
+gamRfc2544Control OBJECT IDENTIFIER
+    ::= { gamRfc2544MibObjects 4 }
+
+gamRfc2544ControlReport OBJECT IDENTIFIER
+    ::= { gamRfc2544Control 3 }
+
+gamRfc2544ControlReportDelete OBJECT IDENTIFIER
+    ::= { gamRfc2544ControlReport 1 }
+
+gamRfc2544ControlReportDeleteName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the RFC2544 test report to delete."
+    ::= { gamRfc2544ControlReportDelete 1 }
+
+gamRfc2544ControlTest OBJECT IDENTIFIER
+    ::= { gamRfc2544Control 4 }
+
+gamRfc2544ControlTestTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMRfc2544ControlTestEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing RFC2544 tests. Each entry represents a
+         running test."
+    ::= { gamRfc2544ControlTest 1 }
+
+gamRfc2544ControlTestEntry OBJECT-TYPE
+    SYNTAX      GAMRfc2544ControlTestEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters that identifies the test.
+         
+         Start a new test by using the row editor to add a new entry.
+         
+         Stop a running test by setting the action object in an entry to 1.
+         
+         The other objects in an entry cannot be modified."
+    INDEX       { gamRfc2544ControlTestName }
+    ::= { gamRfc2544ControlTestTable 1 }
+
+GAMRfc2544ControlTestEntry ::= SEQUENCE {
+    gamRfc2544ControlTestName         GAMDisplayString,
+    gamRfc2544ControlTestDescription  GAMDisplayString,
+    gamRfc2544ControlTestProfileName  GAMDisplayString,
+    gamRfc2544ControlTestDmac         MacAddress,
+    gamRfc2544ControlTestAction       GAMRowEditorState
+}
+
+gamRfc2544ControlTestName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of the RFC2544 test report."
+    ::= { gamRfc2544ControlTestEntry 1 }
+
+gamRfc2544ControlTestDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The description of the RFC2544 test report."
+    ::= { gamRfc2544ControlTestEntry 2 }
+
+gamRfc2544ControlTestProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the RFC2544 profile to use when performing the test."
+    ::= { gamRfc2544ControlTestEntry 3 }
+
+gamRfc2544ControlTestDmac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address found in the profile is used as DMAC in the
+         generated frames, unless overridden with this field.
+         
+         In order to override, the Dmac must be a non-zero unicast MAC address.
+         
+         In order not to override, set the Dmac to all-zeros."
+    ::= { gamRfc2544ControlTestEntry 4 }
+
+gamRfc2544ControlTestAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamRfc2544ControlTestEntry 10000 }
+
+gamRfc2544ControlTestTableRowEditor OBJECT IDENTIFIER
+    ::= { gamRfc2544ControlTest 2 }
+
+gamRfc2544ControlTestTableRowEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the RFC2544 test report."
+    ::= { gamRfc2544ControlTestTableRowEditor 1 }
+
+gamRfc2544ControlTestTableRowEditorDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The description of the RFC2544 test report."
+    ::= { gamRfc2544ControlTestTableRowEditor 2 }
+
+gamRfc2544ControlTestTableRowEditorProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the RFC2544 profile to use when performing the test."
+    ::= { gamRfc2544ControlTestTableRowEditor 3 }
+
+gamRfc2544ControlTestTableRowEditorDmac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination MAC address found in the profile is used as DMAC in the
+         generated frames, unless overridden with this field.
+         
+         In order to override, the Dmac must be a non-zero unicast MAC address.
+         
+         In order not to override, set the Dmac to all-zeros."
+    ::= { gamRfc2544ControlTestTableRowEditor 4 }
+
+gamRfc2544ControlTestTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamRfc2544ControlTestTableRowEditor 10000 }
+
+gamRfc2544ControlTestStart OBJECT IDENTIFIER
+    ::= { gamRfc2544ControlTest 4 }
+
+gamRfc2544ControlTestStartName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the RFC2544 test to start."
+    ::= { gamRfc2544ControlTestStart 1 }
+
+gamRfc2544ControlTestStop OBJECT IDENTIFIER
+    ::= { gamRfc2544ControlTest 5 }
+
+gamRfc2544ControlTestStopName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the RFC2544 test to stop."
+    ::= { gamRfc2544ControlTestStop 1 }
+
+gamRfc2544MibConformance OBJECT IDENTIFIER
+    ::= { gamRfc2544Mib 2 }
+
+gamRfc2544MibCompliances OBJECT IDENTIFIER
+    ::= { gamRfc2544MibConformance 1 }
+
+gamRfc2544MibGroups OBJECT IDENTIFIER
+    ::= { gamRfc2544MibConformance 2 }
+
+gamRfc2544CapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamRfc2544CapabilitiesProfileCntMax,
+                  gamRfc2544CapabilitiesReportCntMax,
+                  gamRfc2544CapabilitiesConcurrentTestMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamRfc2544MibGroups 1 }
+
+gamRfc2544ConfigProfileTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamRfc2544ConfigProfileName,
+                  gamRfc2544ConfigProfileDescription,
+                  gamRfc2544ConfigProfileDstOamAware,
+                  gamRfc2544ConfigProfileVlanId,
+                  gamRfc2544ConfigProfileVlanPcp,
+                  gamRfc2544ConfigProfileVlanDei,
+                  gamRfc2544ConfigProfileEgressInterface,
+                  gamRfc2544ConfigProfileMegLevel,
+                  gamRfc2544ConfigProfileDmac,
+                  gamRfc2544ConfigProfileFrameSize64,
+                  gamRfc2544ConfigProfileFrameSize128,
+                  gamRfc2544ConfigProfileFrameSize256,
+                  gamRfc2544ConfigProfileFrameSize512,
+                  gamRfc2544ConfigProfileFrameSize1024,
+                  gamRfc2544ConfigProfileFrameSize1280,
+                  gamRfc2544ConfigProfileFrameSize1518,
+                  gamRfc2544ConfigProfileFrameSize2000,
+                  gamRfc2544ConfigProfileFrameSize9600,
+                  gamRfc2544ConfigProfileDwellTime,
+                  gamRfc2544ConfigProfileSequenceCheck,
+                  gamRfc2544ConfigProfileTpEnable,
+                  gamRfc2544ConfigProfileTpTrialDuration,
+                  gamRfc2544ConfigProfileTpRateMin,
+                  gamRfc2544ConfigProfileTpRateMax,
+                  gamRfc2544ConfigProfileTpRateStep,
+                  gamRfc2544ConfigProfileTpAllowedFrameLoss,
+                  gamRfc2544ConfigProfileLaEnable,
+                  gamRfc2544ConfigProfileLaTrialDuration,
+                  gamRfc2544ConfigProfileLaDmInterval,
+                  gamRfc2544ConfigProfileLaAllowedFrameLoss,
+                  gamRfc2544ConfigProfileFlEnable,
+                  gamRfc2544ConfigProfileFlTrialDuration,
+                  gamRfc2544ConfigProfileFlRateMin,
+                  gamRfc2544ConfigProfileFlRateMax,
+                  gamRfc2544ConfigProfileFlRateStep,
+                  gamRfc2544ConfigProfileBbEnable,
+                  gamRfc2544ConfigProfileBbTrialDuration,
+                  gamRfc2544ConfigProfileBbTrialCnt,
+                  gamRfc2544ConfigProfileAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamRfc2544MibGroups 2 }
+
+gamRfc2544ConfigProfileTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamRfc2544ConfigProfileTableRowEditorName,
+                  gamRfc2544ConfigProfileTableRowEditorDescription,
+                  gamRfc2544ConfigProfileTableRowEditorDstOamAware,
+                  gamRfc2544ConfigProfileTableRowEditorVlanId,
+                  gamRfc2544ConfigProfileTableRowEditorVlanPcp,
+                  gamRfc2544ConfigProfileTableRowEditorVlanDei,
+                  gamRfc2544ConfigProfileTableRowEditorEgressInterface,
+                  gamRfc2544ConfigProfileTableRowEditorMegLevel,
+                  gamRfc2544ConfigProfileTableRowEditorDmac,
+                  gamRfc2544ConfigProfileTableRowEditorFrameSize64,
+                  gamRfc2544ConfigProfileTableRowEditorFrameSize128,
+                  gamRfc2544ConfigProfileTableRowEditorFrameSize256,
+                  gamRfc2544ConfigProfileTableRowEditorFrameSize512,
+                  gamRfc2544ConfigProfileTableRowEditorFrameSize1024,
+                  gamRfc2544ConfigProfileTableRowEditorFrameSize1280,
+                  gamRfc2544ConfigProfileTableRowEditorFrameSize1518,
+                  gamRfc2544ConfigProfileTableRowEditorFrameSize2000,
+                  gamRfc2544ConfigProfileTableRowEditorFrameSize9600,
+                  gamRfc2544ConfigProfileTableRowEditorDwellTime,
+                  gamRfc2544ConfigProfileTableRowEditorSequenceCheck,
+                  gamRfc2544ConfigProfileTableRowEditorTpEnable,
+                  gamRfc2544ConfigProfileTableRowEditorTpTrialDuration,
+                  gamRfc2544ConfigProfileTableRowEditorTpRateMin,
+                  gamRfc2544ConfigProfileTableRowEditorTpRateMax,
+                  gamRfc2544ConfigProfileTableRowEditorTpRateStep,
+                  gamRfc2544ConfigProfileTableRowEditorTpAllowedFrameLoss,
+                  gamRfc2544ConfigProfileTableRowEditorLaEnable,
+                  gamRfc2544ConfigProfileTableRowEditorLaTrialDuration,
+                  gamRfc2544ConfigProfileTableRowEditorLaDmInterval,
+                  gamRfc2544ConfigProfileTableRowEditorLaAllowedFrameLoss,
+                  gamRfc2544ConfigProfileTableRowEditorFlEnable,
+                  gamRfc2544ConfigProfileTableRowEditorFlTrialDuration,
+                  gamRfc2544ConfigProfileTableRowEditorFlRateMin,
+                  gamRfc2544ConfigProfileTableRowEditorFlRateMax,
+                  gamRfc2544ConfigProfileTableRowEditorFlRateStep,
+                  gamRfc2544ConfigProfileTableRowEditorBbEnable,
+                  gamRfc2544ConfigProfileTableRowEditorBbTrialDuration,
+                  gamRfc2544ConfigProfileTableRowEditorBbTrialCnt,
+                  gamRfc2544ConfigProfileTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamRfc2544MibGroups 3 }
+
+gamRfc2544StatusReportTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamRfc2544StatusReportName,
+                  gamRfc2544StatusReportDescription,
+                  gamRfc2544StatusReportCreationTime,
+                  gamRfc2544StatusReportStatus,
+                  gamRfc2544StatusReportPath }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamRfc2544MibGroups 4 }
+
+gamRfc2544ControlReportDeleteInfoGroup OBJECT-GROUP
+    OBJECTS     { gamRfc2544ControlReportDeleteName }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamRfc2544MibGroups 5 }
+
+gamRfc2544ControlTestTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamRfc2544ControlTestName,
+                  gamRfc2544ControlTestDescription,
+                  gamRfc2544ControlTestProfileName,
+                  gamRfc2544ControlTestDmac,
+                  gamRfc2544ControlTestAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamRfc2544MibGroups 6 }
+
+gamRfc2544ControlTestTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamRfc2544ControlTestTableRowEditorName,
+                  gamRfc2544ControlTestTableRowEditorDescription,
+                  gamRfc2544ControlTestTableRowEditorProfileName,
+                  gamRfc2544ControlTestTableRowEditorDmac,
+                  gamRfc2544ControlTestTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamRfc2544MibGroups 7 }
+
+gamRfc2544ControlTestStartInfoGroup OBJECT-GROUP
+    OBJECTS     { gamRfc2544ControlTestStartName }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamRfc2544MibGroups 8 }
+
+gamRfc2544ControlTestStopInfoGroup OBJECT-GROUP
+    OBJECTS     { gamRfc2544ControlTestStopName }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamRfc2544MibGroups 9 }
+
+gamRfc2544MibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamRfc2544CapabilitiesInfoGroup,
+                       gamRfc2544ConfigProfileTableInfoGroup,
+                       gamRfc2544ConfigProfileTableRowEditorInfoGroup,
+                       gamRfc2544StatusReportTableInfoGroup,
+                       gamRfc2544ControlReportDeleteInfoGroup,
+                       gamRfc2544ControlTestTableInfoGroup,
+                       gamRfc2544ControlTestTableRowEditorInfoGroup,
+                       gamRfc2544ControlTestStartInfoGroup,
+                       gamRfc2544ControlTestStopInfoGroup }
+
+    ::= { gamRfc2544MibCompliances 1 }
+
+END

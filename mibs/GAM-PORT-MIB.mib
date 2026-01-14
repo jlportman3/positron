@@ -1,0 +1,1248 @@
+-- *****************************************************************
+-- PORT-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-PORT-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMPortStatusSpeed FROM GAM-TC
+    GAMRfc5517Mode FROM GAM-TC
+    GAMSfpTransceiver FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    Counter64 FROM SNMPv2-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamPortMib MODULE-IDENTITY
+    LAST-UPDATED "201711270000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the PORT MIB"
+    REVISION    "201711270000Z"
+    DESCRIPTION
+        "Changed PortConfigAdvertiseDisabled to Unsigned32"
+    REVISION    "201701270000Z"
+    DESCRIPTION
+        "Added 802.3br statistics"
+    REVISION    "201611280000Z"
+    DESCRIPTION
+        "Add 2.5G auto-negotiate capability"
+    REVISION    "201507070000Z"
+    DESCRIPTION
+        "Port speed is moved into the TC MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 11 }
+
+
+GAMPortFc ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration controls the interface flow control."
+    SYNTAX      INTEGER { off(0), on(1) }
+
+GAMPortMedia ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration controls the interface media type."
+    SYNTAX      INTEGER { rj45(0), sfp(1), dual(2) }
+
+GAMPortSpeed ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration controls the interface speed. E.g force10ModeFdx means
+         force 10Mbs full duplex."
+    SYNTAX      INTEGER { force10ModeFdx(0), force10ModeHdx(1),
+                          force100ModeFdx(2), force100ModeHdx(3),
+                          force1GModeFdx(4), autoNegMode(5),
+                          force2G5ModeFdx(6), force5GModeFdx(7),
+                          force10GModeFdx(8), force12GModeFdx(9) }
+
+gamPortMibObjects OBJECT IDENTIFIER
+    ::= { gamPortMib 1 }
+
+gamPortConfig OBJECT IDENTIFIER
+    ::= { gamPortMibObjects 2 }
+
+gamPortConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPortConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of the port interface parameters"
+    ::= { gamPortConfig 1 }
+
+gamPortConfigEntry OBJECT-TYPE
+    SYNTAX      GAMPortConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port interface has a set of parameters"
+    INDEX       { gamPortConfigIfIndex }
+    ::= { gamPortConfigTable 1 }
+
+GAMPortConfigEntry ::= SEQUENCE {
+    gamPortConfigIfIndex            GAMInterfaceIndex,
+    gamPortConfigShutdown           TruthValue,
+    gamPortConfigSpeed              GAMPortSpeed,
+    gamPortConfigAdvertiseDisabled  Unsigned32,
+    gamPortConfigMediaType          GAMPortMedia,
+    gamPortConfigFC                 GAMPortFc,
+    gamPortConfigMTU                Unsigned32,
+    gamPortConfigExcessiveRestart   TruthValue,
+    gamPortConfigPFC                GAMUnsigned8,
+    gamPortConfigFrameLengthCheck   TruthValue,
+    gamPortConfigRfc5517Mode        GAMRfc5517Mode
+}
+
+gamPortConfigIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamPortConfigEntry 1 }
+
+gamPortConfigShutdown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether interface is shutdown or powered up. Set to TRUE in
+         order to power down the interface."
+    ::= { gamPortConfigEntry 2 }
+
+gamPortConfigSpeed OBJECT-TYPE
+    SYNTAX      GAMPortSpeed
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls the port speed and duplex."
+    ::= { gamPortConfigEntry 3 }
+
+gamPortConfigAdvertiseDisabled OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "In auto mode, bitmask that allows features not to be advertised.
+         
+         Bit 0: Disable half duplex advertising.
+         
+         Bit 1: Disable full duplex advertising.
+         
+         Bit 3: Disable 2.5G advertising.
+         
+         Bit 4: Disable 1G advertising.
+         
+         Bit 6: Disable 100M advertising.
+         
+         Bit 7: Disable 10M advertising.
+         
+         Bit 8: Disable 5G advertising.
+         
+         Bit 9: Disable 10G advertising.
+         
+         When not in auto mode, the value shall be zero."
+    ::= { gamPortConfigEntry 4 }
+
+gamPortConfigMediaType OBJECT-TYPE
+    SYNTAX      GAMPortMedia
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls the port media type."
+    ::= { gamPortConfigEntry 5 }
+
+gamPortConfigFC OBJECT-TYPE
+    SYNTAX      GAMPortFc
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls the port flow control mode."
+    ::= { gamPortConfigEntry 6 }
+
+gamPortConfigMTU OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls the port's Maximum Transmission Unit."
+    ::= { gamPortConfigEntry 7 }
+
+gamPortConfigExcessiveRestart OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "TRUE to restart half-duplex back-off algorithm after 16 collisions.
+         FALSE to discard frame after 16 collisions"
+    ::= { gamPortConfigEntry 8 }
+
+gamPortConfigPFC OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "802.1Qbb Priority Flow Control bitmask, one bit for each prioritet.E.g.
+         0x01 = prio 0, 0x80 = prio 7, 0xFF = prio 0-7"
+    ::= { gamPortConfigEntry 9 }
+
+gamPortConfigFrameLengthCheck OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "TRUE to enforce 802.3 frame length check (from Ethertype field). If
+         enabled frames with length that doesn't match the frame length field
+         will be dropped."
+    ::= { gamPortConfigEntry 10 }
+
+gamPortConfigRfc5517Mode OBJECT-TYPE
+    SYNTAX      GAMRfc5517Mode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Port RFC5517 mode. Applicable to 10G and MGMT ports only. Valid values
+         are 'isolated', 'uplink', 'stacking' and 'stacking-isolated' on 10G
+         port, and 'isolated' and 'uplink' on MGMT port."
+    ::= { gamPortConfigEntry 11 }
+
+gamPortStatus OBJECT IDENTIFIER
+    ::= { gamPortMibObjects 3 }
+
+gamPortStatusInformationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPortStatusInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents the status of the ports"
+    ::= { gamPortStatus 1 }
+
+gamPortStatusInformationEntry OBJECT-TYPE
+    SYNTAX      GAMPortStatusInformationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port interface has a set of status parameters"
+    INDEX       { gamPortStatusInformationIfIndex }
+    ::= { gamPortStatusInformationTable 1 }
+
+GAMPortStatusInformationEntry ::= SEQUENCE {
+    gamPortStatusInformationIfIndex        GAMInterfaceIndex,
+    gamPortStatusInformationLink           TruthValue,
+    gamPortStatusInformationFdx            TruthValue,
+    gamPortStatusInformationFiber          TruthValue,
+    gamPortStatusInformationSpeed          GAMPortStatusSpeed,
+    gamPortStatusInformationSFPType        GAMSfpTransceiver,
+    gamPortStatusInformationSFPVendorName  GAMDisplayString,
+    gamPortStatusInformationSFPVendorPN    GAMDisplayString,
+    gamPortStatusInformationSFPVendorRev   GAMDisplayString,
+    gamPortStatusInformationSFPVendorSN    GAMDisplayString
+}
+
+gamPortStatusInformationIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamPortStatusInformationEntry 1 }
+
+gamPortStatusInformationLink OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface has link."
+    ::= { gamPortStatusInformationEntry 2 }
+
+gamPortStatusInformationFdx OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface is running in full duplex."
+    ::= { gamPortStatusInformationEntry 3 }
+
+gamPortStatusInformationFiber OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows whether interface is a fiber link (fiber SFP or cu SFP)."
+    ::= { gamPortStatusInformationEntry 4 }
+
+gamPortStatusInformationSpeed OBJECT-TYPE
+    SYNTAX      GAMPortStatusSpeed
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the current interface speed."
+    ::= { gamPortStatusInformationEntry 5 }
+
+gamPortStatusInformationSFPType OBJECT-TYPE
+    SYNTAX      GAMSfpTransceiver
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the current interface SFP type."
+    ::= { gamPortStatusInformationEntry 6 }
+
+gamPortStatusInformationSFPVendorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..19))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the SFP vendor name."
+    ::= { gamPortStatusInformationEntry 7 }
+
+gamPortStatusInformationSFPVendorPN OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..19))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the SFP vendor Product Number."
+    ::= { gamPortStatusInformationEntry 8 }
+
+gamPortStatusInformationSFPVendorRev OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..5))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the SFP vendor Revision."
+    ::= { gamPortStatusInformationEntry 9 }
+
+gamPortStatusInformationSFPVendorSN OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..19))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the SFP vendor Serial Number."
+    ::= { gamPortStatusInformationEntry 10 }
+
+gamPortStatusVeriPhyResult OBJECT IDENTIFIER
+    ::= { gamPortStatus 3 }
+
+gamPortControl OBJECT IDENTIFIER
+    ::= { gamPortMibObjects 4 }
+
+gamPortControlStatisticsClear OBJECT IDENTIFIER
+    ::= { gamPortControl 1 }
+
+gamPortControlStatisticsClearTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPortControlStatisticsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table to clear port Interface statistics"
+    ::= { gamPortControlStatisticsClear 1 }
+
+gamPortControlStatisticsClearEntry OBJECT-TYPE
+    SYNTAX      GAMPortControlStatisticsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port has a set of control parameters"
+    INDEX       { gamPortControlStatisticsClearIfIndex }
+    ::= { gamPortControlStatisticsClearTable 1 }
+
+GAMPortControlStatisticsClearEntry ::= SEQUENCE {
+    gamPortControlStatisticsClearIfIndex          GAMInterfaceIndex,
+    gamPortControlStatisticsClearStatisticsClear  TruthValue
+}
+
+gamPortControlStatisticsClearIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamPortControlStatisticsClearEntry 1 }
+
+gamPortControlStatisticsClearStatisticsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to clear the statistics of an interface."
+    ::= { gamPortControlStatisticsClearEntry 2 }
+
+gamPortStatistics OBJECT IDENTIFIER
+    ::= { gamPortMibObjects 5 }
+
+gamPortStatisticsRmonStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPortStatisticsRmonStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents the port interface RMON statistics counters"
+    ::= { gamPortStatistics 1 }
+
+gamPortStatisticsRmonStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMPortStatisticsRmonStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port interface has a set of statistics counters"
+    INDEX       { gamPortStatisticsRmonStatisticsIfIndex }
+    ::= { gamPortStatisticsRmonStatisticsTable 1 }
+
+GAMPortStatisticsRmonStatisticsEntry ::= SEQUENCE {
+    gamPortStatisticsRmonStatisticsIfIndex            GAMInterfaceIndex,
+    gamPortStatisticsRmonStatisticsRxDropEvents       Counter64,
+    gamPortStatisticsRmonStatisticsRxOctets           Counter64,
+    gamPortStatisticsRmonStatisticsRxPkts             Counter64,
+    gamPortStatisticsRmonStatisticsRxBroadcastPkts    Counter64,
+    gamPortStatisticsRmonStatisticsRxMulticastPkts    Counter64,
+    gamPortStatisticsRmonStatisticsRxCrcAlignErrPkts  Counter64,
+    gamPortStatisticsRmonStatisticsRxUndersizePkts    Counter64,
+    gamPortStatisticsRmonStatisticsRxOversizePkts     Counter64,
+    gamPortStatisticsRmonStatisticsRxFragmentsPkts    Counter64,
+    gamPortStatisticsRmonStatisticsRxJabbersPkts      Counter64,
+    gamPortStatisticsRmonStatisticsRx64Pkts           Counter64,
+    gamPortStatisticsRmonStatisticsRx65to127Pkts      Counter64,
+    gamPortStatisticsRmonStatisticsRx128to255Pkts     Counter64,
+    gamPortStatisticsRmonStatisticsRx256to511Pkts     Counter64,
+    gamPortStatisticsRmonStatisticsRx512to1023Pkts    Counter64,
+    gamPortStatisticsRmonStatisticsRx1024to1518Pkts   Counter64,
+    gamPortStatisticsRmonStatisticsRx1519PktsToMax    Counter64,
+    gamPortStatisticsRmonStatisticsTxDropEvents       Counter64,
+    gamPortStatisticsRmonStatisticsTxOctets           Counter64,
+    gamPortStatisticsRmonStatisticsTxPkts             Counter64,
+    gamPortStatisticsRmonStatisticsTxBroadcastPkts    Counter64,
+    gamPortStatisticsRmonStatisticsTxMulticastPkts    Counter64,
+    gamPortStatisticsRmonStatisticsTx64Pkts           Counter64,
+    gamPortStatisticsRmonStatisticsTx65to127Pkts      Counter64,
+    gamPortStatisticsRmonStatisticsTx128to255Pkts     Counter64,
+    gamPortStatisticsRmonStatisticsTx256to511Pkts     Counter64,
+    gamPortStatisticsRmonStatisticsTx512to1023Pkts    Counter64,
+    gamPortStatisticsRmonStatisticsTx1024to1518Pkts   Counter64,
+    gamPortStatisticsRmonStatisticsTx1519PktsToMax    Counter64
+}
+
+gamPortStatisticsRmonStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamPortStatisticsRmonStatisticsEntry 1 }
+
+gamPortStatisticsRmonStatisticsRxDropEvents OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of frames discarded due to ingress congestion."
+    ::= { gamPortStatisticsRmonStatisticsEntry 2 }
+
+gamPortStatisticsRmonStatisticsRxOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of received (good and bad) bytes. Includes FCS, but
+         excludes framing bits."
+    ::= { gamPortStatisticsRmonStatisticsEntry 3 }
+
+gamPortStatisticsRmonStatisticsRxPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of received (good and bad) packets."
+    ::= { gamPortStatisticsRmonStatisticsEntry 4 }
+
+gamPortStatisticsRmonStatisticsRxBroadcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of received (good and bad) broadcast packets."
+    ::= { gamPortStatisticsRmonStatisticsEntry 5 }
+
+gamPortStatisticsRmonStatisticsRxMulticastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of received (good and bad) multicast packets."
+    ::= { gamPortStatisticsRmonStatisticsEntry 6 }
+
+gamPortStatisticsRmonStatisticsRxCrcAlignErrPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of frames received with CRC or alignment errors."
+    ::= { gamPortStatisticsRmonStatisticsEntry 7 }
+
+gamPortStatisticsRmonStatisticsRxUndersizePkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of short frames (frames that are smaller than 64
+         bytes) received with valid CRC."
+    ::= { gamPortStatisticsRmonStatisticsEntry 8 }
+
+gamPortStatisticsRmonStatisticsRxOversizePkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of long frames received with valid CRC."
+    ::= { gamPortStatisticsRmonStatisticsEntry 9 }
+
+gamPortStatisticsRmonStatisticsRxFragmentsPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of short frames (frames that are smaller than 64
+         bytes) received with invalid CRC."
+    ::= { gamPortStatisticsRmonStatisticsEntry 10 }
+
+gamPortStatisticsRmonStatisticsRxJabbersPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of long frames (frames that are longer than the configured
+         maximum frame length for this interface) received with invalid CRC."
+    ::= { gamPortStatisticsRmonStatisticsEntry 11 }
+
+gamPortStatisticsRmonStatisticsRx64Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of 64 bytes frames received."
+    ::= { gamPortStatisticsRmonStatisticsEntry 12 }
+
+gamPortStatisticsRmonStatisticsRx65to127Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received frames with size within 65 to 127 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 13 }
+
+gamPortStatisticsRmonStatisticsRx128to255Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received frames with size within 128 to 255 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 14 }
+
+gamPortStatisticsRmonStatisticsRx256to511Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received frames with size within 256 to 511 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 15 }
+
+gamPortStatisticsRmonStatisticsRx512to1023Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received frames with size within 512 to 1023 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 16 }
+
+gamPortStatisticsRmonStatisticsRx1024to1518Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received frames with size within 1024 to 1518 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 17 }
+
+gamPortStatisticsRmonStatisticsRx1519PktsToMax OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of received frames with size larger than 1518 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 18 }
+
+gamPortStatisticsRmonStatisticsTxDropEvents OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of frames discarded due to egress congestion."
+    ::= { gamPortStatisticsRmonStatisticsEntry 19 }
+
+gamPortStatisticsRmonStatisticsTxOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of transmitted (good and bad) bytes. Includes FCS, but
+         excludes framing bits."
+    ::= { gamPortStatisticsRmonStatisticsEntry 20 }
+
+gamPortStatisticsRmonStatisticsTxPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of transmitted (good and bad) packets."
+    ::= { gamPortStatisticsRmonStatisticsEntry 21 }
+
+gamPortStatisticsRmonStatisticsTxBroadcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of transmitted (good and bad) broadcast packets."
+    ::= { gamPortStatisticsRmonStatisticsEntry 22 }
+
+gamPortStatisticsRmonStatisticsTxMulticastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of transmitted (good and bad) multicast packets."
+    ::= { gamPortStatisticsRmonStatisticsEntry 23 }
+
+gamPortStatisticsRmonStatisticsTx64Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of 64 bytes frames transmitted."
+    ::= { gamPortStatisticsRmonStatisticsEntry 24 }
+
+gamPortStatisticsRmonStatisticsTx65to127Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted frames with size within 65 to 127 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 25 }
+
+gamPortStatisticsRmonStatisticsTx128to255Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted frames with size within 128 to 255 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 26 }
+
+gamPortStatisticsRmonStatisticsTx256to511Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted frames with size within 256 to 511 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 27 }
+
+gamPortStatisticsRmonStatisticsTx512to1023Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted frames with size within 512 to 1023 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 28 }
+
+gamPortStatisticsRmonStatisticsTx1024to1518Pkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted frames with size within 1024 to 1518 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 29 }
+
+gamPortStatisticsRmonStatisticsTx1519PktsToMax OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of transmitted frames with size larger than 1518 bytes."
+    ::= { gamPortStatisticsRmonStatisticsEntry 30 }
+
+gamPortStatisticsIfGroupStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPortStatisticsIfGroupStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents the port interfaces group (RFC 2863) counters"
+    ::= { gamPortStatistics 2 }
+
+gamPortStatisticsIfGroupStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMPortStatisticsIfGroupStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port interface has a set of statistics counters"
+    INDEX       { gamPortStatisticsIfGroupStatisticsIfIndex }
+    ::= { gamPortStatisticsIfGroupStatisticsTable 1 }
+
+GAMPortStatisticsIfGroupStatisticsEntry ::= SEQUENCE {
+    gamPortStatisticsIfGroupStatisticsIfIndex           GAMInterfaceIndex,
+    gamPortStatisticsIfGroupStatisticsRxOctets          Counter64,
+    gamPortStatisticsIfGroupStatisticsRxUnicastPkts     Counter64,
+    gamPortStatisticsIfGroupStatisticsRxMulticastPkts   Counter64,
+    gamPortStatisticsIfGroupStatisticsRxBroadcastPkts   Counter64,
+    gamPortStatisticsIfGroupStatisticsRxNonUnicastPkts  Counter64,
+    gamPortStatisticsIfGroupStatisticsRxDiscards        Counter64,
+    gamPortStatisticsIfGroupStatisticsRxErrors          Counter64,
+    gamPortStatisticsIfGroupStatisticsTxOctets          Counter64,
+    gamPortStatisticsIfGroupStatisticsTxUnicastPkts     Counter64,
+    gamPortStatisticsIfGroupStatisticsTxMulticastPkts   Counter64,
+    gamPortStatisticsIfGroupStatisticsTxBroadcastPkts   Counter64,
+    gamPortStatisticsIfGroupStatisticsTxNonUnicastPkts  Counter64,
+    gamPortStatisticsIfGroupStatisticsTxDiscardPkts     Counter64,
+    gamPortStatisticsIfGroupStatisticsTxErrorPkts       Counter64
+}
+
+gamPortStatisticsIfGroupStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 1 }
+
+gamPortStatisticsIfGroupStatisticsRxOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of bytes received."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 2 }
+
+gamPortStatisticsIfGroupStatisticsRxUnicastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of uni-cast frames received."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 3 }
+
+gamPortStatisticsIfGroupStatisticsRxMulticastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of multi-cast frames received."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 4 }
+
+gamPortStatisticsIfGroupStatisticsRxBroadcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of broad-cast frames received."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 5 }
+
+gamPortStatisticsIfGroupStatisticsRxNonUnicastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of non uni-cast frames received."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 6 }
+
+gamPortStatisticsIfGroupStatisticsRxDiscards OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of received frames discarded."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 7 }
+
+gamPortStatisticsIfGroupStatisticsRxErrors OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of frames with errors received."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 8 }
+
+gamPortStatisticsIfGroupStatisticsTxOctets OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of bytes transmitted."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 9 }
+
+gamPortStatisticsIfGroupStatisticsTxUnicastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of uni-cast frames transmitted."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 10 }
+
+gamPortStatisticsIfGroupStatisticsTxMulticastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of multi-cast frames transmitted."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 11 }
+
+gamPortStatisticsIfGroupStatisticsTxBroadcastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of broad-cast frames transmitted."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 12 }
+
+gamPortStatisticsIfGroupStatisticsTxNonUnicastPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of non uni-cast frames transmitted."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 13 }
+
+gamPortStatisticsIfGroupStatisticsTxDiscardPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of discard frames which should been transmitted."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 14 }
+
+gamPortStatisticsIfGroupStatisticsTxErrorPkts OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the number of frames transmit with error."
+    ::= { gamPortStatisticsIfGroupStatisticsEntry 15 }
+
+gamPortStatisticsEthernetLikeStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPortStatisticsEthernetLikeStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents the port Ethernet-like interfaces counters"
+    ::= { gamPortStatistics 3 }
+
+gamPortStatisticsEthernetLikeStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMPortStatisticsEthernetLikeStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port interface has a set of statistics counters"
+    INDEX       { gamPortStatisticsEthernetLikeStatisticsIfIndex }
+    ::= { gamPortStatisticsEthernetLikeStatisticsTable 1 }
+
+GAMPortStatisticsEthernetLikeStatisticsEntry ::= SEQUENCE {
+    gamPortStatisticsEthernetLikeStatisticsIfIndex        GAMInterfaceIndex,
+    gamPortStatisticsEthernetLikeStatisticsRxPauseFrames  Counter64,
+    gamPortStatisticsEthernetLikeStatisticsTxPauseFrames  Counter64
+}
+
+gamPortStatisticsEthernetLikeStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamPortStatisticsEthernetLikeStatisticsEntry 1 }
+
+gamPortStatisticsEthernetLikeStatisticsRxPauseFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of pause frames received."
+    ::= { gamPortStatisticsEthernetLikeStatisticsEntry 2 }
+
+gamPortStatisticsEthernetLikeStatisticsTxPauseFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of pause frames transmitted."
+    ::= { gamPortStatisticsEthernetLikeStatisticsEntry 3 }
+
+gamPortStatisticsQueuesStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPortStatisticsQueuesStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents the port interfaces queues counters"
+    ::= { gamPortStatistics 4 }
+
+gamPortStatisticsQueuesStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMPortStatisticsQueuesStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port interface has a set of statistics counters"
+    INDEX       { gamPortStatisticsQueuesStatisticsIfIndex,
+                  gamPortStatisticsQueuesStatisticsQueue }
+    ::= { gamPortStatisticsQueuesStatisticsTable 1 }
+
+GAMPortStatisticsQueuesStatisticsEntry ::= SEQUENCE {
+    gamPortStatisticsQueuesStatisticsIfIndex       GAMInterfaceIndex,
+    gamPortStatisticsQueuesStatisticsQueue         Integer32,
+    gamPortStatisticsQueuesStatisticsRxPrio        Counter64,
+    gamPortStatisticsQueuesStatisticsTxPrio        Counter64,
+    gamPortStatisticsQueuesStatisticsRxOctetsPrio  Counter64,
+    gamPortStatisticsQueuesStatisticsTxOctetsPrio  Counter64
+}
+
+gamPortStatisticsQueuesStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamPortStatisticsQueuesStatisticsEntry 1 }
+
+gamPortStatisticsQueuesStatisticsQueue OBJECT-TYPE
+    SYNTAX      Integer32 (0..3)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Queue index."
+    ::= { gamPortStatisticsQueuesStatisticsEntry 2 }
+
+gamPortStatisticsQueuesStatisticsRxPrio OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frames received for the queue."
+    ::= { gamPortStatisticsQueuesStatisticsEntry 3 }
+
+gamPortStatisticsQueuesStatisticsTxPrio OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frames transmitted for the queue."
+    ::= { gamPortStatisticsQueuesStatisticsEntry 4 }
+
+gamPortStatisticsQueuesStatisticsRxOctetsPrio OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes received for the queue."
+    ::= { gamPortStatisticsQueuesStatisticsEntry 5 }
+
+gamPortStatisticsQueuesStatisticsTxOctetsPrio OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes transmitted for the queue."
+    ::= { gamPortStatisticsQueuesStatisticsEntry 6 }
+
+gamPortStatisticsBridgeStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPortStatisticsBridgeStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents the port interface bridge counters"
+    ::= { gamPortStatistics 5 }
+
+gamPortStatisticsBridgeStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMPortStatisticsBridgeStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port interface has a set of statistics counters"
+    INDEX       { gamPortStatisticsBridgeStatisticsIfIndex }
+    ::= { gamPortStatisticsBridgeStatisticsTable 1 }
+
+GAMPortStatisticsBridgeStatisticsEntry ::= SEQUENCE {
+    gamPortStatisticsBridgeStatisticsIfIndex          GAMInterfaceIndex,
+    gamPortStatisticsBridgeStatisticsRxBridgeDiscard  Counter64
+}
+
+gamPortStatisticsBridgeStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamPortStatisticsBridgeStatisticsEntry 1 }
+
+gamPortStatisticsBridgeStatisticsRxBridgeDiscard OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bridge frames discarded."
+    ::= { gamPortStatisticsBridgeStatisticsEntry 2 }
+
+gamPortStatisticsDot3brStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPortStatisticsDot3brStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table represents the port 802.3br counters"
+    ::= { gamPortStatistics 6 }
+
+gamPortStatisticsDot3brStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMPortStatisticsDot3brStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port interface has a set of statistics counters"
+    INDEX       { gamPortStatisticsDot3brStatisticsIfIndex }
+    ::= { gamPortStatisticsDot3brStatisticsTable 1 }
+
+GAMPortStatisticsDot3brStatisticsEntry ::= SEQUENCE {
+    gamPortStatisticsDot3brStatisticsIfIndex                      GAMInterfaceIndex,
+    gamPortStatisticsDot3brStatisticsAMACMergeFrameAssErrorCount  Counter64,
+    gamPortStatisticsDot3brStatisticsAMACMergeFrameSmdErrorCount  Counter64,
+    gamPortStatisticsDot3brStatisticsAMACMergeFrameAssOkCount     Counter64,
+    gamPortStatisticsDot3brStatisticsAMACMergeFragCountRx         Counter64,
+    gamPortStatisticsDot3brStatisticsAMACMergeFragCountTx         Counter64,
+    gamPortStatisticsDot3brStatisticsAMACMergeHoldCount           Counter64
+}
+
+gamPortStatisticsDot3brStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamPortStatisticsDot3brStatisticsEntry 1 }
+
+gamPortStatisticsDot3brStatisticsAMACMergeFrameAssErrorCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A count of MAC frames with reassembly errors."
+    ::= { gamPortStatisticsDot3brStatisticsEntry 2 }
+
+gamPortStatisticsDot3brStatisticsAMACMergeFrameSmdErrorCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A count of received MAC frames / MAC frame fragments rejected due to
+         unknown SMD value or arriving with an SMD-C when no frame is in
+         progress."
+    ::= { gamPortStatisticsDot3brStatisticsEntry 3 }
+
+gamPortStatisticsDot3brStatisticsAMACMergeFrameAssOkCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A count of MAC frames that were successfully reassembled and delivered
+         to MAC."
+    ::= { gamPortStatisticsDot3brStatisticsEntry 4 }
+
+gamPortStatisticsDot3brStatisticsAMACMergeFragCountRx OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A count of the number of additional mPackets received due to
+         preemption."
+    ::= { gamPortStatisticsDot3brStatisticsEntry 5 }
+
+gamPortStatisticsDot3brStatisticsAMACMergeFragCountTx OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A count of the number of additional mPackets transmitted due to
+         preemption."
+    ::= { gamPortStatisticsDot3brStatisticsEntry 6 }
+
+gamPortStatisticsDot3brStatisticsAMACMergeHoldCount OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A count of the number of times the variable hold (see 802.3br, section
+         99.4.7.3) transitions from FALSE to TRUE."
+    ::= { gamPortStatisticsDot3brStatisticsEntry 7 }
+
+gamPortMibConformance OBJECT IDENTIFIER
+    ::= { gamPortMib 2 }
+
+gamPortMibCompliances OBJECT IDENTIFIER
+    ::= { gamPortMibConformance 1 }
+
+gamPortMibGroups OBJECT IDENTIFIER
+    ::= { gamPortMibConformance 2 }
+
+gamPortConfigInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPortConfigIfIndex, gamPortConfigShutdown,
+                  gamPortConfigSpeed, gamPortConfigAdvertiseDisabled,
+                  gamPortConfigMediaType, gamPortConfigFC,
+                  gamPortConfigMTU, gamPortConfigExcessiveRestart,
+                  gamPortConfigPFC, gamPortConfigFrameLengthCheck,
+                  gamPortConfigRfc5517Mode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPortMibGroups 1 }
+
+gamPortStatusInformationTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPortStatusInformationIfIndex,
+                  gamPortStatusInformationLink,
+                  gamPortStatusInformationFdx,
+                  gamPortStatusInformationFiber,
+                  gamPortStatusInformationSpeed,
+                  gamPortStatusInformationSFPType,
+                  gamPortStatusInformationSFPVendorName,
+                  gamPortStatusInformationSFPVendorPN,
+                  gamPortStatusInformationSFPVendorRev,
+                  gamPortStatusInformationSFPVendorSN }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPortMibGroups 2 }
+
+gamPortControlStatisticsClearTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPortControlStatisticsClearIfIndex,
+                  gamPortControlStatisticsClearStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPortMibGroups 3 }
+
+gamPortStatisticsRmonStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPortStatisticsRmonStatisticsIfIndex,
+                  gamPortStatisticsRmonStatisticsRxDropEvents,
+                  gamPortStatisticsRmonStatisticsRxOctets,
+                  gamPortStatisticsRmonStatisticsRxPkts,
+                  gamPortStatisticsRmonStatisticsRxBroadcastPkts,
+                  gamPortStatisticsRmonStatisticsRxMulticastPkts,
+                  gamPortStatisticsRmonStatisticsRxCrcAlignErrPkts,
+                  gamPortStatisticsRmonStatisticsRxUndersizePkts,
+                  gamPortStatisticsRmonStatisticsRxOversizePkts,
+                  gamPortStatisticsRmonStatisticsRxFragmentsPkts,
+                  gamPortStatisticsRmonStatisticsRxJabbersPkts,
+                  gamPortStatisticsRmonStatisticsRx64Pkts,
+                  gamPortStatisticsRmonStatisticsRx65to127Pkts,
+                  gamPortStatisticsRmonStatisticsRx128to255Pkts,
+                  gamPortStatisticsRmonStatisticsRx256to511Pkts,
+                  gamPortStatisticsRmonStatisticsRx512to1023Pkts,
+                  gamPortStatisticsRmonStatisticsRx1024to1518Pkts,
+                  gamPortStatisticsRmonStatisticsRx1519PktsToMax,
+                  gamPortStatisticsRmonStatisticsTxDropEvents,
+                  gamPortStatisticsRmonStatisticsTxOctets,
+                  gamPortStatisticsRmonStatisticsTxPkts,
+                  gamPortStatisticsRmonStatisticsTxBroadcastPkts,
+                  gamPortStatisticsRmonStatisticsTxMulticastPkts,
+                  gamPortStatisticsRmonStatisticsTx64Pkts,
+                  gamPortStatisticsRmonStatisticsTx65to127Pkts,
+                  gamPortStatisticsRmonStatisticsTx128to255Pkts,
+                  gamPortStatisticsRmonStatisticsTx256to511Pkts,
+                  gamPortStatisticsRmonStatisticsTx512to1023Pkts,
+                  gamPortStatisticsRmonStatisticsTx1024to1518Pkts,
+                  gamPortStatisticsRmonStatisticsTx1519PktsToMax }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPortMibGroups 4 }
+
+gamPortStatisticsIfGroupStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPortStatisticsIfGroupStatisticsIfIndex,
+                  gamPortStatisticsIfGroupStatisticsRxOctets,
+                  gamPortStatisticsIfGroupStatisticsRxUnicastPkts,
+                  gamPortStatisticsIfGroupStatisticsRxMulticastPkts,
+                  gamPortStatisticsIfGroupStatisticsRxBroadcastPkts,
+                  gamPortStatisticsIfGroupStatisticsRxNonUnicastPkts,
+                  gamPortStatisticsIfGroupStatisticsRxDiscards,
+                  gamPortStatisticsIfGroupStatisticsRxErrors,
+                  gamPortStatisticsIfGroupStatisticsTxOctets,
+                  gamPortStatisticsIfGroupStatisticsTxUnicastPkts,
+                  gamPortStatisticsIfGroupStatisticsTxMulticastPkts,
+                  gamPortStatisticsIfGroupStatisticsTxBroadcastPkts,
+                  gamPortStatisticsIfGroupStatisticsTxNonUnicastPkts,
+                  gamPortStatisticsIfGroupStatisticsTxDiscardPkts,
+                  gamPortStatisticsIfGroupStatisticsTxErrorPkts }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPortMibGroups 5 }
+
+gamPortStatisticsEthernetLikeStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPortStatisticsEthernetLikeStatisticsIfIndex,
+                  gamPortStatisticsEthernetLikeStatisticsRxPauseFrames,
+                  gamPortStatisticsEthernetLikeStatisticsTxPauseFrames }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPortMibGroups 6 }
+
+gamPortStatisticsQueuesStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPortStatisticsQueuesStatisticsIfIndex,
+                  gamPortStatisticsQueuesStatisticsQueue,
+                  gamPortStatisticsQueuesStatisticsRxPrio,
+                  gamPortStatisticsQueuesStatisticsTxPrio,
+                  gamPortStatisticsQueuesStatisticsRxOctetsPrio,
+                  gamPortStatisticsQueuesStatisticsTxOctetsPrio }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPortMibGroups 7 }
+
+gamPortStatisticsBridgeStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPortStatisticsBridgeStatisticsIfIndex,
+                  gamPortStatisticsBridgeStatisticsRxBridgeDiscard }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPortMibGroups 8 }
+
+gamPortStatisticsDot3brStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPortStatisticsDot3brStatisticsIfIndex,
+                  gamPortStatisticsDot3brStatisticsAMACMergeFrameAssErrorCount,
+                  gamPortStatisticsDot3brStatisticsAMACMergeFrameSmdErrorCount,
+                  gamPortStatisticsDot3brStatisticsAMACMergeFrameAssOkCount,
+                  gamPortStatisticsDot3brStatisticsAMACMergeFragCountRx,
+                  gamPortStatisticsDot3brStatisticsAMACMergeFragCountTx,
+                  gamPortStatisticsDot3brStatisticsAMACMergeHoldCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPortMibGroups 9 }
+
+gamPortMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamPortConfigInfoGroup,
+                       gamPortStatusInformationTableInfoGroup,
+                       gamPortControlStatisticsClearTableInfoGroup,
+                       gamPortStatisticsRmonStatisticsTableInfoGroup,
+                       gamPortStatisticsIfGroupStatisticsTableInfoGroup,
+                       gamPortStatisticsEthernetLikeStatisticsTableInfoGroup,
+                       gamPortStatisticsQueuesStatisticsTableInfoGroup,
+                       gamPortStatisticsBridgeStatisticsTableInfoGroup,
+                       gamPortStatisticsDot3brStatisticsTableInfoGroup }
+
+    ::= { gamPortMibCompliances 1 }
+
+END

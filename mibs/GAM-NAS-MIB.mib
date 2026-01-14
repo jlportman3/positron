@@ -1,0 +1,794 @@
+-- *****************************************************************
+-- NAS-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-NAS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    GAMVlan FROM GAM-TC
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamNasMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is the Vitesse NAS private MIB."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 21 }
+
+
+GAMNasPortControl ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration the NAS admin state.
+         
+         "
+    SYNTAX      INTEGER { none(0), forceAuthorized(1), auto(2),
+                          forceUnAuthorized(3), macBased(4),
+                          dot1xSingle(5), dot1xmulti(6) }
+
+GAMNasPortStatus ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration the NAS interface status."
+    SYNTAX      INTEGER { linkDown(0), authorized(1), unAuthorized(2),
+                          disabled(3), count(4) }
+
+GAMNasVlanType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration the NAS VLAN type."
+    SYNTAX      INTEGER { none(0), radiusAssigned(1), guestVlan(2) }
+
+gamNasMibObjects OBJECT IDENTIFIER
+    ::= { gamNasMib 1 }
+
+gamNasConfig OBJECT IDENTIFIER
+    ::= { gamNasMibObjects 2 }
+
+gamNasConfigGlobal OBJECT IDENTIFIER
+    ::= { gamNasConfig 1 }
+
+gamNasConfigGlobalNasMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to globally enabled or disabled NAS for the switch. If
+         globally disabled, all physical interfaces are allowed forwarding of
+         frames."
+    ::= { gamNasConfigGlobal 1 }
+
+gamNasConfigGlobalReauthenticationMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "If set to TRUE, successfully authenticated supplicants/clients are
+         re-authenticated after the interval specified by the Reauthentication
+         Period. Re-authentication for 802.1X-enabled interfaces can be used to
+         detect if a new device is plugged into a switch port or if a supplicant
+         is no longer attached. For MAC-based ports, re-authentication is only
+         useful, if the RADIUS server configuration has changed. It does not
+         involve communication between the switch and the client, and therefore
+         does not imply that a client is still present on a port (see Aging
+         Period)."
+    ::= { gamNasConfigGlobal 2 }
+
+gamNasConfigGlobalReauthenticationPeriod OBJECT-TYPE
+    SYNTAX      GAMUnsigned16 (1..3600)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Sets the period in seconds, after which a connected client must be
+         re-authenticated. This is only active if the ReauthenticationMode is
+         set to TRUE."
+    ::= { gamNasConfigGlobal 3 }
+
+gamNasConfigGlobalEapolTimeout OBJECT-TYPE
+    SYNTAX      GAMUnsigned16 (1..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Determines the time for re-transmission of Request Identity EAPOL
+         frames. This has no effect for MAC-based ports."
+    ::= { gamNasConfigGlobal 4 }
+
+gamNasConfigGlobalAgingPeriod OBJECT-TYPE
+    SYNTAX      Unsigned32 (10..1000000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specific the PSEC aging period in seconds. In the period the CPU starts
+         listening to frames from the given MAC address, and if none arrives
+         before period end, the entry will be removed."
+    ::= { gamNasConfigGlobal 5 }
+
+gamNasConfigGlobalAuthFailureHoldTime OBJECT-TYPE
+    SYNTAX      Unsigned32 (10..1000000)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Time in seconds to wait before attempting to re-authenticate if
+         re-authentication failed for a given client."
+    ::= { gamNasConfigGlobal 6 }
+
+gamNasConfigGlobalRadiusAssignedQosMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to enable RADIUS assigned QoS."
+    ::= { gamNasConfigGlobal 7 }
+
+gamNasConfigGlobalRadiusAssignedVlanMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to enable RADIUS assigned VLAN."
+    ::= { gamNasConfigGlobal 8 }
+
+gamNasConfigGlobalGuestVlanMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to enable Guest VLAN Mode."
+    ::= { gamNasConfigGlobal 9 }
+
+gamNasConfigGlobalGuestVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Guest VLAN ID to get assigned to an interface moved to Guest VLAN mode."
+    ::= { gamNasConfigGlobal 10 }
+
+gamNasConfigGlobalMaxReauthrequestsCount OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..255)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Maximum re-authentication request count."
+    ::= { gamNasConfigGlobal 11 }
+
+gamNasConfigGlobalGuestVlanAllowEapols OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to allow an interface to move to Guest VLAN even when EAPOL
+         packets has been received at an interface."
+    ::= { gamNasConfigGlobal 12 }
+
+gamNasConfigReAuthTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMNasConfigReAuthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for port configuration"
+    ::= { gamNasConfig 2 }
+
+gamNasConfigReAuthEntry OBJECT-TYPE
+    SYNTAX      GAMNasConfigReAuthEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each physical interface has a set of parameters"
+    INDEX       { gamNasConfigReAuthInterfaceNo }
+    ::= { gamNasConfigReAuthTable 1 }
+
+GAMNasConfigReAuthEntry ::= SEQUENCE {
+    gamNasConfigReAuthInterfaceNo              GAMInterfaceIndex,
+    gamNasConfigReAuthAdminState               GAMNasPortControl,
+    gamNasConfigReAuthRadiusAssignedQosState   TruthValue,
+    gamNasConfigReAuthRadiusAssignedVlanState  TruthValue,
+    gamNasConfigReAuthGuestVlanState           TruthValue
+}
+
+gamNasConfigReAuthInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamNasConfigReAuthEntry 1 }
+
+gamNasConfigReAuthAdminState OBJECT-TYPE
+    SYNTAX      GAMNasPortControl
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative State.
+         
+         TypeNone : Forces an interface to be disabled.
+         
+         forceAuthorized : Forces an interface to grant access to all clients,
+         802.1X-aware or not.
+         
+         auto : Requires an 802.1X-aware client to be authorized by the
+         authentication server. Clients that are not 802.1X-aware will be denied
+         access.
+         
+         unauthorized : Forces an interface to deny access to all clients,
+         802.1X-aware or not.
+         
+         macBased : The switch authenticates on behalf of the client, using the
+         client MAC-address as the username and password and MD5 EAP method.
+         
+         dot1xSingle : At most one supplicant is allowed to authenticate, and it
+         authenticates using normal 802.1X frames.
+         
+         dot1xmulti : One or more supplicants are allowed to authenticate
+         individually using an 802.1X variant, where EAPOL frames sent from the
+         switch are directed towards the supplicants MAC address instead of
+         using the multi-cast BPDU MAC address. Unauthenticated supplicants will
+         not get access.
+         
+         
+         
+         Note: The 802.1X Admin State must be set to Authorized for interfaces
+         that are enabled forSpanning Tree"
+    ::= { gamNasConfigReAuthEntry 2 }
+
+gamNasConfigReAuthRadiusAssignedQosState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable RADIUS-assigned QoS for this interface."
+    ::= { gamNasConfigReAuthEntry 3 }
+
+gamNasConfigReAuthRadiusAssignedVlanState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable RADIUS-assigned VLAN for this interface."
+    ::= { gamNasConfigReAuthEntry 4 }
+
+gamNasConfigReAuthGuestVlanState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to TRUE to enable Guest-VLAN for this interface."
+    ::= { gamNasConfigReAuthEntry 5 }
+
+gamNasStatus OBJECT IDENTIFIER
+    ::= { gamNasMibObjects 3 }
+
+gamNasStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMNasStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table to get NAS per-port status table."
+    ::= { gamNasStatus 1 }
+
+gamNasStatusEntry OBJECT-TYPE
+    SYNTAX      GAMNasStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each physical interface has a set of per-port status parameters."
+    INDEX       { gamNasStatusInterfaceNo }
+    ::= { gamNasStatusTable 1 }
+
+GAMNasStatusEntry ::= SEQUENCE {
+    gamNasStatusInterfaceNo  GAMInterfaceIndex,
+    gamNasStatusStatus       GAMNasPortStatus,
+    gamNasStatusQosClass     Unsigned32,
+    gamNasStatusVlanType     GAMNasVlanType,
+    gamNasStatusVlanId       GAMVlan
+}
+
+gamNasStatusInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamNasStatusEntry 1 }
+
+gamNasStatusStatus OBJECT-TYPE
+    SYNTAX      GAMNasPortStatus
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "dot1x port status."
+    ::= { gamNasStatusEntry 2 }
+
+gamNasStatusQosClass OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "QoS class for this port. If vaule is 4294967295 then it means that the
+         QoS is not overridden."
+    ::= { gamNasStatusEntry 3 }
+
+gamNasStatusVlanType OBJECT-TYPE
+    SYNTAX      GAMNasVlanType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "VLAN Type for this port."
+    ::= { gamNasStatusEntry 4 }
+
+gamNasStatusVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "VLAN Id for this port."
+    ::= { gamNasStatusEntry 5 }
+
+gamNasStatusLastSupplicantTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMNasStatusLastSupplicantEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table to get NAS last supplicant"
+    ::= { gamNasStatus 2 }
+
+gamNasStatusLastSupplicantEntry OBJECT-TYPE
+    SYNTAX      GAMNasStatusLastSupplicantEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each physical interface has a set of parameters"
+    INDEX       { gamNasStatusLastSupplicantInterfaceNo }
+    ::= { gamNasStatusLastSupplicantTable 1 }
+
+GAMNasStatusLastSupplicantEntry ::= SEQUENCE {
+    gamNasStatusLastSupplicantInterfaceNo  GAMInterfaceIndex,
+    gamNasStatusLastSupplicantVlanId       GAMVlan,
+    gamNasStatusLastSupplicantMac          MacAddress,
+    gamNasStatusLastSupplicantIdentity     GAMDisplayString
+}
+
+gamNasStatusLastSupplicantInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamNasStatusLastSupplicantEntry 1 }
+
+gamNasStatusLastSupplicantVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "VLAN ID."
+    ::= { gamNasStatusLastSupplicantEntry 2 }
+
+gamNasStatusLastSupplicantMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Binary version of MacAddrStr."
+    ::= { gamNasStatusLastSupplicantEntry 3 }
+
+gamNasStatusLastSupplicantIdentity OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..39))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Identity string."
+    ::= { gamNasStatusLastSupplicantEntry 4 }
+
+gamNasControl OBJECT IDENTIFIER
+    ::= { gamNasMibObjects 4 }
+
+gamNasControlPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMNasControlPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table to start NAS re-authorization"
+    ::= { gamNasControl 1 }
+
+gamNasControlPortEntry OBJECT-TYPE
+    SYNTAX      GAMNasControlPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each physical interface has a set of parameters"
+    INDEX       { gamNasControlPortInterfaceNo }
+    ::= { gamNasControlPortTable 1 }
+
+GAMNasControlPortEntry ::= SEQUENCE {
+    gamNasControlPortInterfaceNo  GAMInterfaceIndex,
+    gamNasControlPortNow          TruthValue
+}
+
+gamNasControlPortInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamNasControlPortEntry 1 }
+
+gamNasControlPortNow OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "TRUE to force re-authentication immediately. FALSE to refresh (restart)
+         802.1X authentication process."
+    ::= { gamNasControlPortEntry 2 }
+
+gamNasControlStatisticsClearTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMNasControlStatisticsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table to clear NAS statistics for a specific interface."
+    ::= { gamNasControl 2 }
+
+gamNasControlStatisticsClearEntry OBJECT-TYPE
+    SYNTAX      GAMNasControlStatisticsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each interface has a set of statistics counters"
+    INDEX       { gamNasControlStatisticsClearInterfaceNo }
+    ::= { gamNasControlStatisticsClearTable 1 }
+
+GAMNasControlStatisticsClearEntry ::= SEQUENCE {
+    gamNasControlStatisticsClearInterfaceNo  GAMInterfaceIndex,
+    gamNasControlStatisticsClearClear        TruthValue
+}
+
+gamNasControlStatisticsClearInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamNasControlStatisticsClearEntry 1 }
+
+gamNasControlStatisticsClearClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "TRUE to clear NAS statistics."
+    ::= { gamNasControlStatisticsClearEntry 5 }
+
+gamNasStatistics OBJECT IDENTIFIER
+    ::= { gamNasMibObjects 5 }
+
+gamNasStatisticsEapolTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMNasStatisticsEapolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table to get NAS EAPOL statistics."
+    ::= { gamNasStatistics 1 }
+
+gamNasStatisticsEapolEntry OBJECT-TYPE
+    SYNTAX      GAMNasStatisticsEapolEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each physical interface has a set of EAPOL counters."
+    INDEX       { gamNasStatisticsEapolInterfaceNo }
+    ::= { gamNasStatisticsEapolTable 1 }
+
+GAMNasStatisticsEapolEntry ::= SEQUENCE {
+    gamNasStatisticsEapolInterfaceNo                      GAMInterfaceIndex,
+    gamNasStatisticsEapolDot1xAuthEapolFramesRx           Unsigned32,
+    gamNasStatisticsEapolDot1xAuthEapolFramesTx           Unsigned32,
+    gamNasStatisticsEapolDot1xAuthEapolStartFramesRx      Unsigned32,
+    gamNasStatisticsEapolDot1xAuthEapolLogoffFramesRx     Unsigned32,
+    gamNasStatisticsEapolDot1xAuthEapolRespIdFramesRx     Unsigned32,
+    gamNasStatisticsEapolDot1xAuthEapolRespFramesRx       Unsigned32,
+    gamNasStatisticsEapolDot1xAuthEapolReqIdFramesTx      Unsigned32,
+    gamNasStatisticsEapolDot1xAuthEapolReqFramesTx        Unsigned32,
+    gamNasStatisticsEapolDot1xAuthInvalidEapolFramesRx    Unsigned32,
+    gamNasStatisticsEapolDot1xAuthEapLengthErrorFramesRx  Unsigned32
+}
+
+gamNasStatisticsEapolInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamNasStatisticsEapolEntry 1 }
+
+gamNasStatisticsEapolDot1xAuthEapolFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of dot1x Auth Eapol Frames Received."
+    ::= { gamNasStatisticsEapolEntry 5 }
+
+gamNasStatisticsEapolDot1xAuthEapolFramesTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of dot1x Auth Eapol Frames Transmitted."
+    ::= { gamNasStatisticsEapolEntry 6 }
+
+gamNasStatisticsEapolDot1xAuthEapolStartFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of dot1x Auth Eapol Start Frames Received."
+    ::= { gamNasStatisticsEapolEntry 7 }
+
+gamNasStatisticsEapolDot1xAuthEapolLogoffFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of dot1x Auth Eapol Logoff Frames Received."
+    ::= { gamNasStatisticsEapolEntry 8 }
+
+gamNasStatisticsEapolDot1xAuthEapolRespIdFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of dot1x Auth Eapol RespId Frames Received."
+    ::= { gamNasStatisticsEapolEntry 9 }
+
+gamNasStatisticsEapolDot1xAuthEapolRespFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of dot1x Auth Eapol Resp Frames Received."
+    ::= { gamNasStatisticsEapolEntry 10 }
+
+gamNasStatisticsEapolDot1xAuthEapolReqIdFramesTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of dot1x Auth Eapol Req Id Frames Transmitted."
+    ::= { gamNasStatisticsEapolEntry 11 }
+
+gamNasStatisticsEapolDot1xAuthEapolReqFramesTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of dot1x Auth Eapol Req Frames Transmitted."
+    ::= { gamNasStatisticsEapolEntry 12 }
+
+gamNasStatisticsEapolDot1xAuthInvalidEapolFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of dot1x Auth Invalid Eapol Frames Received."
+    ::= { gamNasStatisticsEapolEntry 13 }
+
+gamNasStatisticsEapolDot1xAuthEapLengthErrorFramesRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of dot1x Auth Eap Length Error Frames Received."
+    ::= { gamNasStatisticsEapolEntry 14 }
+
+gamNasStatisticsRadiusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMNasStatisticsRadiusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table to get NAS EAPOL statistics."
+    ::= { gamNasStatistics 2 }
+
+gamNasStatisticsRadiusEntry OBJECT-TYPE
+    SYNTAX      GAMNasStatisticsRadiusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each physical interface has a set of EAPOL counters."
+    INDEX       { gamNasStatisticsRadiusInterfaceNo }
+    ::= { gamNasStatisticsRadiusTable 1 }
+
+GAMNasStatisticsRadiusEntry ::= SEQUENCE {
+    gamNasStatisticsRadiusInterfaceNo                       GAMInterfaceIndex,
+    gamNasStatisticsRadiusBackendResponses                  Unsigned32,
+    gamNasStatisticsRadiusBackendAccessChallenges           Unsigned32,
+    gamNasStatisticsRadiusBackendOtherRequestsToSupplicant  Unsigned32,
+    gamNasStatisticsRadiusBackendAuthSuccesses              Unsigned32,
+    gamNasStatisticsRadiusBackendAuthFails                  Unsigned32
+}
+
+gamNasStatisticsRadiusInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamNasStatisticsRadiusEntry 1 }
+
+gamNasStatisticsRadiusBackendResponses OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of backend Responses."
+    ::= { gamNasStatisticsRadiusEntry 5 }
+
+gamNasStatisticsRadiusBackendAccessChallenges OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of backend Access Challenges."
+    ::= { gamNasStatisticsRadiusEntry 6 }
+
+gamNasStatisticsRadiusBackendOtherRequestsToSupplicant OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of backend Other Requests To Supplicant."
+    ::= { gamNasStatisticsRadiusEntry 7 }
+
+gamNasStatisticsRadiusBackendAuthSuccesses OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of backend Auth Successes."
+    ::= { gamNasStatisticsRadiusEntry 8 }
+
+gamNasStatisticsRadiusBackendAuthFails OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Numbers of backend Auth Fails."
+    ::= { gamNasStatisticsRadiusEntry 9 }
+
+gamNasMibConformance OBJECT IDENTIFIER
+    ::= { gamNasMib 2 }
+
+gamNasMibCompliances OBJECT IDENTIFIER
+    ::= { gamNasMibConformance 1 }
+
+gamNasMibGroups OBJECT IDENTIFIER
+    ::= { gamNasMibConformance 2 }
+
+gamNasConfigGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { gamNasConfigGlobalNasMode,
+                  gamNasConfigGlobalReauthenticationMode,
+                  gamNasConfigGlobalReauthenticationPeriod,
+                  gamNasConfigGlobalEapolTimeout,
+                  gamNasConfigGlobalAgingPeriod,
+                  gamNasConfigGlobalAuthFailureHoldTime,
+                  gamNasConfigGlobalRadiusAssignedQosMode,
+                  gamNasConfigGlobalRadiusAssignedVlanMode,
+                  gamNasConfigGlobalGuestVlanMode,
+                  gamNasConfigGlobalGuestVlanId,
+                  gamNasConfigGlobalMaxReauthrequestsCount,
+                  gamNasConfigGlobalGuestVlanAllowEapols }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamNasMibGroups 1 }
+
+gamNasConfigReAuthInfoGroup OBJECT-GROUP
+    OBJECTS     { gamNasConfigReAuthInterfaceNo,
+                  gamNasConfigReAuthAdminState,
+                  gamNasConfigReAuthRadiusAssignedQosState,
+                  gamNasConfigReAuthRadiusAssignedVlanState,
+                  gamNasConfigReAuthGuestVlanState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamNasMibGroups 2 }
+
+gamNasStatusTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamNasStatusInterfaceNo, gamNasStatusStatus,
+                  gamNasStatusQosClass, gamNasStatusVlanType,
+                  gamNasStatusVlanId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamNasMibGroups 3 }
+
+gamNasStatusLastSupplicantInfoGroup OBJECT-GROUP
+    OBJECTS     { gamNasStatusLastSupplicantInterfaceNo,
+                  gamNasStatusLastSupplicantVlanId,
+                  gamNasStatusLastSupplicantMac,
+                  gamNasStatusLastSupplicantIdentity }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamNasMibGroups 4 }
+
+gamNasControlPortInfoGroup OBJECT-GROUP
+    OBJECTS     { gamNasControlPortInterfaceNo, gamNasControlPortNow }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamNasMibGroups 5 }
+
+gamNasControlStatisticsClearInfoGroup OBJECT-GROUP
+    OBJECTS     { gamNasControlStatisticsClearInterfaceNo,
+                  gamNasControlStatisticsClearClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamNasMibGroups 6 }
+
+gamNasStatisticsEapolInfoGroup OBJECT-GROUP
+    OBJECTS     { gamNasStatisticsEapolInterfaceNo,
+                  gamNasStatisticsEapolDot1xAuthEapolFramesRx,
+                  gamNasStatisticsEapolDot1xAuthEapolFramesTx,
+                  gamNasStatisticsEapolDot1xAuthEapolStartFramesRx,
+                  gamNasStatisticsEapolDot1xAuthEapolLogoffFramesRx,
+                  gamNasStatisticsEapolDot1xAuthEapolRespIdFramesRx,
+                  gamNasStatisticsEapolDot1xAuthEapolRespFramesRx,
+                  gamNasStatisticsEapolDot1xAuthEapolReqIdFramesTx,
+                  gamNasStatisticsEapolDot1xAuthEapolReqFramesTx,
+                  gamNasStatisticsEapolDot1xAuthInvalidEapolFramesRx,
+                  gamNasStatisticsEapolDot1xAuthEapLengthErrorFramesRx }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamNasMibGroups 7 }
+
+gamNasStatisticsRadiusInfoGroup OBJECT-GROUP
+    OBJECTS     { gamNasStatisticsRadiusInterfaceNo,
+                  gamNasStatisticsRadiusBackendResponses,
+                  gamNasStatisticsRadiusBackendAccessChallenges,
+                  gamNasStatisticsRadiusBackendOtherRequestsToSupplicant,
+                  gamNasStatisticsRadiusBackendAuthSuccesses,
+                  gamNasStatisticsRadiusBackendAuthFails }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamNasMibGroups 8 }
+
+gamNasMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamNasConfigGlobalInfoGroup,
+                       gamNasConfigReAuthInfoGroup,
+                       gamNasStatusTableInfoGroup,
+                       gamNasStatusLastSupplicantInfoGroup,
+                       gamNasControlPortInfoGroup,
+                       gamNasControlStatisticsClearInfoGroup,
+                       gamNasStatisticsEapolInfoGroup,
+                       gamNasStatisticsRadiusInfoGroup }
+
+    ::= { gamNasMibCompliances 1 }
+
+END

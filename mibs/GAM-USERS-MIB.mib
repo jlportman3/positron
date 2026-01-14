@@ -1,0 +1,196 @@
+-- *****************************************************************
+-- USERS-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-USERS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamUsersMib MODULE-IDENTITY
+    LAST-UPDATED "201601190000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of Users"
+    REVISION    "201601190000Z"
+    DESCRIPTION
+        "Updated the maximum length of password"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 58 }
+
+
+gamUsersMibObjects OBJECT IDENTIFIER
+    ::= { gamUsersMib 1 }
+
+gamUsersConfig OBJECT IDENTIFIER
+    ::= { gamUsersMibObjects 2 }
+
+gamUsersConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMUsersConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The table is Users onfiguration table. The index is user name."
+    ::= { gamUsersConfig 1 }
+
+gamUsersConfigEntry OBJECT-TYPE
+    SYNTAX      GAMUsersConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamUsersConfigUsername }
+    ::= { gamUsersConfigTable 1 }
+
+GAMUsersConfigEntry ::= SEQUENCE {
+    gamUsersConfigUsername   GAMDisplayString,
+    gamUsersConfigPrivilege  Unsigned32,
+    gamUsersConfigEncrypted  TruthValue,
+    gamUsersConfigPassword   GAMDisplayString,
+    gamUsersConfigAction     GAMRowEditorState
+}
+
+gamUsersConfigUsername OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of user."
+    ::= { gamUsersConfigEntry 1 }
+
+gamUsersConfigPrivilege OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Privilege level of the user."
+    ::= { gamUsersConfigEntry 2 }
+
+gamUsersConfigEncrypted OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The flag indicates the password is encrypted or not. TRUE means the
+         password is encrypted. FALSE means the password is plain text."
+    ::= { gamUsersConfigEntry 3 }
+
+gamUsersConfigPassword OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Password of the user. The password length depends on the type of
+         password. If the password is encrypted, then the length is 128. If it
+         is unencrypted, then the maximum length is 31."
+    ::= { gamUsersConfigEntry 4 }
+
+gamUsersConfigAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamUsersConfigEntry 100 }
+
+gamUsersConfigTableRowEditor OBJECT IDENTIFIER
+    ::= { gamUsersConfig 2 }
+
+gamUsersConfigTableRowEditorUsername OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Name of user."
+    ::= { gamUsersConfigTableRowEditor 1 }
+
+gamUsersConfigTableRowEditorPrivilege OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Privilege level of the user."
+    ::= { gamUsersConfigTableRowEditor 2 }
+
+gamUsersConfigTableRowEditorEncrypted OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The flag indicates the password is encrypted or not. TRUE means the
+         password is encrypted. FALSE means the password is plain text."
+    ::= { gamUsersConfigTableRowEditor 3 }
+
+gamUsersConfigTableRowEditorPassword OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..128))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Password of the user. The password length depends on the type of
+         password. If the password is encrypted, then the length is 128. If it
+         is unencrypted, then the maximum length is 31."
+    ::= { gamUsersConfigTableRowEditor 4 }
+
+gamUsersConfigTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamUsersConfigTableRowEditor 100 }
+
+gamUsersMibConformance OBJECT IDENTIFIER
+    ::= { gamUsersMib 2 }
+
+gamUsersMibCompliances OBJECT IDENTIFIER
+    ::= { gamUsersMibConformance 1 }
+
+gamUsersMibGroups OBJECT IDENTIFIER
+    ::= { gamUsersMibConformance 2 }
+
+gamUsersConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamUsersConfigUsername, gamUsersConfigPrivilege,
+                  gamUsersConfigEncrypted, gamUsersConfigPassword,
+                  gamUsersConfigAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamUsersMibGroups 1 }
+
+gamUsersConfigTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamUsersConfigTableRowEditorUsername,
+                  gamUsersConfigTableRowEditorPrivilege,
+                  gamUsersConfigTableRowEditorEncrypted,
+                  gamUsersConfigTableRowEditorPassword,
+                  gamUsersConfigTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamUsersMibGroups 2 }
+
+gamUsersMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamUsersConfigTableInfoGroup,
+                       gamUsersConfigTableRowEditorInfoGroup }
+
+    ::= { gamUsersMibCompliances 1 }
+
+END

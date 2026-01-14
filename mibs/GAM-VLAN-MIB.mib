@@ -1,0 +1,885 @@
+-- *****************************************************************
+-- VLAN-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-VLAN-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMEtherType FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMPortList FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    GAMVlan FROM GAM-TC
+    GAMVlanListQuarter FROM GAM-TC
+    GAMVlanOrZero FROM GAM-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamVlanMib MODULE-IDENTITY
+    LAST-UPDATED "201501160000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "Private MIB for VLAN."
+    REVISION    "201501160000Z"
+    DESCRIPTION
+        "Added Shared VLAN Learning table"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 13 }
+
+
+GAMVlanEgressTagging ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates how egress tagging occurs."
+    SYNTAX      INTEGER { untagThis(0), tagThis(1), tagAll(2),
+                          untagAll(3) }
+
+GAMVlanIngressAcceptance ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates the type of frames that are not discarded on
+         ingress w.r.t. VLAN tagging."
+    SYNTAX      INTEGER { all(0), tagged(1), untagged(2) }
+
+GAMVlanPortMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Determines the underlying port mode.
+         
+         Access ports are only members of one VLAN, the AccessVlan.
+         
+         Trunk ports are by default members of all VLANs, which can be limited
+         with TrunkVlans.
+         
+         Hybrid ports allow for changing all port VLAN parameters. As trunk
+         ports, hybrid ports are by default members of all VLANs, which can be
+         limited with HybridVlans."
+    SYNTAX      INTEGER { access(0), trunk(1), hybrid(2) }
+
+GAMVlanPortType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates if a port is VLAN aware, and if so, to which
+         EtherType it is sensitive."
+    SYNTAX      INTEGER { unaware(0), c(1), s(2), sCustom(3) }
+
+GAMVlanUserType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "An integer that indicates the VLAN user type. A value of 'combined'
+         indicates the VLAN settings as programmed to hardware. A value of
+         'admin' indicates the VLAN settings as programmed by the administrative
+         user, and any other value indicates a software module that changes VLAN
+         settings 'behind the scenes'."
+    SYNTAX      INTEGER { combined(0), admin(1), forbidden(2),
+                          dot1x(3), mvrp(4), gvrp(5), mvr(6),
+                          voiceVlan(7), mstp(8), erps(9), mep(10),
+                          evc(11), vcl(12), rmirror(13), ttloop(14),
+                          ghn(15) }
+
+gamVlanMibObjects OBJECT IDENTIFIER
+    ::= { gamVlanMib 1 }
+
+gamVlanCapabilities OBJECT IDENTIFIER
+    ::= { gamVlanMibObjects 1 }
+
+gamVlanCapabilitiesVlanIdMin OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum VLAN ID that can be configured on the device."
+    ::= { gamVlanCapabilities 1 }
+
+gamVlanCapabilitiesVlanIdMax OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum VLAN ID that can be configured on the device."
+    ::= { gamVlanCapabilities 2 }
+
+gamVlanCapabilitiesFidCnt OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of Shared VLAN Learning (SVL) Filter IDs (FIDs) supported by
+         this device. 0 if SVL is not supported."
+    ::= { gamVlanCapabilities 3 }
+
+gamVlanConfig OBJECT IDENTIFIER
+    ::= { gamVlanMibObjects 2 }
+
+gamVlanConfigGlobals OBJECT IDENTIFIER
+    ::= { gamVlanConfig 1 }
+
+gamVlanConfigGlobalsMain OBJECT IDENTIFIER
+    ::= { gamVlanConfigGlobals 1 }
+
+gamVlanConfigGlobalsMainCustomSPortEtherType OBJECT-TYPE
+    SYNTAX      GAMEtherType (1536..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "TPID (EtherType) for ports marked as Custom-S tag aware."
+    ::= { gamVlanConfigGlobalsMain 1 }
+
+gamVlanConfigGlobalsMainAccessVlans0To1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating the enabled access VLANs."
+    ::= { gamVlanConfigGlobalsMain 2 }
+
+gamVlanConfigGlobalsMainAccessVlans1KTo2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating the enabled access VLANs."
+    ::= { gamVlanConfigGlobalsMain 3 }
+
+gamVlanConfigGlobalsMainAccessVlans2KTo3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating the enabled access VLANs."
+    ::= { gamVlanConfigGlobalsMain 4 }
+
+gamVlanConfigGlobalsMainAccessVlans3KTo4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Last quarter of bit-array indicating the enabled access VLANs."
+    ::= { gamVlanConfigGlobalsMain 5 }
+
+gamVlanConfigGlobalsNameTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVlanConfigGlobalsNameEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of VLAN names."
+    ::= { gamVlanConfigGlobals 2 }
+
+gamVlanConfigGlobalsNameEntry OBJECT-TYPE
+    SYNTAX      GAMVlanConfigGlobalsNameEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the name of a given VLAN."
+    INDEX       { gamVlanConfigGlobalsNameVlanId }
+    ::= { gamVlanConfigGlobalsNameTable 1 }
+
+GAMVlanConfigGlobalsNameEntry ::= SEQUENCE {
+    gamVlanConfigGlobalsNameVlanId  GAMVlan,
+    gamVlanConfigGlobalsNameName    GAMDisplayString
+}
+
+gamVlanConfigGlobalsNameVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VLAN ID. Valid range is 1 - 4095."
+    ::= { gamVlanConfigGlobalsNameEntry 1 }
+
+gamVlanConfigGlobalsNameName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "VLAN Name. Default for VLAN 1 is 'default'. Default for any other VLAN
+         is 'VLANxxxx', where 'xxxx' is a decimal representation of the VLAN ID
+         with leading zeroes."
+    ::= { gamVlanConfigGlobalsNameEntry 2 }
+
+gamVlanConfigInterfaces OBJECT IDENTIFIER
+    ::= { gamVlanConfig 2 }
+
+gamVlanConfigInterfacesTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVlanConfigInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of per-port configuration."
+    ::= { gamVlanConfigInterfaces 1 }
+
+gamVlanConfigInterfacesEntry OBJECT-TYPE
+    SYNTAX      GAMVlanConfigInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the VLAN configuration for a port interface."
+    INDEX       { gamVlanConfigInterfacesIfIndex }
+    ::= { gamVlanConfigInterfacesTable 1 }
+
+GAMVlanConfigInterfacesEntry ::= SEQUENCE {
+    gamVlanConfigInterfacesIfIndex                  GAMInterfaceIndex,
+    gamVlanConfigInterfacesMode                     GAMVlanPortMode,
+    gamVlanConfigInterfacesAccessVlan               GAMVlan,
+    gamVlanConfigInterfacesTrunkNativeVlan          GAMVlan,
+    gamVlanConfigInterfacesTrunkTagNativeVlan       TruthValue,
+    gamVlanConfigInterfacesTrunkVlans0KTo1K         GAMVlanListQuarter,
+    gamVlanConfigInterfacesTrunkVlans1KTo2K         GAMVlanListQuarter,
+    gamVlanConfigInterfacesTrunkVlans2KTo3K         GAMVlanListQuarter,
+    gamVlanConfigInterfacesTrunkVlans3KTo4K         GAMVlanListQuarter,
+    gamVlanConfigInterfacesHybridNativeVlan         GAMVlan,
+    gamVlanConfigInterfacesHybridPortType           GAMVlanPortType,
+    gamVlanConfigInterfacesHybridIngressFiltering   TruthValue,
+    gamVlanConfigInterfacesHybridIngressAcceptance  GAMVlanIngressAcceptance,
+    gamVlanConfigInterfacesHybridEgressTagging      GAMVlanEgressTagging,
+    gamVlanConfigInterfacesHybridVlans0KTo1K        GAMVlanListQuarter,
+    gamVlanConfigInterfacesHybridVlans1KTo2K        GAMVlanListQuarter,
+    gamVlanConfigInterfacesHybridVlans2KTo3K        GAMVlanListQuarter,
+    gamVlanConfigInterfacesHybridVlans3KTo4K        GAMVlanListQuarter,
+    gamVlanConfigInterfacesForbiddenVlans0KTo1K     GAMVlanListQuarter,
+    gamVlanConfigInterfacesForbiddenVlans1KTo2K     GAMVlanListQuarter,
+    gamVlanConfigInterfacesForbiddenVlans2KTo3K     GAMVlanListQuarter,
+    gamVlanConfigInterfacesForbiddenVlans3KTo4K     GAMVlanListQuarter
+}
+
+gamVlanConfigInterfacesIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface index."
+    ::= { gamVlanConfigInterfacesEntry 1 }
+
+gamVlanConfigInterfacesMode OBJECT-TYPE
+    SYNTAX      GAMVlanPortMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "VLAN mode of the port."
+    ::= { gamVlanConfigInterfacesEntry 2 }
+
+gamVlanConfigInterfacesAccessVlan OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The port VLAN ID the port will be assigned when Mode is Access."
+    ::= { gamVlanConfigInterfacesEntry 3 }
+
+gamVlanConfigInterfacesTrunkNativeVlan OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The port VLAN ID the port will be assigned when Mode is trunk."
+    ::= { gamVlanConfigInterfacesEntry 4 }
+
+gamVlanConfigInterfacesTrunkTagNativeVlan OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether frames classified to TrunkNativeVlan get tagged on
+         egress. Used when Mode is trunk."
+    ::= { gamVlanConfigInterfacesEntry 5 }
+
+gamVlanConfigInterfacesTrunkVlans0KTo1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is trunk."
+    ::= { gamVlanConfigInterfacesEntry 6 }
+
+gamVlanConfigInterfacesTrunkVlans1KTo2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is trunk."
+    ::= { gamVlanConfigInterfacesEntry 7 }
+
+gamVlanConfigInterfacesTrunkVlans2KTo3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is trunk."
+    ::= { gamVlanConfigInterfacesEntry 8 }
+
+gamVlanConfigInterfacesTrunkVlans3KTo4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Last quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is trunk."
+    ::= { gamVlanConfigInterfacesEntry 9 }
+
+gamVlanConfigInterfacesHybridNativeVlan OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The port VLAN ID the port will be assigned when Mode is hybrid."
+    ::= { gamVlanConfigInterfacesEntry 10 }
+
+gamVlanConfigInterfacesHybridPortType OBJECT-TYPE
+    SYNTAX      GAMVlanPortType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls awareness and whether it reacts to C-tags, S-tags,
+         Custom-S-tags. Used when Mode is hybrid."
+    ::= { gamVlanConfigInterfacesEntry 11 }
+
+gamVlanConfigInterfacesHybridIngressFiltering OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether frames classified to a certain VLAN ID get discarded
+         (true) or not (false) if the port is not member of the VLAN ID. Used
+         when Mode is hybrid."
+    ::= { gamVlanConfigInterfacesEntry 12 }
+
+gamVlanConfigInterfacesHybridIngressAcceptance OBJECT-TYPE
+    SYNTAX      GAMVlanIngressAcceptance
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether frames are accepted on ingress depending on VLAN tag
+         in frame. Used when Mode is hybrid."
+    ::= { gamVlanConfigInterfacesEntry 13 }
+
+gamVlanConfigInterfacesHybridEgressTagging OBJECT-TYPE
+    SYNTAX      GAMVlanEgressTagging
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls tagging of frames on egress. tagThis(1) is not allowed. Used
+         when Mode is hybrid."
+    ::= { gamVlanConfigInterfacesEntry 14 }
+
+gamVlanConfigInterfacesHybridVlans0KTo1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is hybrid."
+    ::= { gamVlanConfigInterfacesEntry 15 }
+
+gamVlanConfigInterfacesHybridVlans1KTo2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is hybrid."
+    ::= { gamVlanConfigInterfacesEntry 16 }
+
+gamVlanConfigInterfacesHybridVlans2KTo3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is hybrid."
+    ::= { gamVlanConfigInterfacesEntry 17 }
+
+gamVlanConfigInterfacesHybridVlans3KTo4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Last quarter of bit-array indicating whether the port is member of a
+         VLAN ('1') or not ('0'). Used when Mode is hybrid."
+    ::= { gamVlanConfigInterfacesEntry 18 }
+
+gamVlanConfigInterfacesForbiddenVlans0KTo1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating whether the port can ever become
+         a member of a VLAN ('0') or not ('1'). Used in all modes."
+    ::= { gamVlanConfigInterfacesEntry 19 }
+
+gamVlanConfigInterfacesForbiddenVlans1KTo2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating whether the port can ever become
+         a member of a VLAN ('0') or not ('1'). Used in all modes."
+    ::= { gamVlanConfigInterfacesEntry 20 }
+
+gamVlanConfigInterfacesForbiddenVlans2KTo3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating whether the port can ever become
+         a member of a VLAN ('0') or not ('1'). Used in all modes."
+    ::= { gamVlanConfigInterfacesEntry 21 }
+
+gamVlanConfigInterfacesForbiddenVlans3KTo4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Last quarter of bit-array indicating whether the port can ever become a
+         member of a VLAN ('0') or not ('1'). Used in all modes."
+    ::= { gamVlanConfigInterfacesEntry 22 }
+
+gamVlanConfigInterfacesSvlTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVlanConfigInterfacesSvlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Shared VLAN Learning (SVL) allows for having one or more VLAN IDs map
+         to the same Filter ID (FID). For a given set of VLANs, if an individual
+         MAC address is learned in one VLAN, that learned information is used in
+         forwarding decisions taken for that address relative to all other VLANs
+         in the given set.
+         
+         fidCnt, which can be found in the capabilities section, indicates the
+         number of FIDs available on this platform. The feature is not available
+         if this number is 0."
+    ::= { gamVlanConfigInterfaces 2 }
+
+gamVlanConfigInterfacesSvlEntry OBJECT-TYPE
+    SYNTAX      GAMVlanConfigInterfacesSvlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The table is indexed by VLAN ID"
+    INDEX       { gamVlanConfigInterfacesSvlVlanId }
+    ::= { gamVlanConfigInterfacesSvlTable 1 }
+
+GAMVlanConfigInterfacesSvlEntry ::= SEQUENCE {
+    gamVlanConfigInterfacesSvlVlanId    GAMVlan,
+    gamVlanConfigInterfacesSvlFilterId  GAMUnsigned16,
+    gamVlanConfigInterfacesSvlAction    GAMRowEditorState
+}
+
+gamVlanConfigInterfacesSvlVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VLAN ID. Valid range is 1 - 4095."
+    ::= { gamVlanConfigInterfacesSvlEntry 1 }
+
+gamVlanConfigInterfacesSvlFilterId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Filter ID (FID) used in Shared VLAN Learning. Zero or more VLANs may
+         map into the same FID."
+    ::= { gamVlanConfigInterfacesSvlEntry 2 }
+
+gamVlanConfigInterfacesSvlAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVlanConfigInterfacesSvlEntry 100 }
+
+gamVlanConfigInterfacesSvlTableRowEditor OBJECT IDENTIFIER
+    ::= { gamVlanConfigInterfaces 3 }
+
+gamVlanConfigInterfacesSvlTableRowEditorVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "VLAN ID. Valid range is 1 - 4095."
+    ::= { gamVlanConfigInterfacesSvlTableRowEditor 1 }
+
+gamVlanConfigInterfacesSvlTableRowEditorFilterId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Filter ID (FID) used in Shared VLAN Learning. Zero or more VLANs may
+         map into the same FID."
+    ::= { gamVlanConfigInterfacesSvlTableRowEditor 2 }
+
+gamVlanConfigInterfacesSvlTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVlanConfigInterfacesSvlTableRowEditor 100 }
+
+gamVlanStatus OBJECT IDENTIFIER
+    ::= { gamVlanMibObjects 3 }
+
+gamVlanStatusInterfaces OBJECT IDENTIFIER
+    ::= { gamVlanStatus 1 }
+
+gamVlanStatusInterfacesTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVlanStatusInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of per-interface (port) status."
+    ::= { gamVlanStatusInterfaces 1 }
+
+gamVlanStatusInterfacesEntry OBJECT-TYPE
+    SYNTAX      GAMVlanStatusInterfacesEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the VLAN configuration for a port interface for a
+         given VLAN user."
+    INDEX       { gamVlanStatusInterfacesIfIndex,
+                  gamVlanStatusInterfacesVlanUser }
+    ::= { gamVlanStatusInterfacesTable 1 }
+
+GAMVlanStatusInterfacesEntry ::= SEQUENCE {
+    gamVlanStatusInterfacesIfIndex            GAMInterfaceIndex,
+    gamVlanStatusInterfacesVlanUser           GAMVlanUserType,
+    gamVlanStatusInterfacesPvid               GAMVlan,
+    gamVlanStatusInterfacesUvid               GAMVlan,
+    gamVlanStatusInterfacesPortType           GAMVlanPortType,
+    gamVlanStatusInterfacesIngressFiltering   TruthValue,
+    gamVlanStatusInterfacesIngressAcceptance  GAMVlanIngressAcceptance,
+    gamVlanStatusInterfacesEgressTagging      GAMVlanEgressTagging
+}
+
+gamVlanStatusInterfacesIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface index."
+    ::= { gamVlanStatusInterfacesEntry 1 }
+
+gamVlanStatusInterfacesVlanUser OBJECT-TYPE
+    SYNTAX      GAMVlanUserType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VLAN user."
+    ::= { gamVlanStatusInterfacesEntry 2 }
+
+gamVlanStatusInterfacesPvid OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Port VLAN ID set by this user."
+    ::= { gamVlanStatusInterfacesEntry 3 }
+
+gamVlanStatusInterfacesUvid OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Untagged VLAN ID set by a user. This may only be populated by non-admin
+         users."
+    ::= { gamVlanStatusInterfacesEntry 4 }
+
+gamVlanStatusInterfacesPortType OBJECT-TYPE
+    SYNTAX      GAMVlanPortType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "VLAN Awareness and tag reaction set by this user."
+    ::= { gamVlanStatusInterfacesEntry 5 }
+
+gamVlanStatusInterfacesIngressFiltering OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Ingress filtering enabled or disabled by this user."
+    ::= { gamVlanStatusInterfacesEntry 6 }
+
+gamVlanStatusInterfacesIngressAcceptance OBJECT-TYPE
+    SYNTAX      GAMVlanIngressAcceptance
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "VLAN tagging accepted upon ingress configured by this user."
+    ::= { gamVlanStatusInterfacesEntry 7 }
+
+gamVlanStatusInterfacesEgressTagging OBJECT-TYPE
+    SYNTAX      GAMVlanEgressTagging
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Egress tagging configured by this user."
+    ::= { gamVlanStatusInterfacesEntry 8 }
+
+gamVlanStatusMemberships OBJECT IDENTIFIER
+    ::= { gamVlanStatus 2 }
+
+gamVlanStatusMembershipsVlanTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVlanStatusMembershipsVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of per-VLAN, per-VLAN user port memberships."
+    ::= { gamVlanStatusMemberships 1 }
+
+gamVlanStatusMembershipsVlanEntry OBJECT-TYPE
+    SYNTAX      GAMVlanStatusMembershipsVlanEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains a port list of VLAN memberships for a given VLAN and
+         VLAN user.The table is sparsely populated, so if a VLAN user doesn't
+         contribute, the row is non-existent."
+    INDEX       { gamVlanStatusMembershipsVlanVlanId,
+                  gamVlanStatusMembershipsVlanVlanUser }
+    ::= { gamVlanStatusMembershipsVlanTable 1 }
+
+GAMVlanStatusMembershipsVlanEntry ::= SEQUENCE {
+    gamVlanStatusMembershipsVlanVlanId    GAMVlan,
+    gamVlanStatusMembershipsVlanVlanUser  GAMVlanUserType,
+    gamVlanStatusMembershipsVlanPortList  GAMPortList
+}
+
+gamVlanStatusMembershipsVlanVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VLAN ID. Valid range is 1 - 4095."
+    ::= { gamVlanStatusMembershipsVlanEntry 1 }
+
+gamVlanStatusMembershipsVlanVlanUser OBJECT-TYPE
+    SYNTAX      GAMVlanUserType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VLAN user."
+    ::= { gamVlanStatusMembershipsVlanEntry 2 }
+
+gamVlanStatusMembershipsVlanPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Port list."
+    ::= { gamVlanStatusMembershipsVlanEntry 3 }
+
+gamVlanStatusMembershipsVlan2TagsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVlanStatusMembershipsVlan2TagsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of per-outer VLAN, per-inner VLAN, per-VLAN user port
+         memberships."
+    ::= { gamVlanStatusMemberships 2 }
+
+gamVlanStatusMembershipsVlan2TagsEntry OBJECT-TYPE
+    SYNTAX      GAMVlanStatusMembershipsVlan2TagsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains a port list of VLAN memberships for a given VLAN
+         (outer/inner VID) and VLAN user.The table is sparsely populated, so if
+         a VLAN user doesn't contribute, the row is non-existent."
+    INDEX       { gamVlanStatusMembershipsVlan2TagsOuterVlanId,
+                  gamVlanStatusMembershipsVlan2TagsInnerVlanId,
+                  gamVlanStatusMembershipsVlan2TagsVlanUser }
+    ::= { gamVlanStatusMembershipsVlan2TagsTable 1 }
+
+GAMVlanStatusMembershipsVlan2TagsEntry ::= SEQUENCE {
+    gamVlanStatusMembershipsVlan2TagsOuterVlanId  GAMVlan,
+    gamVlanStatusMembershipsVlan2TagsInnerVlanId  GAMVlanOrZero,
+    gamVlanStatusMembershipsVlan2TagsVlanUser     GAMVlanUserType,
+    gamVlanStatusMembershipsVlan2TagsPortList     GAMPortList
+}
+
+gamVlanStatusMembershipsVlan2TagsOuterVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Outer VLAN ID. Valid range is 1 - 4095."
+    ::= { gamVlanStatusMembershipsVlan2TagsEntry 1 }
+
+gamVlanStatusMembershipsVlan2TagsInnerVlanId OBJECT-TYPE
+    SYNTAX      GAMVlanOrZero
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Inner VLAN ID. Valid range is 0 (when single tag, in which case only
+         the outer tag VID is used), or 1 - 4095."
+    ::= { gamVlanStatusMembershipsVlan2TagsEntry 2 }
+
+gamVlanStatusMembershipsVlan2TagsVlanUser OBJECT-TYPE
+    SYNTAX      GAMVlanUserType
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "VLAN user."
+    ::= { gamVlanStatusMembershipsVlan2TagsEntry 3 }
+
+gamVlanStatusMembershipsVlan2TagsPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Port list."
+    ::= { gamVlanStatusMembershipsVlan2TagsEntry 4 }
+
+gamVlanMibConformance OBJECT IDENTIFIER
+    ::= { gamVlanMib 2 }
+
+gamVlanMibCompliances OBJECT IDENTIFIER
+    ::= { gamVlanMibConformance 1 }
+
+gamVlanMibGroups OBJECT IDENTIFIER
+    ::= { gamVlanMibConformance 2 }
+
+gamVlanCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVlanCapabilitiesVlanIdMin,
+                  gamVlanCapabilitiesVlanIdMax,
+                  gamVlanCapabilitiesFidCnt }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVlanMibGroups 1 }
+
+gamVlanConfigGlobalsMainInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVlanConfigGlobalsMainCustomSPortEtherType,
+                  gamVlanConfigGlobalsMainAccessVlans0To1K,
+                  gamVlanConfigGlobalsMainAccessVlans1KTo2K,
+                  gamVlanConfigGlobalsMainAccessVlans2KTo3K,
+                  gamVlanConfigGlobalsMainAccessVlans3KTo4K }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVlanMibGroups 2 }
+
+gamVlanConfigGlobalsNameTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVlanConfigGlobalsNameVlanId,
+                  gamVlanConfigGlobalsNameName }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVlanMibGroups 3 }
+
+gamVlanConfigInterfacesTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVlanConfigInterfacesIfIndex,
+                  gamVlanConfigInterfacesMode,
+                  gamVlanConfigInterfacesAccessVlan,
+                  gamVlanConfigInterfacesTrunkNativeVlan,
+                  gamVlanConfigInterfacesTrunkTagNativeVlan,
+                  gamVlanConfigInterfacesTrunkVlans0KTo1K,
+                  gamVlanConfigInterfacesTrunkVlans1KTo2K,
+                  gamVlanConfigInterfacesTrunkVlans2KTo3K,
+                  gamVlanConfigInterfacesTrunkVlans3KTo4K,
+                  gamVlanConfigInterfacesHybridNativeVlan,
+                  gamVlanConfigInterfacesHybridPortType,
+                  gamVlanConfigInterfacesHybridIngressFiltering,
+                  gamVlanConfigInterfacesHybridIngressAcceptance,
+                  gamVlanConfigInterfacesHybridEgressTagging,
+                  gamVlanConfigInterfacesHybridVlans0KTo1K,
+                  gamVlanConfigInterfacesHybridVlans1KTo2K,
+                  gamVlanConfigInterfacesHybridVlans2KTo3K,
+                  gamVlanConfigInterfacesHybridVlans3KTo4K,
+                  gamVlanConfigInterfacesForbiddenVlans0KTo1K,
+                  gamVlanConfigInterfacesForbiddenVlans1KTo2K,
+                  gamVlanConfigInterfacesForbiddenVlans2KTo3K,
+                  gamVlanConfigInterfacesForbiddenVlans3KTo4K }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVlanMibGroups 4 }
+
+gamVlanConfigInterfacesSvlTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVlanConfigInterfacesSvlVlanId,
+                  gamVlanConfigInterfacesSvlFilterId,
+                  gamVlanConfigInterfacesSvlAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVlanMibGroups 5 }
+
+gamVlanConfigInterfacesSvlTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVlanConfigInterfacesSvlTableRowEditorVlanId,
+                  gamVlanConfigInterfacesSvlTableRowEditorFilterId,
+                  gamVlanConfigInterfacesSvlTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVlanMibGroups 6 }
+
+gamVlanStatusInterfacesTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVlanStatusInterfacesIfIndex,
+                  gamVlanStatusInterfacesVlanUser,
+                  gamVlanStatusInterfacesPvid,
+                  gamVlanStatusInterfacesUvid,
+                  gamVlanStatusInterfacesPortType,
+                  gamVlanStatusInterfacesIngressFiltering,
+                  gamVlanStatusInterfacesIngressAcceptance,
+                  gamVlanStatusInterfacesEgressTagging }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVlanMibGroups 7 }
+
+gamVlanStatusMembershipsVlanTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVlanStatusMembershipsVlanVlanId,
+                  gamVlanStatusMembershipsVlanVlanUser,
+                  gamVlanStatusMembershipsVlanPortList }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVlanMibGroups 8 }
+
+gamVlanStatusMembershipsVlan2TagsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVlanStatusMembershipsVlan2TagsOuterVlanId,
+                  gamVlanStatusMembershipsVlan2TagsInnerVlanId,
+                  gamVlanStatusMembershipsVlan2TagsVlanUser,
+                  gamVlanStatusMembershipsVlan2TagsPortList }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVlanMibGroups 9 }
+
+gamVlanMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamVlanCapabilitiesInfoGroup,
+                       gamVlanConfigGlobalsMainInfoGroup,
+                       gamVlanConfigGlobalsNameTableInfoGroup,
+                       gamVlanConfigInterfacesTableInfoGroup,
+                       gamVlanConfigInterfacesSvlTableInfoGroup,
+                       gamVlanConfigInterfacesSvlTableRowEditorInfoGroup,
+                       gamVlanStatusInterfacesTableInfoGroup,
+                       gamVlanStatusMembershipsVlanTableInfoGroup,
+                       gamVlanStatusMembershipsVlan2TagsTableInfoGroup }
+
+    ::= { gamVlanMibCompliances 1 }
+
+END

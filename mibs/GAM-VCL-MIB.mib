@@ -1,0 +1,556 @@
+-- *****************************************************************
+-- VCL-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-VCL-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMPortList FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMVclProtoEncap FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    ;
+
+gamVclMib MODULE-IDENTITY
+    LAST-UPDATED "201603210000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "Private VCL MIB."
+    REVISION    "201603210000Z"
+    DESCRIPTION
+        "Allow subnet length zero."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 79 }
+
+
+gamVclMibObjects OBJECT IDENTIFIER
+    ::= { gamVclMib 1 }
+
+gamVclConfig OBJECT IDENTIFIER
+    ::= { gamVclMibObjects 2 }
+
+gamVclConfigMac OBJECT IDENTIFIER
+    ::= { gamVclConfig 1 }
+
+gamVclConfigMacTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVclConfigMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the MAC address to VLAN ID configuration table."
+    ::= { gamVclConfigMac 1 }
+
+gamVclConfigMacEntry OBJECT-TYPE
+    SYNTAX      GAMVclConfigMacEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry in this table represents a configured MAC-based
+         classification.
+         
+         "
+    INDEX       { gamVclConfigMacMacAddress }
+    ::= { gamVclConfigMacTable 1 }
+
+GAMVclConfigMacEntry ::= SEQUENCE {
+    gamVclConfigMacMacAddress  MacAddress,
+    gamVclConfigMacVlanId      Integer32,
+    gamVclConfigMacPortList    GAMPortList,
+    gamVclConfigMacAction      GAMRowEditorState
+}
+
+gamVclConfigMacMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The MAC address for which this entry is applicable."
+    ::= { gamVclConfigMacEntry 1 }
+
+gamVclConfigMacVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vlan id of the mapping."
+    ::= { gamVclConfigMacEntry 2 }
+
+gamVclConfigMacPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "List of stack/switch ports on which this entry is active."
+    ::= { gamVclConfigMacEntry 3 }
+
+gamVclConfigMacAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVclConfigMacEntry 100 }
+
+gamVclConfigMacRowEditor OBJECT IDENTIFIER
+    ::= { gamVclConfigMac 2 }
+
+gamVclConfigMacRowEditorMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The MAC address for which this entry is applicable."
+    ::= { gamVclConfigMacRowEditor 1 }
+
+gamVclConfigMacRowEditorVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vlan id of the mapping."
+    ::= { gamVclConfigMacRowEditor 2 }
+
+gamVclConfigMacRowEditorPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "List of stack/switch ports on which this entry is active."
+    ::= { gamVclConfigMacRowEditor 3 }
+
+gamVclConfigMacRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVclConfigMacRowEditor 100 }
+
+gamVclConfigIp OBJECT IDENTIFIER
+    ::= { gamVclConfig 2 }
+
+gamVclConfigIpTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVclConfigIpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the IP Subnet to VLAN ID configuration table. The key of this
+         table is the IP subnet expressed as x.x.x.x/x, where the first 4 octets
+         represent the IPv4 address and the last one is the mask length.
+         
+         NOTE#1: Inside the VCL module these entries are actually sorted based
+         on a priority defined by the mask length, so that subnets with larger
+         mask lengths are first in the list, followed by entries with smaller
+         mask lengths. SNMP cannot follow this sorting, therefore the order the
+         entries are retrieved by the iterator may not be the same as the
+         actually stored order. (This is not an issue, but should be taken into
+         consideration when using the SNMP interface to create a user interface.
+         
+         NOTE#2: Even though only the subnet address is stored in the table
+         (i.e. both 192.168.1.0/4 and 192.168.2.0/4 will end up as 192.0.0.0/4),
+         the SNMP iterator will NOT take this into consideration. So, when
+         searching the next subnet of 192.168.1.0/4, the result could be
+         193.0.0.0/4 but not 192.168.1.0/24 (granted that these entries are
+         present)"
+    ::= { gamVclConfigIp 1 }
+
+gamVclConfigIpEntry OBJECT-TYPE
+    SYNTAX      GAMVclConfigIpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry in this table represents a configured IP Subnet-based
+         classification.
+         
+         "
+    INDEX       { gamVclConfigIpIpSubnetAddress,
+                  gamVclConfigIpIpSubnetMaskLength }
+    ::= { gamVclConfigIpTable 1 }
+
+GAMVclConfigIpEntry ::= SEQUENCE {
+    gamVclConfigIpIpSubnetAddress     IpAddress,
+    gamVclConfigIpIpSubnetMaskLength  Integer32,
+    gamVclConfigIpVlanId              Integer32,
+    gamVclConfigIpPortList            GAMPortList,
+    gamVclConfigIpAction              GAMRowEditorState
+}
+
+gamVclConfigIpIpSubnetAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The IP subnet address for which this entry is applicable."
+    ::= { gamVclConfigIpEntry 1 }
+
+gamVclConfigIpIpSubnetMaskLength OBJECT-TYPE
+    SYNTAX      Integer32 (0..32)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The IP subnet mask length for which this entry is applicable."
+    ::= { gamVclConfigIpEntry 2 }
+
+gamVclConfigIpVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vlan id of the mapping."
+    ::= { gamVclConfigIpEntry 3 }
+
+gamVclConfigIpPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "List of stack/switch ports on which this entry is active."
+    ::= { gamVclConfigIpEntry 4 }
+
+gamVclConfigIpAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVclConfigIpEntry 100 }
+
+gamVclConfigIpRowEditor OBJECT IDENTIFIER
+    ::= { gamVclConfigIp 2 }
+
+gamVclConfigIpRowEditorIpSubnetAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The IP subnet address for which this entry is applicable."
+    ::= { gamVclConfigIpRowEditor 1 }
+
+gamVclConfigIpRowEditorIpSubnetMaskLength OBJECT-TYPE
+    SYNTAX      Integer32 (0..32)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The IP subnet mask length for which this entry is applicable."
+    ::= { gamVclConfigIpRowEditor 2 }
+
+gamVclConfigIpRowEditorVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vlan id of the mapping."
+    ::= { gamVclConfigIpRowEditor 3 }
+
+gamVclConfigIpRowEditorPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "List of stack/switch ports on which this entry is active."
+    ::= { gamVclConfigIpRowEditor 4 }
+
+gamVclConfigIpRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVclConfigIpRowEditor 100 }
+
+gamVclConfigProtocol OBJECT IDENTIFIER
+    ::= { gamVclConfig 3 }
+
+gamVclConfigProtocolProto OBJECT IDENTIFIER
+    ::= { gamVclConfigProtocol 1 }
+
+gamVclConfigProtocolProtoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVclConfigProtocolProtoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the Protocol to Protocol Group mapping table."
+    ::= { gamVclConfigProtocolProto 1 }
+
+gamVclConfigProtocolProtoEntry OBJECT-TYPE
+    SYNTAX      GAMVclConfigProtocolProtoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry in this table represents a Protocol to Group mapping.
+         
+         "
+    INDEX       { gamVclConfigProtocolProtoProtocolEncapsulation }
+    ::= { gamVclConfigProtocolProtoTable 1 }
+
+GAMVclConfigProtocolProtoEntry ::= SEQUENCE {
+    gamVclConfigProtocolProtoProtocolEncapsulation  GAMVclProtoEncap,
+    gamVclConfigProtocolProtoProtocolGroupName      GAMDisplayString,
+    gamVclConfigProtocolProtoAction                 GAMRowEditorState
+}
+
+gamVclConfigProtocolProtoProtocolEncapsulation OBJECT-TYPE
+    SYNTAX      GAMVclProtoEncap
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The protocol encapsulation of the Protocol to Group mapping."
+    ::= { gamVclConfigProtocolProtoEntry 1 }
+
+gamVclConfigProtocolProtoProtocolGroupName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a name identifying the protocol group."
+    ::= { gamVclConfigProtocolProtoEntry 2 }
+
+gamVclConfigProtocolProtoAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVclConfigProtocolProtoEntry 100 }
+
+gamVclConfigProtocolProtoRowEditor OBJECT IDENTIFIER
+    ::= { gamVclConfigProtocolProto 2 }
+
+gamVclConfigProtocolProtoRowEditorProtocolEncapsulation OBJECT-TYPE
+    SYNTAX      GAMVclProtoEncap
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The protocol encapsulation of the Protocol to Group mapping."
+    ::= { gamVclConfigProtocolProtoRowEditor 1 }
+
+gamVclConfigProtocolProtoRowEditorProtocolGroupName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a name identifying the protocol group."
+    ::= { gamVclConfigProtocolProtoRowEditor 2 }
+
+gamVclConfigProtocolProtoRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVclConfigProtocolProtoRowEditor 100 }
+
+gamVclConfigProtocolGroup OBJECT IDENTIFIER
+    ::= { gamVclConfigProtocol 2 }
+
+gamVclConfigProtocolGroupTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMVclConfigProtocolGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the Protocol Group to VLAN ID configuration table."
+    ::= { gamVclConfigProtocolGroup 1 }
+
+gamVclConfigProtocolGroupEntry OBJECT-TYPE
+    SYNTAX      GAMVclConfigProtocolGroupEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry in this table represents a Protocol Group to VLAN ID
+         mapping.
+         
+         "
+    INDEX       { gamVclConfigProtocolGroupProtocolGroupName }
+    ::= { gamVclConfigProtocolGroupTable 1 }
+
+GAMVclConfigProtocolGroupEntry ::= SEQUENCE {
+    gamVclConfigProtocolGroupProtocolGroupName  GAMDisplayString,
+    gamVclConfigProtocolGroupVlanId             Integer32,
+    gamVclConfigProtocolGroupPortList           GAMPortList,
+    gamVclConfigProtocolGroupAction             GAMRowEditorState
+}
+
+gamVclConfigProtocolGroupProtocolGroupName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "This is a name identifying the protocol group."
+    ::= { gamVclConfigProtocolGroupEntry 1 }
+
+gamVclConfigProtocolGroupVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vlan id of the mapping."
+    ::= { gamVclConfigProtocolGroupEntry 2 }
+
+gamVclConfigProtocolGroupPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "List of stack/switch ports on which this entry is active."
+    ::= { gamVclConfigProtocolGroupEntry 3 }
+
+gamVclConfigProtocolGroupAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVclConfigProtocolGroupEntry 100 }
+
+gamVclConfigProtocolGroupRowEditor OBJECT IDENTIFIER
+    ::= { gamVclConfigProtocolGroup 2 }
+
+gamVclConfigProtocolGroupRowEditorProtocolGroupName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a name identifying the protocol group."
+    ::= { gamVclConfigProtocolGroupRowEditor 1 }
+
+gamVclConfigProtocolGroupRowEditorVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Vlan id of the mapping."
+    ::= { gamVclConfigProtocolGroupRowEditor 2 }
+
+gamVclConfigProtocolGroupRowEditorPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "List of stack/switch ports on which this entry is active."
+    ::= { gamVclConfigProtocolGroupRowEditor 3 }
+
+gamVclConfigProtocolGroupRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamVclConfigProtocolGroupRowEditor 100 }
+
+gamVclMibConformance OBJECT IDENTIFIER
+    ::= { gamVclMib 2 }
+
+gamVclMibCompliances OBJECT IDENTIFIER
+    ::= { gamVclMibConformance 1 }
+
+gamVclMibGroups OBJECT IDENTIFIER
+    ::= { gamVclMibConformance 2 }
+
+gamVclConfigMacTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVclConfigMacMacAddress, gamVclConfigMacVlanId,
+                  gamVclConfigMacPortList, gamVclConfigMacAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVclMibGroups 1 }
+
+gamVclConfigMacRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVclConfigMacRowEditorMacAddress,
+                  gamVclConfigMacRowEditorVlanId,
+                  gamVclConfigMacRowEditorPortList,
+                  gamVclConfigMacRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVclMibGroups 2 }
+
+gamVclConfigIpTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVclConfigIpIpSubnetAddress,
+                  gamVclConfigIpIpSubnetMaskLength,
+                  gamVclConfigIpVlanId, gamVclConfigIpPortList,
+                  gamVclConfigIpAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVclMibGroups 3 }
+
+gamVclConfigIpRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVclConfigIpRowEditorIpSubnetAddress,
+                  gamVclConfigIpRowEditorIpSubnetMaskLength,
+                  gamVclConfigIpRowEditorVlanId,
+                  gamVclConfigIpRowEditorPortList,
+                  gamVclConfigIpRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVclMibGroups 4 }
+
+gamVclConfigProtocolProtoTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVclConfigProtocolProtoProtocolEncapsulation,
+                  gamVclConfigProtocolProtoProtocolGroupName,
+                  gamVclConfigProtocolProtoAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVclMibGroups 5 }
+
+gamVclConfigProtocolProtoRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamVclConfigProtocolProtoRowEditorProtocolEncapsulation,
+                  gamVclConfigProtocolProtoRowEditorProtocolGroupName,
+                  gamVclConfigProtocolProtoRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVclMibGroups 6 }
+
+gamVclConfigProtocolGroupTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamVclConfigProtocolGroupProtocolGroupName,
+                  gamVclConfigProtocolGroupVlanId,
+                  gamVclConfigProtocolGroupPortList,
+                  gamVclConfigProtocolGroupAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVclMibGroups 7 }
+
+gamVclConfigProtocolGroupRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamVclConfigProtocolGroupRowEditorProtocolGroupName,
+                  gamVclConfigProtocolGroupRowEditorVlanId,
+                  gamVclConfigProtocolGroupRowEditorPortList,
+                  gamVclConfigProtocolGroupRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamVclMibGroups 8 }
+
+gamVclMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamVclConfigMacTableInfoGroup,
+                       gamVclConfigMacRowEditorInfoGroup,
+                       gamVclConfigIpTableInfoGroup,
+                       gamVclConfigIpRowEditorInfoGroup,
+                       gamVclConfigProtocolProtoTableInfoGroup,
+                       gamVclConfigProtocolProtoRowEditorInfoGroup,
+                       gamVclConfigProtocolGroupTableInfoGroup,
+                       gamVclConfigProtocolGroupRowEditorInfoGroup }
+
+    ::= { gamVclMibCompliances 1 }
+
+END

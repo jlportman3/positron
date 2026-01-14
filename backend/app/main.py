@@ -7,7 +7,7 @@ import time
 
 from .config import settings
 from .database import init_db, close_db
-from .api.v1 import gam, subscribers, provisioning, monitoring, integration
+from .api.v1 import auth, gam, subscribers, provisioning, monitoring, integration
 
 # Configure logging
 logging.basicConfig(
@@ -100,6 +100,7 @@ async def root():
 
 
 # Include API routers
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(gam.router, prefix="/api/v1/gam", tags=["GAM Devices"])
 app.include_router(subscribers.router, prefix="/api/v1/subscribers", tags=["Subscribers"])
 app.include_router(provisioning.router, prefix="/api/v1/provisioning", tags=["Provisioning"])

@@ -1,0 +1,527 @@
+-- *****************************************************************
+-- LACP-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-LACP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMPortList FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    Counter64 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamLacpMib MODULE-IDENTITY
+    LAST-UPDATED "201707310000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the IEEE802.3ad LAG MIB"
+    REVISION    "201707310000Z"
+    DESCRIPTION
+        "Removed members (AdminMode, AdminKey and AdminKey) from
+         vtssLacpConfigPortEntry as these parameters are now controlled by the
+         AGGR-MIB."
+    REVISION    "201704060000Z"
+    DESCRIPTION
+        "Changed lacpPortConfigTable: 1) Made dot3adAggrActorAdminMode read-only
+         as this parameter is now controlled by the AGGR-MIB. 2) Made
+         dot3adAggrRole object read-only as this is not a port-level but
+         group-level property. Added new objects to lacpPortStatusTable."
+    REVISION    "201411140000Z"
+    DESCRIPTION
+        "Added a new leaf for LACP system priority"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 35 }
+
+
+gamLacpMibObjects OBJECT IDENTIFIER
+    ::= { gamLacpMib 1 }
+
+gamLacpConfig OBJECT IDENTIFIER
+    ::= { gamLacpMibObjects 2 }
+
+gamLacpConfigPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMLacpConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of the LACP port configurations."
+    ::= { gamLacpConfig 1 }
+
+gamLacpConfigPortEntry OBJECT-TYPE
+    SYNTAX      GAMLacpConfigPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port has a set of parameters."
+    INDEX       { gamLacpConfigPortInterfaceNo }
+    ::= { gamLacpConfigPortTable 1 }
+
+GAMLacpConfigPortEntry ::= SEQUENCE {
+    gamLacpConfigPortInterfaceNo             GAMInterfaceIndex,
+    gamLacpConfigPortDot3adAggrTimeout       TruthValue,
+    gamLacpConfigPortDot3adAggrPortPriority  Unsigned32
+}
+
+gamLacpConfigPortInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamLacpConfigPortEntry 1 }
+
+gamLacpConfigPortDot3adAggrTimeout OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Timeout controls the period between BPDU transmissions. Fast(true)
+         will transmit LACP packets each second, while Slow(0) will wait for 30
+         seconds before sending a LACP packet."
+    ::= { gamLacpConfigPortEntry 2 }
+
+gamLacpConfigPortDot3adAggrPortPriority OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Port Priority controls the priority of the port. If the LACP
+         partner wants to form a larger group than is supported by this device
+         then this parameter will control which ports will be active and which
+         ports will be in a backup role. Lower number means greater priority."
+    ::= { gamLacpConfigPortEntry 3 }
+
+gamLacpConfigGlobals OBJECT IDENTIFIER
+    ::= { gamLacpConfig 2 }
+
+gamLacpConfigGlobalsDot3adAggrSystemPriority OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..65535)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "LACP system priority is a value."
+    ::= { gamLacpConfigGlobals 1 }
+
+gamLacpStatus OBJECT IDENTIFIER
+    ::= { gamLacpMibObjects 3 }
+
+gamLacpStatusSystemTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMLacpStatusSystemEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains the LACP aggregation group system status. Each
+         entry represents a single aggregation group and is indexed with the
+         ifIndex of the aggregation group. The table is auto-populated by the
+         system when valid parther information exist for the group."
+    ::= { gamLacpStatus 1 }
+
+gamLacpStatusSystemEntry OBJECT-TYPE
+    SYNTAX      GAMLacpStatusSystemEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry represents a set of status parameters for an aggregation
+         group."
+    INDEX       { gamLacpStatusSystemInterfaceNo }
+    ::= { gamLacpStatusSystemTable 1 }
+
+GAMLacpStatusSystemEntry ::= SEQUENCE {
+    gamLacpStatusSystemInterfaceNo                          GAMInterfaceIndex,
+    gamLacpStatusSystemDot3adAggrID                         GAMUnsigned16,
+    gamLacpStatusSystemDot3adAggrPartnerSystemID            MacAddress,
+    gamLacpStatusSystemDot3adAggrPartnerOperKey             GAMUnsigned16,
+    gamLacpStatusSystemDot3adAggrPartnerOperSystemPriority  GAMUnsigned16,
+    gamLacpStatusSystemDot3adAggrPartnerStateLastChanged    Unsigned32,
+    gamLacpStatusSystemDot3adAggrLocalPorts                 GAMPortList
+}
+
+gamLacpStatusSystemInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamLacpStatusSystemEntry 1 }
+
+gamLacpStatusSystemDot3adAggrID OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The aggregation ID for a particular link aggregation group."
+    ::= { gamLacpStatusSystemEntry 2 }
+
+gamLacpStatusSystemDot3adAggrPartnerSystemID OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The system ID (MAC address) of the aggregation partner."
+    ::= { gamLacpStatusSystemEntry 3 }
+
+gamLacpStatusSystemDot3adAggrPartnerOperKey OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The Key that the partner has assigned to this aggregation ID."
+    ::= { gamLacpStatusSystemEntry 4 }
+
+gamLacpStatusSystemDot3adAggrPartnerOperSystemPriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "A 2-octet read-only value indicating the operational value of priority
+         associated with the Partner's System ID. The value of this attribute
+         may contain the manually configured value carried in
+         aAggPortPartnerAdminSystemPriority if there is no protocol Partner."
+    ::= { gamLacpStatusSystemEntry 5 }
+
+gamLacpStatusSystemDot3adAggrPartnerStateLastChanged OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The time in second since this aggregation changed"
+    ::= { gamLacpStatusSystemEntry 6 }
+
+gamLacpStatusSystemDot3adAggrLocalPorts OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Local port list"
+    ::= { gamLacpStatusSystemEntry 7 }
+
+gamLacpStatusPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMLacpStatusPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains LACP port operational status parameters. Each table
+         entry represents a single aggregation port and is indexed with the
+         ifIndex of the port. The table is auto-populated by the system when
+         valid LACP status exist for the port."
+    ::= { gamLacpStatus 2 }
+
+gamLacpStatusPortEntry OBJECT-TYPE
+    SYNTAX      GAMLacpStatusPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry represents a set of status parameters for an LACP port."
+    INDEX       { gamLacpStatusPortInterfaceNo }
+    ::= { gamLacpStatusPortTable 1 }
+
+GAMLacpStatusPortEntry ::= SEQUENCE {
+    gamLacpStatusPortInterfaceNo                        GAMInterfaceIndex,
+    gamLacpStatusPortDot3adAggrActorAdminMode           TruthValue,
+    gamLacpStatusPortDot3adAggrActorAdminKey            GAMUnsigned16,
+    gamLacpStatusPortDot3adAggrPartnerOperPortIndex     GAMUnsigned16,
+    gamLacpStatusPortDot3adAggrPartnerOperPortPriority  GAMUnsigned16,
+    gamLacpStatusPortDot3adActorAggrPortPriority        GAMUnsigned16,
+    gamLacpStatusPortDot3adAggrPortOperState            OCTET STRING,
+    gamLacpStatusPortDot3adAggrPartnerKey               GAMUnsigned16,
+    gamLacpStatusPortDot3adAggrPartnerOperState         OCTET STRING
+}
+
+gamLacpStatusPortInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamLacpStatusPortEntry 1 }
+
+gamLacpStatusPortDot3adAggrActorAdminMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the current Admin mode of port, if LACP enabled then returns true
+         else returns false."
+    ::= { gamLacpStatusPortEntry 2 }
+
+gamLacpStatusPortDot3adAggrActorAdminKey OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the current administrative value of the Key for the Aggregator.
+         The administrative Key value may differ from the operational Key value
+         for the reasons discussed in 43.6.2. This is a 16-bit, read-write
+         value. The meaning of particular Key values is of local significance"
+    ::= { gamLacpStatusPortEntry 3 }
+
+gamLacpStatusPortDot3adAggrPartnerOperPortIndex OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the port index of the partner port connected to this port."
+    ::= { gamLacpStatusPortEntry 4 }
+
+gamLacpStatusPortDot3adAggrPartnerOperPortPriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows the port priority of the port partner port connected to this
+         port."
+    ::= { gamLacpStatusPortEntry 5 }
+
+gamLacpStatusPortDot3adActorAggrPortPriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current administrative priority assigned to the port."
+    ::= { gamLacpStatusPortEntry 6 }
+
+gamLacpStatusPortDot3adAggrPortOperState OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current operational state of the port as a set of bits according to
+         the defintion of the Actor_State octet (IEEE 802.1AX-2014, section
+         6.4.2.3)."
+    ::= { gamLacpStatusPortEntry 7 }
+
+gamLacpStatusPortDot3adAggrPartnerKey OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current operational value of the key for the partner. The
+         administrative key value may differ from the operational key value for
+         the reasons discussed in 43.6.2. This is a 16-bit value. The meaning of
+         particular key values is of local significance."
+    ::= { gamLacpStatusPortEntry 8 }
+
+gamLacpStatusPortDot3adAggrPartnerOperState OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(1))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current operational state of the partner port as a set of bits
+         according to the definition of the Partner_State octet (IEEE
+         802.1AX-2014, section 6.4.2.3)."
+    ::= { gamLacpStatusPortEntry 9 }
+
+gamLacpControl OBJECT IDENTIFIER
+    ::= { gamLacpMibObjects 4 }
+
+gamLacpControlPortStatsClearTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMLacpControlPortStatsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table to clear LACP port statistics"
+    ::= { gamLacpControl 1 }
+
+gamLacpControlPortStatsClearEntry OBJECT-TYPE
+    SYNTAX      GAMLacpControlPortStatsClearEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port has a set of parameters"
+    INDEX       { gamLacpControlPortStatsClearInterfaceNo }
+    ::= { gamLacpControlPortStatsClearTable 1 }
+
+GAMLacpControlPortStatsClearEntry ::= SEQUENCE {
+    gamLacpControlPortStatsClearInterfaceNo          GAMInterfaceIndex,
+    gamLacpControlPortStatsClearPortStatisticsClear  TruthValue
+}
+
+gamLacpControlPortStatsClearInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamLacpControlPortStatsClearEntry 1 }
+
+gamLacpControlPortStatsClearPortStatisticsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set to true to clear the statistics of a port."
+    ::= { gamLacpControlPortStatsClearEntry 2 }
+
+gamLacpStatistics OBJECT IDENTIFIER
+    ::= { gamLacpMibObjects 5 }
+
+gamLacpStatisticsPortTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMLacpStatisticsPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains LACP port statistics counters. Each table entry
+         represents a single aggregation port and is indexed with the ifIndex of
+         the port. The table is auto-populated by the system when valid LACP
+         statistics exist for the port."
+    ::= { gamLacpStatistics 3 }
+
+gamLacpStatisticsPortEntry OBJECT-TYPE
+    SYNTAX      GAMLacpStatisticsPortEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port has a set of parameters"
+    INDEX       { gamLacpStatisticsPortInterfaceNo }
+    ::= { gamLacpStatisticsPortTable 1 }
+
+GAMLacpStatisticsPortEntry ::= SEQUENCE {
+    gamLacpStatisticsPortInterfaceNo                GAMInterfaceIndex,
+    gamLacpStatisticsPortDot3adAggrRxFrames         Counter64,
+    gamLacpStatisticsPortDot3adAggrTxFrames         Counter64,
+    gamLacpStatisticsPortDot3adAggrRxIllegalFrames  Counter64,
+    gamLacpStatisticsPortDot3adAggrRxUnknownFrames  Counter64
+}
+
+gamLacpStatisticsPortInterfaceNo OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamLacpStatisticsPortEntry 1 }
+
+gamLacpStatisticsPortDot3adAggrRxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows received LACP frame count."
+    ::= { gamLacpStatisticsPortEntry 2 }
+
+gamLacpStatisticsPortDot3adAggrTxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows transmitted LACP frame count."
+    ::= { gamLacpStatisticsPortEntry 3 }
+
+gamLacpStatisticsPortDot3adAggrRxIllegalFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows recevied illegal LACP frame count."
+    ::= { gamLacpStatisticsPortEntry 4 }
+
+gamLacpStatisticsPortDot3adAggrRxUnknownFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Shows recevied unknown LACP frame count."
+    ::= { gamLacpStatisticsPortEntry 5 }
+
+gamLacpMibConformance OBJECT IDENTIFIER
+    ::= { gamLacpMib 2 }
+
+gamLacpMibCompliances OBJECT IDENTIFIER
+    ::= { gamLacpMibConformance 1 }
+
+gamLacpMibGroups OBJECT IDENTIFIER
+    ::= { gamLacpMibConformance 2 }
+
+gamLacpConfigPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamLacpConfigPortInterfaceNo,
+                  gamLacpConfigPortDot3adAggrTimeout,
+                  gamLacpConfigPortDot3adAggrPortPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamLacpMibGroups 1 }
+
+gamLacpConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamLacpConfigGlobalsDot3adAggrSystemPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamLacpMibGroups 2 }
+
+gamLacpStatusSystemTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamLacpStatusSystemInterfaceNo,
+                  gamLacpStatusSystemDot3adAggrID,
+                  gamLacpStatusSystemDot3adAggrPartnerSystemID,
+                  gamLacpStatusSystemDot3adAggrPartnerOperKey,
+                  gamLacpStatusSystemDot3adAggrPartnerOperSystemPriority,
+                  gamLacpStatusSystemDot3adAggrPartnerStateLastChanged,
+                  gamLacpStatusSystemDot3adAggrLocalPorts }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamLacpMibGroups 3 }
+
+gamLacpStatusPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamLacpStatusPortInterfaceNo,
+                  gamLacpStatusPortDot3adAggrActorAdminMode,
+                  gamLacpStatusPortDot3adAggrActorAdminKey,
+                  gamLacpStatusPortDot3adAggrPartnerOperPortIndex,
+                  gamLacpStatusPortDot3adAggrPartnerOperPortPriority,
+                  gamLacpStatusPortDot3adActorAggrPortPriority,
+                  gamLacpStatusPortDot3adAggrPortOperState,
+                  gamLacpStatusPortDot3adAggrPartnerKey,
+                  gamLacpStatusPortDot3adAggrPartnerOperState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamLacpMibGroups 4 }
+
+gamLacpControlPortStatsClearTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamLacpControlPortStatsClearInterfaceNo,
+                  gamLacpControlPortStatsClearPortStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamLacpMibGroups 5 }
+
+gamLacpStatisticsPortTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamLacpStatisticsPortInterfaceNo,
+                  gamLacpStatisticsPortDot3adAggrRxFrames,
+                  gamLacpStatisticsPortDot3adAggrTxFrames,
+                  gamLacpStatisticsPortDot3adAggrRxIllegalFrames,
+                  gamLacpStatisticsPortDot3adAggrRxUnknownFrames }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamLacpMibGroups 6 }
+
+gamLacpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamLacpConfigPortTableInfoGroup,
+                       gamLacpConfigGlobalsInfoGroup,
+                       gamLacpStatusSystemTableInfoGroup,
+                       gamLacpStatusPortTableInfoGroup,
+                       gamLacpControlPortStatsClearTableInfoGroup,
+                       gamLacpStatisticsPortTableInfoGroup }
+
+    ::= { gamLacpMibCompliances 1 }
+
+END

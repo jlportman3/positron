@@ -1,0 +1,1196 @@
+-- *****************************************************************
+-- ERPS-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-ERPS-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMVlanListQuarter FROM GAM-TC
+    Counter64 FROM SNMPv2-SMI
+    Integer32 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamErpsMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "Private MIB for Ethernet Ring Protection Switching, ERPS."
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 72 }
+
+
+GAMErpsAdminCmd ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the Administrative command."
+    SYNTAX      INTEGER { manualSwitch(1), forcedSwitch(2), clear(3) }
+
+GAMErpsControlCmd ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies a control command."
+    SYNTAX      INTEGER { none(0), admCmdForcedSwitch(1),
+                          admCmdManualSwitch(2), admCmdClear(3),
+                          statisticsClear(4) }
+
+GAMErpsPort ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies a particular logical ring port."
+    SYNTAX      INTEGER { port0(1), port1(2) }
+
+GAMErpsPortState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the ring port state."
+    SYNTAX      INTEGER { ok(1), signalFail(2) }
+
+GAMErpsProtectionState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the ring protection state."
+    SYNTAX      INTEGER { none(1), idle(2), protected(3),
+                          forcedSwitch(4), manualSwitch(5),
+                          pending(6) }
+
+GAMErpsRequestState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies a request/state."
+    SYNTAX      INTEGER { none(1), manualSwitch(2), signalFail(3),
+                          forcedSwitch(4), event(5) }
+
+GAMErpsRingType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the ERPS ring type."
+    SYNTAX      INTEGER { major(1), sub(2) }
+
+GAMErpsRplMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the Ring Protection Link mode. Use 'none' if port is neither
+         RPL owner nor neighbour."
+    SYNTAX      INTEGER { none(1), owner(2), neighbour(3) }
+
+GAMErpsVersion ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Specifies the ERPS protocol version."
+    SYNTAX      INTEGER { version1(1), version2(2) }
+
+gamErpsMibObjects OBJECT IDENTIFIER
+    ::= { gamErpsMib 1 }
+
+gamErpsCapabilities OBJECT IDENTIFIER
+    ::= { gamErpsMibObjects 1 }
+
+gamErpsCapabilitiesMaxGroups OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of configured ERPS groups."
+    ::= { gamErpsCapabilities 1 }
+
+gamErpsCapabilitiesMaxVlansPerGroup OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum number of protected VLANS per ERPS group."
+    ::= { gamErpsCapabilities 2 }
+
+gamErpsConfig OBJECT IDENTIFIER
+    ::= { gamErpsMibObjects 2 }
+
+gamErpsConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMErpsConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the ERPS group configuration table."
+    ::= { gamErpsConfig 1 }
+
+gamErpsConfigEntry OBJECT-TYPE
+    SYNTAX      GAMErpsConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry in this table represents an ERPS group."
+    INDEX       { gamErpsConfigGroupIndex }
+    ::= { gamErpsConfigTable 1 }
+
+GAMErpsConfigEntry ::= SEQUENCE {
+    gamErpsConfigGroupIndex                       Integer32,
+    gamErpsConfigRingType                         GAMErpsRingType,
+    gamErpsConfigPort0                            GAMInterfaceIndex,
+    gamErpsConfigPort1                            GAMInterfaceIndex,
+    gamErpsConfigInterconnectMajorRingGroupIndex  Unsigned32,
+    gamErpsConfigVirtualChannel                   TruthValue,
+    gamErpsConfigPort0SignalFailMepIndex          Unsigned32,
+    gamErpsConfigPort0ApsMepIndex                 Unsigned32,
+    gamErpsConfigPort1SignalFailMepIndex          Unsigned32,
+    gamErpsConfigPort1ApsMepIndex                 Unsigned32,
+    gamErpsConfigHoldOffTime                      Unsigned32,
+    gamErpsConfigWaitToRestoreTime                Unsigned32,
+    gamErpsConfigGuardTime                        Unsigned32,
+    gamErpsConfigRplMode                          GAMErpsRplMode,
+    gamErpsConfigRplPort                          GAMErpsPort,
+    gamErpsConfigRevertive                        TruthValue,
+    gamErpsConfigVersion                          GAMErpsVersion,
+    gamErpsConfigTopologyChange                   TruthValue,
+    gamErpsConfigProtectedVlans0Kto1K             GAMVlanListQuarter,
+    gamErpsConfigProtectedVlans1Kto2K             GAMVlanListQuarter,
+    gamErpsConfigProtectedVlans2Kto3K             GAMVlanListQuarter,
+    gamErpsConfigProtectedVlans3Kto4K             GAMVlanListQuarter,
+    gamErpsConfigAction                           GAMRowEditorState
+}
+
+gamErpsConfigGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ERPS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the ERPS
+         capabilities."
+    ::= { gamErpsConfigEntry 1 }
+
+gamErpsConfigRingType OBJECT-TYPE
+    SYNTAX      GAMErpsRingType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of ring. Can only be set once for a ring instance."
+    ::= { gamErpsConfigEntry 2 }
+
+gamErpsConfigPort0 OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "ifindex of ring protection port 0. Can only be set once for a ring
+         instance."
+    ::= { gamErpsConfigEntry 3 }
+
+gamErpsConfigPort1 OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "ifindex of ring protection Port 1. For interconnected sub-rings this
+         value must be zero. Can only be set once for a ring instance."
+    ::= { gamErpsConfigEntry 4 }
+
+gamErpsConfigInterconnectMajorRingGroupIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "For sub-ring: zero = not interconnected; > zero = index of major ring
+         group. For major ring: zero = not interconnected; > zero = is
+         interconnected (i.e flag-like semantics). Can only be set once for a
+         ring instance."
+    ::= { gamErpsConfigEntry 5 }
+
+gamErpsConfigVirtualChannel OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether to use a virtual channel. Can only be set once for a ring
+         instance."
+    ::= { gamErpsConfigEntry 6 }
+
+gamErpsConfigPort0SignalFailMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Index of SignalFail MEP for Port 0. Zero if not set. To clear an ERPS
+         group's MEP association, set this to zero; it affects all MEP indices."
+    ::= { gamErpsConfigEntry 7 }
+
+gamErpsConfigPort0ApsMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Index of APS MEP for Port 0. Zero if not set."
+    ::= { gamErpsConfigEntry 8 }
+
+gamErpsConfigPort1SignalFailMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Index of SignalFail MEP for Port 1. Zero if not set. Must be zero for
+         interconnected sub-rings."
+    ::= { gamErpsConfigEntry 9 }
+
+gamErpsConfigPort1ApsMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Index of APS MEP for Port 1. Zero if not set. Must be zero for
+         interconnected sub-rings with virtual channel."
+    ::= { gamErpsConfigEntry 10 }
+
+gamErpsConfigHoldOffTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Hold off time in ms. Value is rounded down to 100ms precision. Valid
+         range is 0-10000 ms"
+    ::= { gamErpsConfigEntry 11 }
+
+gamErpsConfigWaitToRestoreTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Wait-to-Restore time in ms. Valid range is 60000-720000 ms (1-12
+         minutes)."
+    ::= { gamErpsConfigEntry 12 }
+
+gamErpsConfigGuardTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Guard time in ms. Valid range is 10-2000 ms."
+    ::= { gamErpsConfigEntry 13 }
+
+gamErpsConfigRplMode OBJECT-TYPE
+    SYNTAX      GAMErpsRplMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Ring Protection Link mode."
+    ::= { gamErpsConfigEntry 14 }
+
+gamErpsConfigRplPort OBJECT-TYPE
+    SYNTAX      GAMErpsPort
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "RPL port. Only valid if the ERPS group is RPL owner or neighbour."
+    ::= { gamErpsConfigEntry 15 }
+
+gamErpsConfigRevertive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Revertive (true) or Non-revertive (false) mode."
+    ::= { gamErpsConfigEntry 16 }
+
+gamErpsConfigVersion OBJECT-TYPE
+    SYNTAX      GAMErpsVersion
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "ERPS protocol version."
+    ::= { gamErpsConfigEntry 17 }
+
+gamErpsConfigTopologyChange OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether to enable Topology Change propagation; only valid for an
+         interconnected node."
+    ::= { gamErpsConfigEntry 18 }
+
+gamErpsConfigProtectedVlans0Kto1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { gamErpsConfigEntry 19 }
+
+gamErpsConfigProtectedVlans1Kto2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { gamErpsConfigEntry 20 }
+
+gamErpsConfigProtectedVlans2Kto3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { gamErpsConfigEntry 21 }
+
+gamErpsConfigProtectedVlans3Kto4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Fourth quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { gamErpsConfigEntry 22 }
+
+gamErpsConfigAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamErpsConfigEntry 100 }
+
+gamErpsConfigRowEditor OBJECT IDENTIFIER
+    ::= { gamErpsConfig 2 }
+
+gamErpsConfigRowEditorGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "ERPS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the ERPS
+         capabilities."
+    ::= { gamErpsConfigRowEditor 1 }
+
+gamErpsConfigRowEditorRingType OBJECT-TYPE
+    SYNTAX      GAMErpsRingType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of ring. Can only be set once for a ring instance."
+    ::= { gamErpsConfigRowEditor 2 }
+
+gamErpsConfigRowEditorPort0 OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "ifindex of ring protection port 0. Can only be set once for a ring
+         instance."
+    ::= { gamErpsConfigRowEditor 3 }
+
+gamErpsConfigRowEditorPort1 OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "ifindex of ring protection Port 1. For interconnected sub-rings this
+         value must be zero. Can only be set once for a ring instance."
+    ::= { gamErpsConfigRowEditor 4 }
+
+gamErpsConfigRowEditorInterconnectMajorRingGroupIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "For sub-ring: zero = not interconnected; > zero = index of major ring
+         group. For major ring: zero = not interconnected; > zero = is
+         interconnected (i.e flag-like semantics). Can only be set once for a
+         ring instance."
+    ::= { gamErpsConfigRowEditor 5 }
+
+gamErpsConfigRowEditorVirtualChannel OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether to use a virtual channel. Can only be set once for a ring
+         instance."
+    ::= { gamErpsConfigRowEditor 6 }
+
+gamErpsConfigRowEditorPort0SignalFailMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Index of SignalFail MEP for Port 0. Zero if not set. To clear an ERPS
+         group's MEP association, set this to zero; it affects all MEP indices."
+    ::= { gamErpsConfigRowEditor 7 }
+
+gamErpsConfigRowEditorPort0ApsMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Index of APS MEP for Port 0. Zero if not set."
+    ::= { gamErpsConfigRowEditor 8 }
+
+gamErpsConfigRowEditorPort1SignalFailMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Index of SignalFail MEP for Port 1. Zero if not set. Must be zero for
+         interconnected sub-rings."
+    ::= { gamErpsConfigRowEditor 9 }
+
+gamErpsConfigRowEditorPort1ApsMepIndex OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Index of APS MEP for Port 1. Zero if not set. Must be zero for
+         interconnected sub-rings with virtual channel."
+    ::= { gamErpsConfigRowEditor 10 }
+
+gamErpsConfigRowEditorHoldOffTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Hold off time in ms. Value is rounded down to 100ms precision. Valid
+         range is 0-10000 ms"
+    ::= { gamErpsConfigRowEditor 11 }
+
+gamErpsConfigRowEditorWaitToRestoreTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Wait-to-Restore time in ms. Valid range is 60000-720000 ms (1-12
+         minutes)."
+    ::= { gamErpsConfigRowEditor 12 }
+
+gamErpsConfigRowEditorGuardTime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Guard time in ms. Valid range is 10-2000 ms."
+    ::= { gamErpsConfigRowEditor 13 }
+
+gamErpsConfigRowEditorRplMode OBJECT-TYPE
+    SYNTAX      GAMErpsRplMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Ring Protection Link mode."
+    ::= { gamErpsConfigRowEditor 14 }
+
+gamErpsConfigRowEditorRplPort OBJECT-TYPE
+    SYNTAX      GAMErpsPort
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "RPL port. Only valid if the ERPS group is RPL owner or neighbour."
+    ::= { gamErpsConfigRowEditor 15 }
+
+gamErpsConfigRowEditorRevertive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Revertive (true) or Non-revertive (false) mode."
+    ::= { gamErpsConfigRowEditor 16 }
+
+gamErpsConfigRowEditorVersion OBJECT-TYPE
+    SYNTAX      GAMErpsVersion
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "ERPS protocol version."
+    ::= { gamErpsConfigRowEditor 17 }
+
+gamErpsConfigRowEditorTopologyChange OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Whether to enable Topology Change propagation; only valid for an
+         interconnected node."
+    ::= { gamErpsConfigRowEditor 18 }
+
+gamErpsConfigRowEditorProtectedVlans0Kto1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { gamErpsConfigRowEditor 19 }
+
+gamErpsConfigRowEditorProtectedVlans1Kto2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { gamErpsConfigRowEditor 20 }
+
+gamErpsConfigRowEditorProtectedVlans2Kto3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { gamErpsConfigRowEditor 21 }
+
+gamErpsConfigRowEditorProtectedVlans3Kto4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Fourth quarter of bit-array indicating whether a VLAN is protected by
+         this ring instance ('1') or not ('0')."
+    ::= { gamErpsConfigRowEditor 22 }
+
+gamErpsConfigRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamErpsConfigRowEditor 100 }
+
+gamErpsStatus OBJECT IDENTIFIER
+    ::= { gamErpsMibObjects 3 }
+
+gamErpsStatusTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMErpsStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains status per EPRS group."
+    ::= { gamErpsStatus 1 }
+
+gamErpsStatusEntry OBJECT-TYPE
+    SYNTAX      GAMErpsStatusEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Status."
+    INDEX       { gamErpsStatusGroupIndex }
+    ::= { gamErpsStatusTable 1 }
+
+GAMErpsStatusEntry ::= SEQUENCE {
+    gamErpsStatusGroupIndex                   Integer32,
+    gamErpsStatusActive                       TruthValue,
+    gamErpsStatusProtectionState              GAMErpsProtectionState,
+    gamErpsStatusRplBlocked                   TruthValue,
+    gamErpsStatusWtrRemaining                 Unsigned32,
+    gamErpsStatusAdminCmd                     GAMErpsAdminCmd,
+    gamErpsStatusFopAlarm                     TruthValue,
+    gamErpsStatusTxActive                     TruthValue,
+    gamErpsStatusTxRequestOrState             GAMErpsRequestState,
+    gamErpsStatusTxRplBlocked                 TruthValue,
+    gamErpsStatusTxDoNotFlush                 TruthValue,
+    gamErpsStatusBlockedPortReference         GAMErpsPort,
+    gamErpsStatusPort0Blocked                 TruthValue,
+    gamErpsStatusPort0State                   GAMErpsPortState,
+    gamErpsStatusPort0RxActive                TruthValue,
+    gamErpsStatusPort0RxRequestOrState        GAMErpsRequestState,
+    gamErpsStatusPort0RxRplBlocked            TruthValue,
+    gamErpsStatusPort0RxDoNotFlush            TruthValue,
+    gamErpsStatusPort0RxBlockedPortReference  GAMErpsPort,
+    gamErpsStatusPort0RxNodeId                OCTET STRING,
+    gamErpsStatusPort1Blocked                 TruthValue,
+    gamErpsStatusPort1State                   GAMErpsPortState,
+    gamErpsStatusPort1RxActive                TruthValue,
+    gamErpsStatusPort1RxRequestOrState        GAMErpsRequestState,
+    gamErpsStatusPort1RxRplBlocked            TruthValue,
+    gamErpsStatusPort1RxDoNotFlush            TruthValue,
+    gamErpsStatusPort1RxBlockedPortReference  GAMErpsPort,
+    gamErpsStatusPort1RxNodeId                OCTET STRING
+}
+
+gamErpsStatusGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ERPS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the ERPS
+         capabilities."
+    ::= { gamErpsStatusEntry 1 }
+
+gamErpsStatusActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies whether ERPS group is currently active or not."
+    ::= { gamErpsStatusEntry 2 }
+
+gamErpsStatusProtectionState OBJECT-TYPE
+    SYNTAX      GAMErpsProtectionState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies current ERPS group protection state."
+    ::= { gamErpsStatusEntry 3 }
+
+gamErpsStatusRplBlocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies whether the RPL is currently blocked or not."
+    ::= { gamErpsStatusEntry 4 }
+
+gamErpsStatusWtrRemaining OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the remaining wait-time before restoring ring."
+    ::= { gamErpsStatusEntry 5 }
+
+gamErpsStatusAdminCmd OBJECT-TYPE
+    SYNTAX      GAMErpsAdminCmd
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the currently active administrative command."
+    ::= { gamErpsStatusEntry 6 }
+
+gamErpsStatusFopAlarm OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies whether the FailureOfProtocol alarm is currently active or
+         not."
+    ::= { gamErpsStatusEntry 7 }
+
+gamErpsStatusTxActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies whether R-APS transmission is currently active."
+    ::= { gamErpsStatusEntry 8 }
+
+gamErpsStatusTxRequestOrState OBJECT-TYPE
+    SYNTAX      GAMErpsRequestState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the currently transmitted request/state. Only relevant when
+         Tx is active."
+    ::= { gamErpsStatusEntry 9 }
+
+gamErpsStatusTxRplBlocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the currently transmitted RPL Blocked flag. Only relevant
+         when Tx is active."
+    ::= { gamErpsStatusEntry 10 }
+
+gamErpsStatusTxDoNotFlush OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the currently transmitted Do Not Flush flag. Only relevant
+         when Tx is active."
+    ::= { gamErpsStatusEntry 11 }
+
+gamErpsStatusBlockedPortReference OBJECT-TYPE
+    SYNTAX      GAMErpsPort
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the currently transmitted Blocked Port Reference. Only
+         relevant when Tx is active."
+    ::= { gamErpsStatusEntry 12 }
+
+gamErpsStatusPort0Blocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies whether ring Port 0 is blocked or not."
+    ::= { gamErpsStatusEntry 13 }
+
+gamErpsStatusPort0State OBJECT-TYPE
+    SYNTAX      GAMErpsPortState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the state of ring Port 0."
+    ::= { gamErpsStatusEntry 14 }
+
+gamErpsStatusPort0RxActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies if ring Port0 receives R-APS."
+    ::= { gamErpsStatusEntry 15 }
+
+gamErpsStatusPort0RxRequestOrState OBJECT-TYPE
+    SYNTAX      GAMErpsRequestState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the most recently received request/state on ring Port 0. Only
+         relevant when Rx is active."
+    ::= { gamErpsStatusEntry 16 }
+
+gamErpsStatusPort0RxRplBlocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the most recently received RPL Blocked flag on ring Port 0.
+         Only relevant when Rx is active."
+    ::= { gamErpsStatusEntry 17 }
+
+gamErpsStatusPort0RxDoNotFlush OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the most recently received Do Not Flush flag on ring Port 0.
+         Only relevant when Rx is active."
+    ::= { gamErpsStatusEntry 18 }
+
+gamErpsStatusPort0RxBlockedPortReference OBJECT-TYPE
+    SYNTAX      GAMErpsPort
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the most recently received Blocked Port Reference on ring
+         Port 0. Only relevant when Rx is active."
+    ::= { gamErpsStatusEntry 19 }
+
+gamErpsStatusPort0RxNodeId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(6))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the most recently received node ID on ring Port 0. Only
+         relevant when Rx is active."
+    ::= { gamErpsStatusEntry 20 }
+
+gamErpsStatusPort1Blocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies whether ring Port 1 is blocked or not."
+    ::= { gamErpsStatusEntry 21 }
+
+gamErpsStatusPort1State OBJECT-TYPE
+    SYNTAX      GAMErpsPortState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the state of ring Port 1."
+    ::= { gamErpsStatusEntry 22 }
+
+gamErpsStatusPort1RxActive OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies if ring Port1 receives R-APS."
+    ::= { gamErpsStatusEntry 23 }
+
+gamErpsStatusPort1RxRequestOrState OBJECT-TYPE
+    SYNTAX      GAMErpsRequestState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the most recently received request/state on ring Port 1. Only
+         relevant when Rx is active."
+    ::= { gamErpsStatusEntry 24 }
+
+gamErpsStatusPort1RxRplBlocked OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the most recently received RPL Blocked flag on ring Port 1.
+         Only relevant when Rx is active."
+    ::= { gamErpsStatusEntry 25 }
+
+gamErpsStatusPort1RxDoNotFlush OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the most recently received Do Not Flush flag on ring Port 1.
+         Only relevant when Rx is active."
+    ::= { gamErpsStatusEntry 26 }
+
+gamErpsStatusPort1RxBlockedPortReference OBJECT-TYPE
+    SYNTAX      GAMErpsPort
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the most recently received Blocked Port Reference on ring
+         Port 1. Only relevant when Rx is active."
+    ::= { gamErpsStatusEntry 27 }
+
+gamErpsStatusPort1RxNodeId OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(6))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Specifies the most recently received node ID on ring Port 1. Only
+         relevant when Rx is active."
+    ::= { gamErpsStatusEntry 28 }
+
+gamErpsControl OBJECT IDENTIFIER
+    ::= { gamErpsMibObjects 4 }
+
+gamErpsControlTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMErpsControlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the ERPS group control table."
+    ::= { gamErpsControl 1 }
+
+gamErpsControlEntry OBJECT-TYPE
+    SYNTAX      GAMErpsControlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry in this table represents dynamic control elements an ERPS
+         group."
+    INDEX       { gamErpsControlGroupIndex }
+    ::= { gamErpsControlTable 1 }
+
+GAMErpsControlEntry ::= SEQUENCE {
+    gamErpsControlGroupIndex  Integer32,
+    gamErpsControlCommand     GAMErpsControlCmd,
+    gamErpsControlPort        GAMErpsPort
+}
+
+gamErpsControlGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ERPS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the ERPS
+         capabilities."
+    ::= { gamErpsControlEntry 1 }
+
+gamErpsControlCommand OBJECT-TYPE
+    SYNTAX      GAMErpsControlCmd
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Control command to execute. Always returns none when read."
+    ::= { gamErpsControlEntry 2 }
+
+gamErpsControlPort OBJECT-TYPE
+    SYNTAX      GAMErpsPort
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Ring port affected by control command. Only relevant for administrative
+         commands. Always returns port0 when read."
+    ::= { gamErpsControlEntry 3 }
+
+gamErpsStatistics OBJECT IDENTIFIER
+    ::= { gamErpsMibObjects 5 }
+
+gamErpsStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMErpsStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This table contains statistics per EPRS group."
+    ::= { gamErpsStatistics 1 }
+
+gamErpsStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMErpsStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Various PDU and event counters."
+    INDEX       { gamErpsStatisticsGroupIndex }
+    ::= { gamErpsStatisticsTable 1 }
+
+GAMErpsStatisticsEntry ::= SEQUENCE {
+    gamErpsStatisticsGroupIndex      Integer32,
+    gamErpsStatisticsRapsTx          Counter64,
+    gamErpsStatisticsRapsRx          Counter64,
+    gamErpsStatisticsRapsRxDrop      Counter64,
+    gamErpsStatisticsLocalSF         Counter64,
+    gamErpsStatisticsLocalSFCleared  Counter64,
+    gamErpsStatisticsRemoteSF        Counter64,
+    gamErpsStatisticsNR              Counter64,
+    gamErpsStatisticsRemoteMS        Counter64,
+    gamErpsStatisticsLocalMS         Counter64,
+    gamErpsStatisticsRemoteFS        Counter64,
+    gamErpsStatisticsLocalFS         Counter64,
+    gamErpsStatisticsAdminClear      Counter64
+}
+
+gamErpsStatisticsGroupIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "ERPS group index number. Valid range is (1..max groups). The maximum
+         group number is platform-specific and can be retrieved from the ERPS
+         capabilities."
+    ::= { gamErpsStatisticsEntry 1 }
+
+gamErpsStatisticsRapsTx OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of transmitted RAPS PDUs."
+    ::= { gamErpsStatisticsEntry 2 }
+
+gamErpsStatisticsRapsRx OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of received RAPS PDUs."
+    ::= { gamErpsStatisticsEntry 3 }
+
+gamErpsStatisticsRapsRxDrop OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of received RAPS PDUs that were dropped."
+    ::= { gamErpsStatisticsEntry 4 }
+
+gamErpsStatisticsLocalSF OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of local SignalFail events."
+    ::= { gamErpsStatisticsEntry 5 }
+
+gamErpsStatisticsLocalSFCleared OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of local SignalFail clear events."
+    ::= { gamErpsStatisticsEntry 6 }
+
+gamErpsStatisticsRemoteSF OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of remote SignalFail events."
+    ::= { gamErpsStatisticsEntry 7 }
+
+gamErpsStatisticsNR OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of NoRequest events."
+    ::= { gamErpsStatisticsEntry 8 }
+
+gamErpsStatisticsRemoteMS OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of remote ManualSwitch events."
+    ::= { gamErpsStatisticsEntry 9 }
+
+gamErpsStatisticsLocalMS OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of local ManualSwitch events."
+    ::= { gamErpsStatisticsEntry 10 }
+
+gamErpsStatisticsRemoteFS OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of remote ForcedSwitch events."
+    ::= { gamErpsStatisticsEntry 11 }
+
+gamErpsStatisticsLocalFS OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of local ForcedSwitch events."
+    ::= { gamErpsStatisticsEntry 12 }
+
+gamErpsStatisticsAdminClear OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of AdminClear events."
+    ::= { gamErpsStatisticsEntry 13 }
+
+gamErpsMibConformance OBJECT IDENTIFIER
+    ::= { gamErpsMib 2 }
+
+gamErpsMibCompliances OBJECT IDENTIFIER
+    ::= { gamErpsMibConformance 1 }
+
+gamErpsMibGroups OBJECT IDENTIFIER
+    ::= { gamErpsMibConformance 2 }
+
+gamErpsCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamErpsCapabilitiesMaxGroups,
+                  gamErpsCapabilitiesMaxVlansPerGroup }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamErpsMibGroups 1 }
+
+gamErpsConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamErpsConfigGroupIndex, gamErpsConfigRingType,
+                  gamErpsConfigPort0, gamErpsConfigPort1,
+                  gamErpsConfigInterconnectMajorRingGroupIndex,
+                  gamErpsConfigVirtualChannel,
+                  gamErpsConfigPort0SignalFailMepIndex,
+                  gamErpsConfigPort0ApsMepIndex,
+                  gamErpsConfigPort1SignalFailMepIndex,
+                  gamErpsConfigPort1ApsMepIndex,
+                  gamErpsConfigHoldOffTime,
+                  gamErpsConfigWaitToRestoreTime,
+                  gamErpsConfigGuardTime, gamErpsConfigRplMode,
+                  gamErpsConfigRplPort, gamErpsConfigRevertive,
+                  gamErpsConfigVersion, gamErpsConfigTopologyChange,
+                  gamErpsConfigProtectedVlans0Kto1K,
+                  gamErpsConfigProtectedVlans1Kto2K,
+                  gamErpsConfigProtectedVlans2Kto3K,
+                  gamErpsConfigProtectedVlans3Kto4K,
+                  gamErpsConfigAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamErpsMibGroups 2 }
+
+gamErpsConfigRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamErpsConfigRowEditorGroupIndex,
+                  gamErpsConfigRowEditorRingType,
+                  gamErpsConfigRowEditorPort0,
+                  gamErpsConfigRowEditorPort1,
+                  gamErpsConfigRowEditorInterconnectMajorRingGroupIndex,
+                  gamErpsConfigRowEditorVirtualChannel,
+                  gamErpsConfigRowEditorPort0SignalFailMepIndex,
+                  gamErpsConfigRowEditorPort0ApsMepIndex,
+                  gamErpsConfigRowEditorPort1SignalFailMepIndex,
+                  gamErpsConfigRowEditorPort1ApsMepIndex,
+                  gamErpsConfigRowEditorHoldOffTime,
+                  gamErpsConfigRowEditorWaitToRestoreTime,
+                  gamErpsConfigRowEditorGuardTime,
+                  gamErpsConfigRowEditorRplMode,
+                  gamErpsConfigRowEditorRplPort,
+                  gamErpsConfigRowEditorRevertive,
+                  gamErpsConfigRowEditorVersion,
+                  gamErpsConfigRowEditorTopologyChange,
+                  gamErpsConfigRowEditorProtectedVlans0Kto1K,
+                  gamErpsConfigRowEditorProtectedVlans1Kto2K,
+                  gamErpsConfigRowEditorProtectedVlans2Kto3K,
+                  gamErpsConfigRowEditorProtectedVlans3Kto4K,
+                  gamErpsConfigRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamErpsMibGroups 3 }
+
+gamErpsStatusTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamErpsStatusGroupIndex, gamErpsStatusActive,
+                  gamErpsStatusProtectionState,
+                  gamErpsStatusRplBlocked, gamErpsStatusWtrRemaining,
+                  gamErpsStatusAdminCmd, gamErpsStatusFopAlarm,
+                  gamErpsStatusTxActive,
+                  gamErpsStatusTxRequestOrState,
+                  gamErpsStatusTxRplBlocked,
+                  gamErpsStatusTxDoNotFlush,
+                  gamErpsStatusBlockedPortReference,
+                  gamErpsStatusPort0Blocked, gamErpsStatusPort0State,
+                  gamErpsStatusPort0RxActive,
+                  gamErpsStatusPort0RxRequestOrState,
+                  gamErpsStatusPort0RxRplBlocked,
+                  gamErpsStatusPort0RxDoNotFlush,
+                  gamErpsStatusPort0RxBlockedPortReference,
+                  gamErpsStatusPort0RxNodeId,
+                  gamErpsStatusPort1Blocked, gamErpsStatusPort1State,
+                  gamErpsStatusPort1RxActive,
+                  gamErpsStatusPort1RxRequestOrState,
+                  gamErpsStatusPort1RxRplBlocked,
+                  gamErpsStatusPort1RxDoNotFlush,
+                  gamErpsStatusPort1RxBlockedPortReference,
+                  gamErpsStatusPort1RxNodeId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamErpsMibGroups 4 }
+
+gamErpsControlTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamErpsControlGroupIndex, gamErpsControlCommand,
+                  gamErpsControlPort }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamErpsMibGroups 5 }
+
+gamErpsStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamErpsStatisticsGroupIndex,
+                  gamErpsStatisticsRapsTx, gamErpsStatisticsRapsRx,
+                  gamErpsStatisticsRapsRxDrop,
+                  gamErpsStatisticsLocalSF,
+                  gamErpsStatisticsLocalSFCleared,
+                  gamErpsStatisticsRemoteSF, gamErpsStatisticsNR,
+                  gamErpsStatisticsRemoteMS, gamErpsStatisticsLocalMS,
+                  gamErpsStatisticsRemoteFS, gamErpsStatisticsLocalFS,
+                  gamErpsStatisticsAdminClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamErpsMibGroups 6 }
+
+gamErpsMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamErpsCapabilitiesInfoGroup,
+                       gamErpsConfigTableInfoGroup,
+                       gamErpsConfigRowEditorInfoGroup,
+                       gamErpsStatusTableInfoGroup,
+                       gamErpsControlTableInfoGroup,
+                       gamErpsStatisticsTableInfoGroup }
+
+    ::= { gamErpsMibCompliances 1 }
+
+END

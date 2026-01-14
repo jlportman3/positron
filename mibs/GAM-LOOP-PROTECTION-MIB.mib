@@ -1,0 +1,255 @@
+-- *****************************************************************
+-- LOOP-PROTECTION-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-LOOP-PROTECTION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMUnsigned64 FROM GAM-TC
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamLoopProtectionMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private MIB for loop protection"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 91 }
+
+
+GAMLoopProtectionAction ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the available actions for when a loop on an
+         interface is detected."
+    SYNTAX      INTEGER { shutdown(0), shutdownAndLogEvent(1),
+                          logEvent(2) }
+
+gamLoopProtectionMibObjects OBJECT IDENTIFIER
+    ::= { gamLoopProtectionMib 1 }
+
+gamLoopProtectionConfig OBJECT IDENTIFIER
+    ::= { gamLoopProtectionMibObjects 2 }
+
+gamLoopProtectionConfigGlobals OBJECT IDENTIFIER
+    ::= { gamLoopProtectionConfig 1 }
+
+gamLoopProtectionConfigGlobalsEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global enabled for loop protection on any port."
+    ::= { gamLoopProtectionConfigGlobals 1 }
+
+gamLoopProtectionConfigGlobalsTransmitInterval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Port transmission interval (seconds). Valid range: 1-10 seconds."
+    ::= { gamLoopProtectionConfigGlobals 2 }
+
+gamLoopProtectionConfigGlobalsShutdownPeriod OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Port shutdown period (seconds). Valid range: 0 to 604800 seconds."
+    ::= { gamLoopProtectionConfigGlobals 3 }
+
+gamLoopProtectionConfigInterface OBJECT IDENTIFIER
+    ::= { gamLoopProtectionConfig 2 }
+
+gamLoopProtectionConfigInterfaceParamTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMLoopProtectionConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of loop protection interface parameters"
+    ::= { gamLoopProtectionConfigInterface 1 }
+
+gamLoopProtectionConfigInterfaceParamEntry OBJECT-TYPE
+    SYNTAX      GAMLoopProtectionConfigInterfaceParamEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each physical interface has a set of parameters"
+    INDEX       { gamLoopProtectionConfigInterfaceParamIfIndex }
+    ::= { gamLoopProtectionConfigInterfaceParamTable 1 }
+
+GAMLoopProtectionConfigInterfaceParamEntry ::= SEQUENCE {
+    gamLoopProtectionConfigInterfaceParamIfIndex   GAMInterfaceIndex,
+    gamLoopProtectionConfigInterfaceParamEnabled   TruthValue,
+    gamLoopProtectionConfigInterfaceParamAction    GAMLoopProtectionAction,
+    gamLoopProtectionConfigInterfaceParamTransmit  TruthValue
+}
+
+gamLoopProtectionConfigInterfaceParamIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamLoopProtectionConfigInterfaceParamEntry 1 }
+
+gamLoopProtectionConfigInterfaceParamEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enabled loop protection on port"
+    ::= { gamLoopProtectionConfigInterfaceParamEntry 2 }
+
+gamLoopProtectionConfigInterfaceParamAction OBJECT-TYPE
+    SYNTAX      GAMLoopProtectionAction
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action if loop detected"
+    ::= { gamLoopProtectionConfigInterfaceParamEntry 3 }
+
+gamLoopProtectionConfigInterfaceParamTransmit OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Actively generate PDUs"
+    ::= { gamLoopProtectionConfigInterfaceParamEntry 4 }
+
+gamLoopProtectionStatus OBJECT IDENTIFIER
+    ::= { gamLoopProtectionMibObjects 3 }
+
+gamLoopProtectionStatusInterface OBJECT IDENTIFIER
+    ::= { gamLoopProtectionStatus 2 }
+
+gamLoopProtectionStatusInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMLoopProtectionStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of loop protection interface status"
+    ::= { gamLoopProtectionStatusInterface 1 }
+
+gamLoopProtectionStatusInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMLoopProtectionStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each physical interface has a set of status objects"
+    INDEX       { gamLoopProtectionStatusInterfaceIfIndex }
+    ::= { gamLoopProtectionStatusInterfaceTable 1 }
+
+GAMLoopProtectionStatusInterfaceEntry ::= SEQUENCE {
+    gamLoopProtectionStatusInterfaceIfIndex       GAMInterfaceIndex,
+    gamLoopProtectionStatusInterfaceDisabled      TruthValue,
+    gamLoopProtectionStatusInterfaceLoopDetected  TruthValue,
+    gamLoopProtectionStatusInterfaceLoopCount     Unsigned32,
+    gamLoopProtectionStatusInterfaceLastLoop      GAMUnsigned64
+}
+
+gamLoopProtectionStatusInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number."
+    ::= { gamLoopProtectionStatusInterfaceEntry 1 }
+
+gamLoopProtectionStatusInterfaceDisabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Whether a port is currently disabled"
+    ::= { gamLoopProtectionStatusInterfaceEntry 2 }
+
+gamLoopProtectionStatusInterfaceLoopDetected OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Whether a port has a loop detected"
+    ::= { gamLoopProtectionStatusInterfaceEntry 3 }
+
+gamLoopProtectionStatusInterfaceLoopCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of times a loop has been detected on a port"
+    ::= { gamLoopProtectionStatusInterfaceEntry 4 }
+
+gamLoopProtectionStatusInterfaceLastLoop OBJECT-TYPE
+    SYNTAX      GAMUnsigned64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Time of last loop condition"
+    ::= { gamLoopProtectionStatusInterfaceEntry 5 }
+
+gamLoopProtectionMibConformance OBJECT IDENTIFIER
+    ::= { gamLoopProtectionMib 2 }
+
+gamLoopProtectionMibCompliances OBJECT IDENTIFIER
+    ::= { gamLoopProtectionMibConformance 1 }
+
+gamLoopProtectionMibGroups OBJECT IDENTIFIER
+    ::= { gamLoopProtectionMibConformance 2 }
+
+gamLoopProtectionConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamLoopProtectionConfigGlobalsEnabled,
+                  gamLoopProtectionConfigGlobalsTransmitInterval,
+                  gamLoopProtectionConfigGlobalsShutdownPeriod }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamLoopProtectionMibGroups 1 }
+
+gamLoopProtectionConfigInterfaceParamTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamLoopProtectionConfigInterfaceParamIfIndex,
+                  gamLoopProtectionConfigInterfaceParamEnabled,
+                  gamLoopProtectionConfigInterfaceParamAction,
+                  gamLoopProtectionConfigInterfaceParamTransmit }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamLoopProtectionMibGroups 2 }
+
+gamLoopProtectionStatusInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamLoopProtectionStatusInterfaceIfIndex,
+                  gamLoopProtectionStatusInterfaceDisabled,
+                  gamLoopProtectionStatusInterfaceLoopDetected,
+                  gamLoopProtectionStatusInterfaceLoopCount,
+                  gamLoopProtectionStatusInterfaceLastLoop }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamLoopProtectionMibGroups 3 }
+
+gamLoopProtectionMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamLoopProtectionConfigGlobalsInfoGroup,
+                       gamLoopProtectionConfigInterfaceParamTableInfoGroup,
+                       gamLoopProtectionStatusInterfaceTableInfoGroup }
+
+    ::= { gamLoopProtectionMibCompliances 1 }
+
+END

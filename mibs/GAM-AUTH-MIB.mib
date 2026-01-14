@@ -1,0 +1,998 @@
+-- *****************************************************************
+-- AUTH-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-AUTH-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamAuthMib MODULE-IDENTITY
+    LAST-UPDATED "201701160000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private MIB for authentication"
+    REVISION    "201701160000Z"
+    DESCRIPTION
+        "Update the valid range of authentication method priority index"
+    REVISION    "201603210000Z"
+    DESCRIPTION
+        "Support the encrypted secret key"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 48 }
+
+
+GAMAuthAcctMethod ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the available accounting methods."
+    SYNTAX      INTEGER { none(0), tacacs(3) }
+
+GAMAuthAuthenMethod ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the available authentication methods."
+    SYNTAX      INTEGER { none(0), local(1), radius(2), tacacs(3) }
+
+GAMAuthAuthorMethod ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the available authorization methods."
+    SYNTAX      INTEGER { none(0), tacacs(3) }
+
+gamAuthMibObjects OBJECT IDENTIFIER
+    ::= { gamAuthMib 1 }
+
+gamAuthConfig OBJECT IDENTIFIER
+    ::= { gamAuthMibObjects 2 }
+
+gamAuthConfigGlobals OBJECT IDENTIFIER
+    ::= { gamAuthConfig 1 }
+
+gamAuthConfigGlobalsAgents OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobals 1 }
+
+gamAuthConfigGlobalsAgentsConsoleAuthen OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsAgents 1 }
+
+gamAuthConfigGlobalsAgentsConsoleAuthenMethodsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is an ordered table of methods used to authenticate console access"
+    ::= { gamAuthConfigGlobalsAgentsConsoleAuthen 1 }
+
+gamAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry OBJECT-TYPE
+    SYNTAX      GAMAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry defines a method to be consulted with a priorty equal to the
+         index"
+    INDEX       {                   gamAuthConfigGlobalsAgentsConsoleAuthenMethodsIndex }
+    ::= { gamAuthConfigGlobalsAgentsConsoleAuthenMethodsTable 1 }
+
+GAMAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry ::= SEQUENCE {
+    gamAuthConfigGlobalsAgentsConsoleAuthenMethodsIndex   Integer32,
+    gamAuthConfigGlobalsAgentsConsoleAuthenMethodsMethod  GAMAuthAuthenMethod
+}
+
+gamAuthConfigGlobalsAgentsConsoleAuthenMethodsIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Method priority index, from 0 to 2 where 0 is the highest priority
+         index"
+    ::= { gamAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry 1 }
+
+gamAuthConfigGlobalsAgentsConsoleAuthenMethodsMethod OBJECT-TYPE
+    SYNTAX      GAMAuthAuthenMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authentication method"
+    ::= { gamAuthConfigGlobalsAgentsConsoleAuthenMethodsEntry 2 }
+
+gamAuthConfigGlobalsAgentsTelnetAuthen OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsAgents 2 }
+
+gamAuthConfigGlobalsAgentsTelnetAuthenMethodsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is an ordered table of methods used to authenticate telnet access"
+    ::= { gamAuthConfigGlobalsAgentsTelnetAuthen 1 }
+
+gamAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry OBJECT-TYPE
+    SYNTAX      GAMAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry defines a method to be consulted with a priorty equal to the
+         index"
+    INDEX       {                   gamAuthConfigGlobalsAgentsTelnetAuthenMethodsIndex }
+    ::= { gamAuthConfigGlobalsAgentsTelnetAuthenMethodsTable 1 }
+
+GAMAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry ::= SEQUENCE {
+    gamAuthConfigGlobalsAgentsTelnetAuthenMethodsIndex   Integer32,
+    gamAuthConfigGlobalsAgentsTelnetAuthenMethodsMethod  GAMAuthAuthenMethod
+}
+
+gamAuthConfigGlobalsAgentsTelnetAuthenMethodsIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Method priority index, from 0 to 2 where 0 is the highest priority
+         index"
+    ::= { gamAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry 1 }
+
+gamAuthConfigGlobalsAgentsTelnetAuthenMethodsMethod OBJECT-TYPE
+    SYNTAX      GAMAuthAuthenMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authentication method"
+    ::= { gamAuthConfigGlobalsAgentsTelnetAuthenMethodsEntry 2 }
+
+gamAuthConfigGlobalsAgentsSshAuthen OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsAgents 3 }
+
+gamAuthConfigGlobalsAgentsSshAuthenMethodsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAuthConfigGlobalsAgentsSshAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is an ordered table of methods used to authenticate ssh access"
+    ::= { gamAuthConfigGlobalsAgentsSshAuthen 1 }
+
+gamAuthConfigGlobalsAgentsSshAuthenMethodsEntry OBJECT-TYPE
+    SYNTAX      GAMAuthConfigGlobalsAgentsSshAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry defines a method to be consulted with a priorty equal to the
+         index"
+    INDEX       { gamAuthConfigGlobalsAgentsSshAuthenMethodsIndex }
+    ::= { gamAuthConfigGlobalsAgentsSshAuthenMethodsTable 1 }
+
+GAMAuthConfigGlobalsAgentsSshAuthenMethodsEntry ::= SEQUENCE {
+    gamAuthConfigGlobalsAgentsSshAuthenMethodsIndex   Integer32,
+    gamAuthConfigGlobalsAgentsSshAuthenMethodsMethod  GAMAuthAuthenMethod
+}
+
+gamAuthConfigGlobalsAgentsSshAuthenMethodsIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Method priority index, from 0 to 2 where 0 is the highest priority
+         index"
+    ::= { gamAuthConfigGlobalsAgentsSshAuthenMethodsEntry 1 }
+
+gamAuthConfigGlobalsAgentsSshAuthenMethodsMethod OBJECT-TYPE
+    SYNTAX      GAMAuthAuthenMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authentication method"
+    ::= { gamAuthConfigGlobalsAgentsSshAuthenMethodsEntry 2 }
+
+gamAuthConfigGlobalsAgentsHttpAuthen OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsAgents 4 }
+
+gamAuthConfigGlobalsAgentsHttpAuthenMethodsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAuthConfigGlobalsAgentsHttpAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is an ordered table of methods used to authenticate HTTP access"
+    ::= { gamAuthConfigGlobalsAgentsHttpAuthen 1 }
+
+gamAuthConfigGlobalsAgentsHttpAuthenMethodsEntry OBJECT-TYPE
+    SYNTAX      GAMAuthConfigGlobalsAgentsHttpAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry defines a method to be consulted with a priorty equal to the
+         index"
+    INDEX       { gamAuthConfigGlobalsAgentsHttpAuthenMethodsIndex }
+    ::= { gamAuthConfigGlobalsAgentsHttpAuthenMethodsTable 1 }
+
+GAMAuthConfigGlobalsAgentsHttpAuthenMethodsEntry ::= SEQUENCE {
+    gamAuthConfigGlobalsAgentsHttpAuthenMethodsIndex   Integer32,
+    gamAuthConfigGlobalsAgentsHttpAuthenMethodsMethod  GAMAuthAuthenMethod
+}
+
+gamAuthConfigGlobalsAgentsHttpAuthenMethodsIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Method priority index, from 0 to 2 where 0 is the highest priority
+         index"
+    ::= { gamAuthConfigGlobalsAgentsHttpAuthenMethodsEntry 1 }
+
+gamAuthConfigGlobalsAgentsHttpAuthenMethodsMethod OBJECT-TYPE
+    SYNTAX      GAMAuthAuthenMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authentication method"
+    ::= { gamAuthConfigGlobalsAgentsHttpAuthenMethodsEntry 2 }
+
+gamAuthConfigGlobalsAgentsJsonRPCAuthen OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsAgents 5 }
+
+gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAuthConfigGlobalsAgentsJsonRPCAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is an ordered table of methods used to authenticate JSON-RPC
+         access"
+    ::= { gamAuthConfigGlobalsAgentsJsonRPCAuthen 1 }
+
+gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsEntry OBJECT-TYPE
+    SYNTAX      GAMAuthConfigGlobalsAgentsJsonRPCAuthenMethodsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry defines a method to be consulted with a priorty equal to the
+         index"
+    INDEX       {                   gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsIndex }
+    ::= { gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsTable 1 }
+
+GAMAuthConfigGlobalsAgentsJsonRPCAuthenMethodsEntry ::= SEQUENCE {
+    gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsIndex   Integer32,
+    gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsMethod  GAMAuthAuthenMethod
+}
+
+gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Method priority index, from 0 to 2 where 0 is the highest priority
+         index"
+    ::= { gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsEntry 1 }
+
+gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsMethod OBJECT-TYPE
+    SYNTAX      GAMAuthAuthenMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authentication method"
+    ::= { gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsEntry 2 }
+
+gamAuthConfigGlobalsAgentsConsoleAuthor OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsAgents 11 }
+
+gamAuthConfigGlobalsAgentsConsoleAuthorMethod OBJECT-TYPE
+    SYNTAX      GAMAuthAuthorMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authorization method"
+    ::= { gamAuthConfigGlobalsAgentsConsoleAuthor 1 }
+
+gamAuthConfigGlobalsAgentsConsoleAuthorCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable authorization of commands"
+    ::= { gamAuthConfigGlobalsAgentsConsoleAuthor 2 }
+
+gamAuthConfigGlobalsAgentsConsoleAuthorCmdPrivLvl OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Command privilege level. Authorize all commands with a privilege level
+         higher than or equal to this level. Valid values are in the range 0 to
+         15"
+    ::= { gamAuthConfigGlobalsAgentsConsoleAuthor 3 }
+
+gamAuthConfigGlobalsAgentsConsoleAuthorCfgCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Also authorize configuration commands"
+    ::= { gamAuthConfigGlobalsAgentsConsoleAuthor 4 }
+
+gamAuthConfigGlobalsAgentsTelnetAuthor OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsAgents 12 }
+
+gamAuthConfigGlobalsAgentsTelnetAuthorMethod OBJECT-TYPE
+    SYNTAX      GAMAuthAuthorMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authorization method"
+    ::= { gamAuthConfigGlobalsAgentsTelnetAuthor 1 }
+
+gamAuthConfigGlobalsAgentsTelnetAuthorCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable authorization of commands"
+    ::= { gamAuthConfigGlobalsAgentsTelnetAuthor 2 }
+
+gamAuthConfigGlobalsAgentsTelnetAuthorCmdPrivLvl OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Command privilege level. Authorize all commands with a privilege level
+         higher than or equal to this level. Valid values are in the range 0 to
+         15"
+    ::= { gamAuthConfigGlobalsAgentsTelnetAuthor 3 }
+
+gamAuthConfigGlobalsAgentsTelnetAuthorCfgCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Also authorize configuration commands"
+    ::= { gamAuthConfigGlobalsAgentsTelnetAuthor 4 }
+
+gamAuthConfigGlobalsAgentsSshAuthor OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsAgents 13 }
+
+gamAuthConfigGlobalsAgentsSshAuthorMethod OBJECT-TYPE
+    SYNTAX      GAMAuthAuthorMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authorization method"
+    ::= { gamAuthConfigGlobalsAgentsSshAuthor 1 }
+
+gamAuthConfigGlobalsAgentsSshAuthorCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable authorization of commands"
+    ::= { gamAuthConfigGlobalsAgentsSshAuthor 2 }
+
+gamAuthConfigGlobalsAgentsSshAuthorCmdPrivLvl OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Command privilege level. Authorize all commands with a privilege level
+         higher than or equal to this level. Valid values are in the range 0 to
+         15"
+    ::= { gamAuthConfigGlobalsAgentsSshAuthor 3 }
+
+gamAuthConfigGlobalsAgentsSshAuthorCfgCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Also authorize configuration commands"
+    ::= { gamAuthConfigGlobalsAgentsSshAuthor 4 }
+
+gamAuthConfigGlobalsAgentsConsoleAcct OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsAgents 21 }
+
+gamAuthConfigGlobalsAgentsConsoleAcctMethod OBJECT-TYPE
+    SYNTAX      GAMAuthAcctMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Accounting method"
+    ::= { gamAuthConfigGlobalsAgentsConsoleAcct 1 }
+
+gamAuthConfigGlobalsAgentsConsoleAcctCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable accounting of commands"
+    ::= { gamAuthConfigGlobalsAgentsConsoleAcct 2 }
+
+gamAuthConfigGlobalsAgentsConsoleAcctCmdPrivLvl OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Command privilege level. Log all commands with a privilege level higher
+         than or equal to this level. Valid values are in the range 0 to 15"
+    ::= { gamAuthConfigGlobalsAgentsConsoleAcct 3 }
+
+gamAuthConfigGlobalsAgentsConsoleAcctExecEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable exec (login) accounting"
+    ::= { gamAuthConfigGlobalsAgentsConsoleAcct 4 }
+
+gamAuthConfigGlobalsAgentsTelnetAcct OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsAgents 22 }
+
+gamAuthConfigGlobalsAgentsTelnetAcctMethod OBJECT-TYPE
+    SYNTAX      GAMAuthAcctMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Accounting method"
+    ::= { gamAuthConfigGlobalsAgentsTelnetAcct 1 }
+
+gamAuthConfigGlobalsAgentsTelnetAcctCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable accounting of commands"
+    ::= { gamAuthConfigGlobalsAgentsTelnetAcct 2 }
+
+gamAuthConfigGlobalsAgentsTelnetAcctCmdPrivLvl OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Command privilege level. Log all commands with a privilege level higher
+         than or equal to this level. Valid values are in the range 0 to 15"
+    ::= { gamAuthConfigGlobalsAgentsTelnetAcct 3 }
+
+gamAuthConfigGlobalsAgentsTelnetAcctExecEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable exec (login) accounting"
+    ::= { gamAuthConfigGlobalsAgentsTelnetAcct 4 }
+
+gamAuthConfigGlobalsAgentsSshAcct OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsAgents 23 }
+
+gamAuthConfigGlobalsAgentsSshAcctMethod OBJECT-TYPE
+    SYNTAX      GAMAuthAcctMethod
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Accounting method"
+    ::= { gamAuthConfigGlobalsAgentsSshAcct 1 }
+
+gamAuthConfigGlobalsAgentsSshAcctCmdEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable accounting of commands"
+    ::= { gamAuthConfigGlobalsAgentsSshAcct 2 }
+
+gamAuthConfigGlobalsAgentsSshAcctCmdPrivLvl OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Command privilege level. Log all commands with a privilege level higher
+         than or equal to this level. Valid values are in the range 0 to 15"
+    ::= { gamAuthConfigGlobalsAgentsSshAcct 3 }
+
+gamAuthConfigGlobalsAgentsSshAcctExecEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable exec (login) accounting"
+    ::= { gamAuthConfigGlobalsAgentsSshAcct 4 }
+
+gamAuthConfigGlobalsRadius OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobals 2 }
+
+gamAuthConfigGlobalsRadiusGlobal OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsRadius 1 }
+
+gamAuthConfigGlobalsRadiusGlobalTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global timeout for for RADIUS servers. Can be overridden by individual
+         host entries. (1 to 1000 seconds)"
+    ::= { gamAuthConfigGlobalsRadiusGlobal 1 }
+
+gamAuthConfigGlobalsRadiusGlobalRetransmit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global retransmit count for RADIUS servers. Can be overridden by
+         individual host entries. (1 to 1000 times)"
+    ::= { gamAuthConfigGlobalsRadiusGlobal 2 }
+
+gamAuthConfigGlobalsRadiusGlobalDeadtime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global deadtime for RADIUS servers. (0 to 1440 minutes)"
+    ::= { gamAuthConfigGlobalsRadiusGlobal 3 }
+
+gamAuthConfigGlobalsRadiusGlobalKey OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..224))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global secret key for RADIUS servers. Can be overridden by individual
+         host entries. If the secret key is unencrypted, then the maximum length
+         is 63."
+    ::= { gamAuthConfigGlobalsRadiusGlobal 4 }
+
+gamAuthConfigGlobalsRadiusGlobalEncrypted OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The flag indicates the secret key is encrypted or not"
+    ::= { gamAuthConfigGlobalsRadiusGlobal 5 }
+
+gamAuthConfigGlobalsRadiusGlobalNasIpv4Enable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable Global NAS IPv4 address"
+    ::= { gamAuthConfigGlobalsRadiusGlobal 11 }
+
+gamAuthConfigGlobalsRadiusGlobalNasIpv4Address OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global NAS IPv4 address"
+    ::= { gamAuthConfigGlobalsRadiusGlobal 12 }
+
+gamAuthConfigGlobalsRadiusGlobalNasIpv6Enable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable Global NAS IPv6 address"
+    ::= { gamAuthConfigGlobalsRadiusGlobal 13 }
+
+gamAuthConfigGlobalsRadiusGlobalNasIpv6Address OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global NAS IPv6 address"
+    ::= { gamAuthConfigGlobalsRadiusGlobal 14 }
+
+gamAuthConfigGlobalsRadiusGlobalNasIdentifier OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global NAS Identifier"
+    ::= { gamAuthConfigGlobalsRadiusGlobal 15 }
+
+gamAuthConfigGlobalsRadiusHostTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAuthConfigGlobalsRadiusHostEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of Radius servers useed to query for RADIUS
+         authentication"
+    ::= { gamAuthConfigGlobalsRadius 3 }
+
+gamAuthConfigGlobalsRadiusHostEntry OBJECT-TYPE
+    SYNTAX      GAMAuthConfigGlobalsRadiusHostEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry defines a RADIUS server, with attributes used for contacting
+         it. Host entries are consulted in numerical order of the entry index"
+    INDEX       { gamAuthConfigGlobalsRadiusHostIndex }
+    ::= { gamAuthConfigGlobalsRadiusHostTable 1 }
+
+GAMAuthConfigGlobalsRadiusHostEntry ::= SEQUENCE {
+    gamAuthConfigGlobalsRadiusHostIndex       Integer32,
+    gamAuthConfigGlobalsRadiusHostAddress     GAMDisplayString,
+    gamAuthConfigGlobalsRadiusHostAuthPort    Unsigned32,
+    gamAuthConfigGlobalsRadiusHostAcctPort    Unsigned32,
+    gamAuthConfigGlobalsRadiusHostTimeout     Unsigned32,
+    gamAuthConfigGlobalsRadiusHostRetransmit  Unsigned32,
+    gamAuthConfigGlobalsRadiusHostKey         GAMDisplayString,
+    gamAuthConfigGlobalsRadiusHostEncrypted   TruthValue
+}
+
+gamAuthConfigGlobalsRadiusHostIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Host entry index"
+    ::= { gamAuthConfigGlobalsRadiusHostEntry 1 }
+
+gamAuthConfigGlobalsRadiusHostAddress OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "IPv4/IPv6 address or hostname of this server"
+    ::= { gamAuthConfigGlobalsRadiusHostEntry 2 }
+
+gamAuthConfigGlobalsRadiusHostAuthPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authentication port number (UDP) for use for this server"
+    ::= { gamAuthConfigGlobalsRadiusHostEntry 3 }
+
+gamAuthConfigGlobalsRadiusHostAcctPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Accounting port number (UDP) to use for this server"
+    ::= { gamAuthConfigGlobalsRadiusHostEntry 4 }
+
+gamAuthConfigGlobalsRadiusHostTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Seconds to wait for a response from this server. Use global timeout if
+         zero"
+    ::= { gamAuthConfigGlobalsRadiusHostEntry 5 }
+
+gamAuthConfigGlobalsRadiusHostRetransmit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of times a request is resent to an unresponding server. Use
+         global retransmit if zero"
+    ::= { gamAuthConfigGlobalsRadiusHostEntry 6 }
+
+gamAuthConfigGlobalsRadiusHostKey OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..224))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The secret key to use for this server. Use global key if empty If the
+         secret key is unencrypted, then the maximum length is 63."
+    ::= { gamAuthConfigGlobalsRadiusHostEntry 7 }
+
+gamAuthConfigGlobalsRadiusHostEncrypted OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The flag indicates the secret key is encrypted or not"
+    ::= { gamAuthConfigGlobalsRadiusHostEntry 8 }
+
+gamAuthConfigGlobalsTacacs OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobals 3 }
+
+gamAuthConfigGlobalsTacacsGlobal OBJECT IDENTIFIER
+    ::= { gamAuthConfigGlobalsTacacs 1 }
+
+gamAuthConfigGlobalsTacacsGlobalTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global timeout for for TACACS servers. Can be overridden by individual
+         host entries. (1 to 1000 seconds)"
+    ::= { gamAuthConfigGlobalsTacacsGlobal 1 }
+
+gamAuthConfigGlobalsTacacsGlobalDeadtime OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global deadtime for TACACS servers. (0 to 1440 minutes)"
+    ::= { gamAuthConfigGlobalsTacacsGlobal 2 }
+
+gamAuthConfigGlobalsTacacsGlobalKey OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..224))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global secret key for TACACS servers. Can be overridden by individual
+         host entries. If the secret key is unencrypted, then the maximum length
+         is 63."
+    ::= { gamAuthConfigGlobalsTacacsGlobal 3 }
+
+gamAuthConfigGlobalsTacacsGlobalEncrypted OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The flag indicates the secret key is encrypted or not"
+    ::= { gamAuthConfigGlobalsTacacsGlobal 4 }
+
+gamAuthConfigGlobalsTacacsHostTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAuthConfigGlobalsTacacsHostEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of Tacacs servers useed to query for TACACS
+         authentication"
+    ::= { gamAuthConfigGlobalsTacacs 2 }
+
+gamAuthConfigGlobalsTacacsHostEntry OBJECT-TYPE
+    SYNTAX      GAMAuthConfigGlobalsTacacsHostEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry defines a TACACS server, with attributes used for contacting
+         it. Host entries are consulted in numerical order of the entry index"
+    INDEX       { gamAuthConfigGlobalsTacacsHostIndex }
+    ::= { gamAuthConfigGlobalsTacacsHostTable 1 }
+
+GAMAuthConfigGlobalsTacacsHostEntry ::= SEQUENCE {
+    gamAuthConfigGlobalsTacacsHostIndex      Integer32,
+    gamAuthConfigGlobalsTacacsHostAddress    GAMDisplayString,
+    gamAuthConfigGlobalsTacacsHostAuthPort   Unsigned32,
+    gamAuthConfigGlobalsTacacsHostTimeout    Unsigned32,
+    gamAuthConfigGlobalsTacacsHostKey        GAMDisplayString,
+    gamAuthConfigGlobalsTacacsHostEncrypted  TruthValue
+}
+
+gamAuthConfigGlobalsTacacsHostIndex OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Host entry index"
+    ::= { gamAuthConfigGlobalsTacacsHostEntry 1 }
+
+gamAuthConfigGlobalsTacacsHostAddress OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..255))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "IPv4/IPv6 address or hostname of this server"
+    ::= { gamAuthConfigGlobalsTacacsHostEntry 2 }
+
+gamAuthConfigGlobalsTacacsHostAuthPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Authentication port number (TCP) to use for this server"
+    ::= { gamAuthConfigGlobalsTacacsHostEntry 3 }
+
+gamAuthConfigGlobalsTacacsHostTimeout OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Seconds to wait for a response from this server. Use global timeout if
+         zero"
+    ::= { gamAuthConfigGlobalsTacacsHostEntry 4 }
+
+gamAuthConfigGlobalsTacacsHostKey OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..224))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The secret key to use for this server. Use global key if empty. If the
+         secret key is unencrypted, then the maximum length is 63."
+    ::= { gamAuthConfigGlobalsTacacsHostEntry 5 }
+
+gamAuthConfigGlobalsTacacsHostEncrypted OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The flag indicates the secret key is encrypted or not"
+    ::= { gamAuthConfigGlobalsTacacsHostEntry 6 }
+
+gamAuthMibConformance OBJECT IDENTIFIER
+    ::= { gamAuthMib 2 }
+
+gamAuthMibCompliances OBJECT IDENTIFIER
+    ::= { gamAuthMibConformance 1 }
+
+gamAuthMibGroups OBJECT IDENTIFIER
+    ::= { gamAuthMibConformance 2 }
+
+gamAuthConfigGlobalsAgentsConsoleAuthenMethodsTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamAuthConfigGlobalsAgentsConsoleAuthenMethodsIndex,
+                  gamAuthConfigGlobalsAgentsConsoleAuthenMethodsMethod }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 1 }
+
+gamAuthConfigGlobalsAgentsTelnetAuthenMethodsTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamAuthConfigGlobalsAgentsTelnetAuthenMethodsIndex,
+                  gamAuthConfigGlobalsAgentsTelnetAuthenMethodsMethod }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 2 }
+
+gamAuthConfigGlobalsAgentsSshAuthenMethodsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsAgentsSshAuthenMethodsIndex,
+                  gamAuthConfigGlobalsAgentsSshAuthenMethodsMethod }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 3 }
+
+gamAuthConfigGlobalsAgentsHttpAuthenMethodsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsAgentsHttpAuthenMethodsIndex,
+                  gamAuthConfigGlobalsAgentsHttpAuthenMethodsMethod }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 4 }
+
+gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsIndex,
+                  gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsMethod }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 5 }
+
+gamAuthConfigGlobalsAgentsConsoleAuthorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsAgentsConsoleAuthorMethod,
+                  gamAuthConfigGlobalsAgentsConsoleAuthorCmdEnable,
+                  gamAuthConfigGlobalsAgentsConsoleAuthorCmdPrivLvl,
+                  gamAuthConfigGlobalsAgentsConsoleAuthorCfgCmdEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 6 }
+
+gamAuthConfigGlobalsAgentsTelnetAuthorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsAgentsTelnetAuthorMethod,
+                  gamAuthConfigGlobalsAgentsTelnetAuthorCmdEnable,
+                  gamAuthConfigGlobalsAgentsTelnetAuthorCmdPrivLvl,
+                  gamAuthConfigGlobalsAgentsTelnetAuthorCfgCmdEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 7 }
+
+gamAuthConfigGlobalsAgentsSshAuthorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsAgentsSshAuthorMethod,
+                  gamAuthConfigGlobalsAgentsSshAuthorCmdEnable,
+                  gamAuthConfigGlobalsAgentsSshAuthorCmdPrivLvl,
+                  gamAuthConfigGlobalsAgentsSshAuthorCfgCmdEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 8 }
+
+gamAuthConfigGlobalsAgentsConsoleAcctInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsAgentsConsoleAcctMethod,
+                  gamAuthConfigGlobalsAgentsConsoleAcctCmdEnable,
+                  gamAuthConfigGlobalsAgentsConsoleAcctCmdPrivLvl,
+                  gamAuthConfigGlobalsAgentsConsoleAcctExecEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 9 }
+
+gamAuthConfigGlobalsAgentsTelnetAcctInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsAgentsTelnetAcctMethod,
+                  gamAuthConfigGlobalsAgentsTelnetAcctCmdEnable,
+                  gamAuthConfigGlobalsAgentsTelnetAcctCmdPrivLvl,
+                  gamAuthConfigGlobalsAgentsTelnetAcctExecEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 10 }
+
+gamAuthConfigGlobalsAgentsSshAcctInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsAgentsSshAcctMethod,
+                  gamAuthConfigGlobalsAgentsSshAcctCmdEnable,
+                  gamAuthConfigGlobalsAgentsSshAcctCmdPrivLvl,
+                  gamAuthConfigGlobalsAgentsSshAcctExecEnable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 11 }
+
+gamAuthConfigGlobalsRadiusGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsRadiusGlobalTimeout,
+                  gamAuthConfigGlobalsRadiusGlobalRetransmit,
+                  gamAuthConfigGlobalsRadiusGlobalDeadtime,
+                  gamAuthConfigGlobalsRadiusGlobalKey,
+                  gamAuthConfigGlobalsRadiusGlobalEncrypted,
+                  gamAuthConfigGlobalsRadiusGlobalNasIpv4Enable,
+                  gamAuthConfigGlobalsRadiusGlobalNasIpv4Address,
+                  gamAuthConfigGlobalsRadiusGlobalNasIpv6Enable,
+                  gamAuthConfigGlobalsRadiusGlobalNasIpv6Address,
+                  gamAuthConfigGlobalsRadiusGlobalNasIdentifier }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 12 }
+
+gamAuthConfigGlobalsRadiusHostTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsRadiusHostIndex,
+                  gamAuthConfigGlobalsRadiusHostAddress,
+                  gamAuthConfigGlobalsRadiusHostAuthPort,
+                  gamAuthConfigGlobalsRadiusHostAcctPort,
+                  gamAuthConfigGlobalsRadiusHostTimeout,
+                  gamAuthConfigGlobalsRadiusHostRetransmit,
+                  gamAuthConfigGlobalsRadiusHostKey,
+                  gamAuthConfigGlobalsRadiusHostEncrypted }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 13 }
+
+gamAuthConfigGlobalsTacacsGlobalInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsTacacsGlobalTimeout,
+                  gamAuthConfigGlobalsTacacsGlobalDeadtime,
+                  gamAuthConfigGlobalsTacacsGlobalKey,
+                  gamAuthConfigGlobalsTacacsGlobalEncrypted }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 14 }
+
+gamAuthConfigGlobalsTacacsHostTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAuthConfigGlobalsTacacsHostIndex,
+                  gamAuthConfigGlobalsTacacsHostAddress,
+                  gamAuthConfigGlobalsTacacsHostAuthPort,
+                  gamAuthConfigGlobalsTacacsHostTimeout,
+                  gamAuthConfigGlobalsTacacsHostKey,
+                  gamAuthConfigGlobalsTacacsHostEncrypted }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAuthMibGroups 15 }
+
+gamAuthMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS {                        gamAuthConfigGlobalsAgentsConsoleAuthenMethodsTableInfoGroup,
+                       gamAuthConfigGlobalsAgentsTelnetAuthenMethodsTableInfoGroup,
+                       gamAuthConfigGlobalsAgentsSshAuthenMethodsTableInfoGroup,
+                       gamAuthConfigGlobalsAgentsHttpAuthenMethodsTableInfoGroup,
+                       gamAuthConfigGlobalsAgentsJsonRPCAuthenMethodsTableInfoGroup,
+                       gamAuthConfigGlobalsAgentsConsoleAuthorInfoGroup,
+                       gamAuthConfigGlobalsAgentsTelnetAuthorInfoGroup,
+                       gamAuthConfigGlobalsAgentsSshAuthorInfoGroup,
+                       gamAuthConfigGlobalsAgentsConsoleAcctInfoGroup,
+                       gamAuthConfigGlobalsAgentsTelnetAcctInfoGroup,
+                       gamAuthConfigGlobalsAgentsSshAcctInfoGroup,
+                       gamAuthConfigGlobalsRadiusGlobalInfoGroup,
+                       gamAuthConfigGlobalsRadiusHostTableInfoGroup,
+                       gamAuthConfigGlobalsTacacsGlobalInfoGroup,
+                       gamAuthConfigGlobalsTacacsHostTableInfoGroup }
+
+    ::= { gamAuthMibCompliances 1 }
+
+END

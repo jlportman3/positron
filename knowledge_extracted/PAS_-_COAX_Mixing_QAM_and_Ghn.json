@@ -1,0 +1,15 @@
+{
+  "metadata": {
+    "filename": "PAS - COAX Mixing QAM and Ghn.pdf",
+    "total_pages": 3,
+    "size_bytes": 235751,
+    "size_mb": 0.22
+  },
+  "chunks": [
+    {
+      "chunk_id": 1,
+      "pages": "1-3",
+      "content": "--- Page 1 ---\n© Positron Access Solutions –2021 \nPositron G.hn + QAM TV signal mix points\nOctober 2025\n\n\n--- Page 2 ---\n© Positron Access Solutions –2024 \nPositron mixing QAM TV with G.hn , QAM TV >200mhz\n2\nGAM\nG.hnQAM G.hn +\nQAM \nG1002 -C+\n9dB TAP\n1:N SplitterTV channels\nout port\nTAP portin port\n6dB TAP\n9dB TAP provides minimal\n1.6dB attenuation to the \npassing thru QAM signal\n6dB TAP\nAttenuation to TV 3.5dBout portin portTAP port\n\n--- Page 3 ---\n© Positron Access Solutions – 2024 \nPositron mixing QAM TV with G.hn , regular QAM >220 and return <50Mhz. \nPrevents G.hn  bleed and port crosstalk \n3GAM\nG.hnQAM+ \nPPV/DOCSIS \nG.hn +\nQAM \n9dB TAP\n1:N SplitterTV channels\nout port\nTAP portin port\n9dB TAP provides minimal\n1.6dB attenuation to the \npassing thru QAM signal\n51-210mhz\nBelden GBR -51/210Mhz filter.\nBand stop filter, reject 51 -210Mhz\n6dB TAP\nAttenuation to TV 3.5dB\nG1002 -C+\n6dB TAPout portin portTAP port\n\n"
+    }
+  ]
+}

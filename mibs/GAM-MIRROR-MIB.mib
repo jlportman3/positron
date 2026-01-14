@@ -1,0 +1,385 @@
+-- *****************************************************************
+-- MIRROR-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-MIRROR-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMPortList FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    GAMVlanListQuarter FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamMirrorMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of Mirror"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 15 }
+
+
+GAMMirrorSessionType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the session type in Mirror function."
+    SYNTAX      INTEGER { mirror(0), rMirrorSource(1),
+                          rMirrorDestination(2) }
+
+gamMirrorMibObjects OBJECT IDENTIFIER
+    ::= { gamMirrorMib 1 }
+
+gamMirrorCapabilities OBJECT IDENTIFIER
+    ::= { gamMirrorMibObjects 1 }
+
+gamMirrorCapabilitiesSessionCountMax OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of sessions."
+    ::= { gamMirrorCapabilities 1 }
+
+gamMirrorCapabilitiesSessionSourceCountMax OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum number of Mirror and RMirror source sessions."
+    ::= { gamMirrorCapabilities 2 }
+
+gamMirrorCapabilitiesRMirrorSuport OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicate if RMirror feature is supported or not. true means supported.
+         false means not supported."
+    ::= { gamMirrorCapabilities 3 }
+
+gamMirrorCapabilitiesInternalReflectorPortSupport OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicate if Internal reflector port is supported or not. true means
+         supported. false means not supported."
+    ::= { gamMirrorCapabilities 4 }
+
+gamMirrorCapabilitiesCpuMirrorSupport OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicate if mirroring CPU traffic is supported or not. true means
+         supported. false means not supported."
+    ::= { gamMirrorCapabilities 5 }
+
+gamMirrorConfig OBJECT IDENTIFIER
+    ::= { gamMirrorMibObjects 2 }
+
+gamMirrorConfigSessionTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMMirrorConfigSessionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of configuration per session"
+    ::= { gamMirrorConfig 1 }
+
+gamMirrorConfigSessionEntry OBJECT-TYPE
+    SYNTAX      GAMMirrorConfigSessionEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each session has a set of parameters"
+    INDEX       { gamMirrorConfigSessionSessionId }
+    ::= { gamMirrorConfigSessionTable 1 }
+
+GAMMirrorConfigSessionEntry ::= SEQUENCE {
+    gamMirrorConfigSessionSessionId            Integer32,
+    gamMirrorConfigSessionMode                 TruthValue,
+    gamMirrorConfigSessionType                 GAMMirrorSessionType,
+    gamMirrorConfigSessionRMirrorVlan          GAMUnsigned16,
+    gamMirrorConfigSessionReflectorPort        GAMInterfaceIndex,
+    gamMirrorConfigSessionStripInnerTag        TruthValue,
+    gamMirrorConfigSessionSourceVlans0KTo1K    GAMVlanListQuarter,
+    gamMirrorConfigSessionSourceVlans1KTo2K    GAMVlanListQuarter,
+    gamMirrorConfigSessionSourceVlans2KTo3K    GAMVlanListQuarter,
+    gamMirrorConfigSessionSourceVlans3KTo4K    GAMVlanListQuarter,
+    gamMirrorConfigSessionSourcePortListRx     GAMPortList,
+    gamMirrorConfigSessionSourcePortListTx     GAMPortList,
+    gamMirrorConfigSessionCpuRx                TruthValue,
+    gamMirrorConfigSessionCpuTx                TruthValue,
+    gamMirrorConfigSessionDestinationPortList  GAMPortList
+}
+
+gamMirrorConfigSessionSessionId OBJECT-TYPE
+    SYNTAX      Integer32 (1..65535)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Session ID. Valid range is (1..maximum). The maximum is
+         platform-specific and can be retrieved from the Mirror capabilities."
+    ::= { gamMirrorConfigSessionEntry 1 }
+
+gamMirrorConfigSessionMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether this session is enabled or disabled. true is to enable
+         the function. false is to disable it.
+         
+         Multiple criteria must be fulfilled in order to be able to enable a
+         session.The criteria depend on the 'SessionType'."
+    ::= { gamMirrorConfigSessionEntry 2 }
+
+gamMirrorConfigSessionType OBJECT-TYPE
+    SYNTAX      GAMMirrorSessionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Session type in Mirror. 'mirror' means to do the Mirror function on the
+         device.
+         
+         'rMirrorSource' means the device acts as source node for monitor flow.
+         
+         'rMirrorDestination' means the device acts as end node for monitor
+         flow.
+         
+         "
+    ::= { gamMirrorConfigSessionEntry 3 }
+
+gamMirrorConfigSessionRMirrorVlan OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VLAN ID points out where the monitor packet will copy to. The
+         remote Mirror VLAN ID. Only used for RMirror types.
+         
+         RMirror source session:
+         
+         The mirrored traffic is copied onto this VLAN ID.
+         
+         Traffic will flood to all ports that are members of the remote Mirror
+         VLAN ID.
+         
+         RMirror destination session:
+         
+         The #destination_port_list contains the port(s) that the Mirror VLAN
+         will be copied to
+         
+         in addition to ports that are already configured (through the VLAN
+         module) to be members of this VLAN."
+    ::= { gamMirrorConfigSessionEntry 4 }
+
+gamMirrorConfigSessionReflectorPort OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A reflector port is a port that the administrator may have to specify
+         in case the device does not have internal (unused) ports available.
+         Whether this is the case or not for this device can be derived from
+         Mirror capabilities. When 'ReflectorPort' is used, it must be specified
+         when an RMirror source session is enabled. In this case, the reflector
+         port will be shut down for normal front port usage, because the switch
+         needs a port where it can loop frames in order to get mirrored traffic
+         copied onto a particular VLAN ID (the 'RMirrorVlan')."
+    ::= { gamMirrorConfigSessionEntry 5 }
+
+gamMirrorConfigSessionStripInnerTag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This configuration is used to strip the original VLAN ID of the
+         mirrored traffic or not. When it is set to TRUE, the the original VLAN
+         ID of the mirrored traffic will be stripped, otherwise the original
+         VLAN ID will be carried to destination interface. It may have to
+         specify in case the device does not have internal (unused) ports
+         available. Whether this is the case or not for this device can be
+         derived from Mirror capabilities."
+    ::= { gamMirrorConfigSessionEntry 6 }
+
+gamMirrorConfigSessionSourceVlans0KTo1K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "First quarter of bit-array indicating source VLAN list. All traffic in
+         the VLANs specified in this list will get mirrored onto either the
+         destination port (Mirror session) or the destination VLAN (RMirror
+         source session). It's a bit-mask that indicates the VLANs. A '1'
+         indicates the VLAN ID is selected, a '0' indicates that the VLAN ID
+         isn't selected. "
+    ::= { gamMirrorConfigSessionEntry 7 }
+
+gamMirrorConfigSessionSourceVlans1KTo2K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Second quarter of bit-array indicating source VLAN list. All traffic in
+         the VLANs specified in this list will get mirrored onto either the
+         destination port (Mirror session) or the destination VLAN (RMirror
+         source session). It's a bit-mask that indicates the VLANs. A '1'
+         indicates the VLAN ID is selected, a '0' indicates that the VLAN ID
+         isn't selected. "
+    ::= { gamMirrorConfigSessionEntry 8 }
+
+gamMirrorConfigSessionSourceVlans2KTo3K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Third quarter of bit-array indicating source VLAN list. All traffic in
+         the VLANs specified in this list will get mirrored onto either the
+         destination port (Mirror session) or the destination VLAN (RMirror
+         source session). It's a bit-mask that indicates the VLANs. A '1'
+         indicates the VLAN ID is selected, a '0' indicates that the VLAN ID
+         isn't selected. "
+    ::= { gamMirrorConfigSessionEntry 9 }
+
+gamMirrorConfigSessionSourceVlans3KTo4K OBJECT-TYPE
+    SYNTAX      GAMVlanListQuarter
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Fourth quarter of bit-array indicating source VLAN list. All traffic in
+         the VLANs specified in this list will get mirrored onto either the
+         destination port (Mirror session) or the destination VLAN (RMirror
+         source session). It's a bit-mask that indicates the VLANs. A '1'
+         indicates the VLAN ID is selected, a '0' indicates that the VLAN ID
+         isn't selected. "
+    ::= { gamMirrorConfigSessionEntry 10 }
+
+gamMirrorConfigSessionSourcePortListRx OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A bit-mask that controls whether a given port is enabled for mirroring
+         of incoming traffic. A '1' indicates that the port is included, whereas
+         a '0' indicates it isn't. Only source sessions (Mirror and RMirror
+         Source) use this value. "
+    ::= { gamMirrorConfigSessionEntry 11 }
+
+gamMirrorConfigSessionSourcePortListTx OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "A bit-mask that controls whether a given port is enabled for mirroring
+         of outgoing traffic. A '1' indicates that the port is included, whereas
+         a '0' indicates it isn't. Only source sessions (Mirror and RMirror
+         Source) use this value. "
+    ::= { gamMirrorConfigSessionEntry 12 }
+
+gamMirrorConfigSessionCpuRx OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether mirroring of traffic received by the internal CPU is
+         enabled or disabled. It is supported or not can be derived from Mirror
+         capabilities.Only source sessions (Mirror and RMirror Source) use this
+         value. "
+    ::= { gamMirrorConfigSessionEntry 13 }
+
+gamMirrorConfigSessionCpuTx OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Controls whether mirroring of traffic transmitted by the internal CPU
+         is enabled or disabled. It is supported or not can be derived from
+         Mirror capabilities.Only source sessions (Mirror and RMirror Source)
+         use this value. "
+    ::= { gamMirrorConfigSessionEntry 14 }
+
+gamMirrorConfigSessionDestinationPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Destination port list implemented as a bit-mask, where a '1' indicates
+         that the port is included and a '0' indicates that it isn't. Only used
+         in plain Mirror sessions and RMirror destination sessions.
+         
+         Mirror session:
+         
+         At most one bit may be set in this mask.
+         
+         RMirror destination session:
+         
+         Zero or more bits may be set in this mask."
+    ::= { gamMirrorConfigSessionEntry 15 }
+
+gamMirrorMibConformance OBJECT IDENTIFIER
+    ::= { gamMirrorMib 2 }
+
+gamMirrorMibCompliances OBJECT IDENTIFIER
+    ::= { gamMirrorMibConformance 1 }
+
+gamMirrorMibGroups OBJECT IDENTIFIER
+    ::= { gamMirrorMibConformance 2 }
+
+gamMirrorCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMirrorCapabilitiesSessionCountMax,
+                  gamMirrorCapabilitiesSessionSourceCountMax,
+                  gamMirrorCapabilitiesRMirrorSuport,
+                  gamMirrorCapabilitiesInternalReflectorPortSupport,
+                  gamMirrorCapabilitiesCpuMirrorSupport }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMirrorMibGroups 1 }
+
+gamMirrorConfigSessionTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamMirrorConfigSessionSessionId,
+                  gamMirrorConfigSessionMode,
+                  gamMirrorConfigSessionType,
+                  gamMirrorConfigSessionRMirrorVlan,
+                  gamMirrorConfigSessionReflectorPort,
+                  gamMirrorConfigSessionStripInnerTag,
+                  gamMirrorConfigSessionSourceVlans0KTo1K,
+                  gamMirrorConfigSessionSourceVlans1KTo2K,
+                  gamMirrorConfigSessionSourceVlans2KTo3K,
+                  gamMirrorConfigSessionSourceVlans3KTo4K,
+                  gamMirrorConfigSessionSourcePortListRx,
+                  gamMirrorConfigSessionSourcePortListTx,
+                  gamMirrorConfigSessionCpuRx,
+                  gamMirrorConfigSessionCpuTx,
+                  gamMirrorConfigSessionDestinationPortList }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamMirrorMibGroups 2 }
+
+gamMirrorMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamMirrorCapabilitiesInfoGroup,
+                       gamMirrorConfigSessionTableInfoGroup }
+
+    ::= { gamMirrorMibCompliances 1 }
+
+END

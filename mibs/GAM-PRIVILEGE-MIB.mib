@@ -1,0 +1,132 @@
+-- *****************************************************************
+-- PRIVILEGE-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-PRIVILEGE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    Unsigned32 FROM SNMPv2-SMI
+    ;
+
+gamPrivilegeMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of Privilege"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 59 }
+
+
+gamPrivilegeMibObjects OBJECT IDENTIFIER
+    ::= { gamPrivilegeMib 1 }
+
+gamPrivilegeConfig OBJECT IDENTIFIER
+    ::= { gamPrivilegeMibObjects 2 }
+
+gamPrivilegeConfigWebTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPrivilegeConfigWebEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table to configure web privilege"
+    ::= { gamPrivilegeConfig 1 }
+
+gamPrivilegeConfigWebEntry OBJECT-TYPE
+    SYNTAX      GAMPrivilegeConfigWebEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each module has a set of parameters"
+    INDEX       { gamPrivilegeConfigWebModuleName }
+    ::= { gamPrivilegeConfigWebTable 1 }
+
+GAMPrivilegeConfigWebEntry ::= SEQUENCE {
+    gamPrivilegeConfigWebModuleName    GAMDisplayString,
+    gamPrivilegeConfigWebConfigRoPriv  Unsigned32,
+    gamPrivilegeConfigWebConfigRwPriv  Unsigned32,
+    gamPrivilegeConfigWebStatusRoPriv  Unsigned32,
+    gamPrivilegeConfigWebStatusRwPriv  Unsigned32
+}
+
+gamPrivilegeConfigWebModuleName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Module name."
+    ::= { gamPrivilegeConfigWebEntry 1 }
+
+gamPrivilegeConfigWebConfigRoPriv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Web privilege of read-only configuration."
+    ::= { gamPrivilegeConfigWebEntry 2 }
+
+gamPrivilegeConfigWebConfigRwPriv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Web privilege of read-write configuration."
+    ::= { gamPrivilegeConfigWebEntry 3 }
+
+gamPrivilegeConfigWebStatusRoPriv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Web privilege of read-only status."
+    ::= { gamPrivilegeConfigWebEntry 4 }
+
+gamPrivilegeConfigWebStatusRwPriv OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Web privilege of read-write status."
+    ::= { gamPrivilegeConfigWebEntry 5 }
+
+gamPrivilegeMibConformance OBJECT IDENTIFIER
+    ::= { gamPrivilegeMib 2 }
+
+gamPrivilegeMibCompliances OBJECT IDENTIFIER
+    ::= { gamPrivilegeMibConformance 1 }
+
+gamPrivilegeMibGroups OBJECT IDENTIFIER
+    ::= { gamPrivilegeMibConformance 2 }
+
+gamPrivilegeConfigWebInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPrivilegeConfigWebModuleName,
+                  gamPrivilegeConfigWebConfigRoPriv,
+                  gamPrivilegeConfigWebConfigRwPriv,
+                  gamPrivilegeConfigWebStatusRoPriv,
+                  gamPrivilegeConfigWebStatusRwPriv }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPrivilegeMibGroups 1 }
+
+gamPrivilegeMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamPrivilegeConfigWebInfoGroup }
+
+    ::= { gamPrivilegeMibCompliances 1 }
+
+END

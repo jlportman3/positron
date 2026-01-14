@@ -1,0 +1,474 @@
+-- *****************************************************************
+-- DDMI-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-DDMI-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMSfpTransceiver FROM GAM-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamDdmiMib MODULE-IDENTITY
+    LAST-UPDATED "201711270000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of DDMI"
+    REVISION    "201711270000Z"
+    DESCRIPTION
+        "Add IfIndex to DdmiStatusInterfaceTableInfoGroup. Editorial changes"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 121 }
+
+
+gamDdmiMibObjects OBJECT IDENTIFIER
+    ::= { gamDdmiMib 1 }
+
+gamDdmiConfig OBJECT IDENTIFIER
+    ::= { gamDdmiMibObjects 2 }
+
+gamDdmiConfigGlobals OBJECT IDENTIFIER
+    ::= { gamDdmiConfig 1 }
+
+gamDdmiConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global operation mode of DDMI. true is to enable the functions of DDMI
+         and false is to disable it."
+    ::= { gamDdmiConfigGlobals 1 }
+
+gamDdmiStatus OBJECT IDENTIFIER
+    ::= { gamDdmiMibObjects 3 }
+
+gamDdmiStatusInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDdmiStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a DDMI status table of port interface."
+    ::= { gamDdmiStatus 2 }
+
+gamDdmiStatusInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMDdmiStatusInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of DDMI status."
+    INDEX       { gamDdmiStatusInterfaceIfIndex }
+    ::= { gamDdmiStatusInterfaceTable 1 }
+
+GAMDdmiStatusInterfaceEntry ::= SEQUENCE {
+    gamDdmiStatusInterfaceIfIndex                          GAMInterfaceIndex,
+    gamDdmiStatusInterfaceA0Supported                      TruthValue,
+    gamDdmiStatusInterfaceA0SfpDetected                    TruthValue,
+    gamDdmiStatusInterfaceA0Vendor                         GAMDisplayString,
+    gamDdmiStatusInterfaceA0PartNumber                     GAMDisplayString,
+    gamDdmiStatusInterfaceA0SerialNumber                   GAMDisplayString,
+    gamDdmiStatusInterfaceA0Revision                       GAMDisplayString,
+    gamDdmiStatusInterfaceA0DateCode                       GAMDisplayString,
+    gamDdmiStatusInterfaceA0SfpType                        GAMSfpTransceiver,
+    gamDdmiStatusInterfaceA2Supported                      TruthValue,
+    gamDdmiStatusInterfaceA2CurrentTemperature             GAMDisplayString,
+    gamDdmiStatusInterfaceA2TemperatureHighAlarmThreshold  GAMDisplayString,
+    gamDdmiStatusInterfaceA2TemperatureLowAlarmThreshold   GAMDisplayString,
+    gamDdmiStatusInterfaceA2TemperatureHighWarnThreshold   GAMDisplayString,
+    gamDdmiStatusInterfaceA2TemperatureLowWarnThreshold    GAMDisplayString,
+    gamDdmiStatusInterfaceA2CurrentVoltage                 GAMDisplayString,
+    gamDdmiStatusInterfaceA2VoltageHighAlarmThreshold      GAMDisplayString,
+    gamDdmiStatusInterfaceA2VoltageLowAlarmThreshold       GAMDisplayString,
+    gamDdmiStatusInterfaceA2VoltageHighWarnThreshold       GAMDisplayString,
+    gamDdmiStatusInterfaceA2VoltageLowWarnThreshold        GAMDisplayString,
+    gamDdmiStatusInterfaceA2CurrentTxBias                  GAMDisplayString,
+    gamDdmiStatusInterfaceA2TxBiasHighAlarmThreshold       GAMDisplayString,
+    gamDdmiStatusInterfaceA2TxBiasLowAlarmThreshold        GAMDisplayString,
+    gamDdmiStatusInterfaceA2TxBiasHighWarnThreshold        GAMDisplayString,
+    gamDdmiStatusInterfaceA2TxBiasLowWarnThreshold         GAMDisplayString,
+    gamDdmiStatusInterfaceA2CurrentTxPower                 GAMDisplayString,
+    gamDdmiStatusInterfaceA2TxPowerHighAlarmThreshold      GAMDisplayString,
+    gamDdmiStatusInterfaceA2TxPowerLowAlarmThreshold       GAMDisplayString,
+    gamDdmiStatusInterfaceA2TxPowerHighWarnThreshold       GAMDisplayString,
+    gamDdmiStatusInterfaceA2TxPowerLowWarnThreshold        GAMDisplayString,
+    gamDdmiStatusInterfaceA2CurrentRxPower                 GAMDisplayString,
+    gamDdmiStatusInterfaceA2RxPowerHighAlarmThreshold      GAMDisplayString,
+    gamDdmiStatusInterfaceA2RxPowerLowAlarmThreshold       GAMDisplayString,
+    gamDdmiStatusInterfaceA2RxPowerHighWarnThreshold       GAMDisplayString,
+    gamDdmiStatusInterfaceA2RxPowerLowWarnThreshold        GAMDisplayString
+}
+
+gamDdmiStatusInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of physical port."
+    ::= { gamDdmiStatusInterfaceEntry 1 }
+
+gamDdmiStatusInterfaceA0Supported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Support transceiver status information or not. true is to supported and
+         false is not supported."
+    ::= { gamDdmiStatusInterfaceEntry 2 }
+
+gamDdmiStatusInterfaceA0SfpDetected OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "SFP module is detected or not. true is to detected and false is not
+         detected."
+    ::= { gamDdmiStatusInterfaceEntry 3 }
+
+gamDdmiStatusInterfaceA0Vendor OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Vendor name."
+    ::= { gamDdmiStatusInterfaceEntry 4 }
+
+gamDdmiStatusInterfaceA0PartNumber OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Part number."
+    ::= { gamDdmiStatusInterfaceEntry 5 }
+
+gamDdmiStatusInterfaceA0SerialNumber OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Serial number."
+    ::= { gamDdmiStatusInterfaceEntry 6 }
+
+gamDdmiStatusInterfaceA0Revision OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Revision."
+    ::= { gamDdmiStatusInterfaceEntry 7 }
+
+gamDdmiStatusInterfaceA0DateCode OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Date Code."
+    ::= { gamDdmiStatusInterfaceEntry 8 }
+
+gamDdmiStatusInterfaceA0SfpType OBJECT-TYPE
+    SYNTAX      GAMSfpTransceiver
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "SFP type. none(0) means no SFP module. notSupported(1) means SFP module
+         is not supported. sfp100Fx(2) means SFP 100BASE-FX. sfp100BaseLx(3)
+         means SFP 100BASE-LX. sfp100BaseBx10(4) means SFP 100BASE-BX10.
+         sfp100BaseT(5) means SFP 100BASE-T. sfp1000BaseBx10(6) means SFP
+         1000BASE-BX10. sfp1000BaseT(7) means SFP 1000BASE-T. sfp1000BaseCx(8)
+         means SFP 1000BASE-CX. sfp1000BaseSx(9) means SFP 1000BASE-SX.
+         sfp1000BaseLx(10) means SFP 1000BASE-LX. sfp1000BaseX(11) means SFP
+         1000BASE-X. sfp2G5(12) means SFP 2.5G. sfp5G(13) means SFP 5G.
+         sfp10G(14) means SFP 10G."
+    ::= { gamDdmiStatusInterfaceEntry 9 }
+
+gamDdmiStatusInterfaceA2Supported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Support DDMI status information or not. true is to supported and false
+         is not supported."
+    ::= { gamDdmiStatusInterfaceEntry 1002 }
+
+gamDdmiStatusInterfaceA2CurrentTemperature OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current temperature in Celcius."
+    ::= { gamDdmiStatusInterfaceEntry 1003 }
+
+gamDdmiStatusInterfaceA2TemperatureHighAlarmThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Temperature high alarm threshold in Celcius."
+    ::= { gamDdmiStatusInterfaceEntry 1004 }
+
+gamDdmiStatusInterfaceA2TemperatureLowAlarmThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Temperature low alarm threshold in Celcius."
+    ::= { gamDdmiStatusInterfaceEntry 1005 }
+
+gamDdmiStatusInterfaceA2TemperatureHighWarnThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Temperature high warning threshold in Celcius."
+    ::= { gamDdmiStatusInterfaceEntry 1006 }
+
+gamDdmiStatusInterfaceA2TemperatureLowWarnThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Temperature low warning threshold in Celcius."
+    ::= { gamDdmiStatusInterfaceEntry 1007 }
+
+gamDdmiStatusInterfaceA2CurrentVoltage OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current voltage in Volt."
+    ::= { gamDdmiStatusInterfaceEntry 1008 }
+
+gamDdmiStatusInterfaceA2VoltageHighAlarmThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Voltage high alarm threshold in Volt."
+    ::= { gamDdmiStatusInterfaceEntry 1009 }
+
+gamDdmiStatusInterfaceA2VoltageLowAlarmThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Voltage low alarm threshold in Volt."
+    ::= { gamDdmiStatusInterfaceEntry 1010 }
+
+gamDdmiStatusInterfaceA2VoltageHighWarnThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Voltage high warning threshold in Volt."
+    ::= { gamDdmiStatusInterfaceEntry 1011 }
+
+gamDdmiStatusInterfaceA2VoltageLowWarnThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Voltage low warning threshold in Volt."
+    ::= { gamDdmiStatusInterfaceEntry 1012 }
+
+gamDdmiStatusInterfaceA2CurrentTxBias OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current Tx bias in mA."
+    ::= { gamDdmiStatusInterfaceEntry 1013 }
+
+gamDdmiStatusInterfaceA2TxBiasHighAlarmThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Tx bias high alarm threshold in mA."
+    ::= { gamDdmiStatusInterfaceEntry 1014 }
+
+gamDdmiStatusInterfaceA2TxBiasLowAlarmThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Tx bias low alarm threshold in mA."
+    ::= { gamDdmiStatusInterfaceEntry 1015 }
+
+gamDdmiStatusInterfaceA2TxBiasHighWarnThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Tx bias high warning threshold in mA."
+    ::= { gamDdmiStatusInterfaceEntry 1016 }
+
+gamDdmiStatusInterfaceA2TxBiasLowWarnThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Tx bias low warning threshold in mA."
+    ::= { gamDdmiStatusInterfaceEntry 1017 }
+
+gamDdmiStatusInterfaceA2CurrentTxPower OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current Tx power in dBm."
+    ::= { gamDdmiStatusInterfaceEntry 1018 }
+
+gamDdmiStatusInterfaceA2TxPowerHighAlarmThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Tx power high alarm threshold in dBm."
+    ::= { gamDdmiStatusInterfaceEntry 1019 }
+
+gamDdmiStatusInterfaceA2TxPowerLowAlarmThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Tx power low alarm threshold in dBm."
+    ::= { gamDdmiStatusInterfaceEntry 1020 }
+
+gamDdmiStatusInterfaceA2TxPowerHighWarnThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Tx power high warning threshold in dBm."
+    ::= { gamDdmiStatusInterfaceEntry 1021 }
+
+gamDdmiStatusInterfaceA2TxPowerLowWarnThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Tx power low warning threshold in dBm."
+    ::= { gamDdmiStatusInterfaceEntry 1022 }
+
+gamDdmiStatusInterfaceA2CurrentRxPower OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Current Rx power in dBm."
+    ::= { gamDdmiStatusInterfaceEntry 1023 }
+
+gamDdmiStatusInterfaceA2RxPowerHighAlarmThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Rx power high alarm threshold in dBm."
+    ::= { gamDdmiStatusInterfaceEntry 1024 }
+
+gamDdmiStatusInterfaceA2RxPowerLowAlarmThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Rx power low alarm threshold in dBm."
+    ::= { gamDdmiStatusInterfaceEntry 1025 }
+
+gamDdmiStatusInterfaceA2RxPowerHighWarnThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Rx power high warning threshold in dBm."
+    ::= { gamDdmiStatusInterfaceEntry 1026 }
+
+gamDdmiStatusInterfaceA2RxPowerLowWarnThreshold OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Rx power low warning threshold in dBm."
+    ::= { gamDdmiStatusInterfaceEntry 1027 }
+
+gamDdmiMibConformance OBJECT IDENTIFIER
+    ::= { gamDdmiMib 2 }
+
+gamDdmiMibCompliances OBJECT IDENTIFIER
+    ::= { gamDdmiMibConformance 1 }
+
+gamDdmiMibGroups OBJECT IDENTIFIER
+    ::= { gamDdmiMibConformance 2 }
+
+gamDdmiConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDdmiConfigGlobalsMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDdmiMibGroups 1 }
+
+gamDdmiStatusInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDdmiStatusInterfaceIfIndex,
+                  gamDdmiStatusInterfaceA0Supported,
+                  gamDdmiStatusInterfaceA0SfpDetected,
+                  gamDdmiStatusInterfaceA0Vendor,
+                  gamDdmiStatusInterfaceA0PartNumber,
+                  gamDdmiStatusInterfaceA0SerialNumber,
+                  gamDdmiStatusInterfaceA0Revision,
+                  gamDdmiStatusInterfaceA0DateCode,
+                  gamDdmiStatusInterfaceA0SfpType,
+                  gamDdmiStatusInterfaceA2Supported,
+                  gamDdmiStatusInterfaceA2CurrentTemperature,
+                  gamDdmiStatusInterfaceA2TemperatureHighAlarmThreshold,
+                  gamDdmiStatusInterfaceA2TemperatureLowAlarmThreshold,
+                  gamDdmiStatusInterfaceA2TemperatureHighWarnThreshold,
+                  gamDdmiStatusInterfaceA2TemperatureLowWarnThreshold,
+                  gamDdmiStatusInterfaceA2CurrentVoltage,
+                  gamDdmiStatusInterfaceA2VoltageHighAlarmThreshold,
+                  gamDdmiStatusInterfaceA2VoltageLowAlarmThreshold,
+                  gamDdmiStatusInterfaceA2VoltageHighWarnThreshold,
+                  gamDdmiStatusInterfaceA2VoltageLowWarnThreshold,
+                  gamDdmiStatusInterfaceA2CurrentTxBias,
+                  gamDdmiStatusInterfaceA2TxBiasHighAlarmThreshold,
+                  gamDdmiStatusInterfaceA2TxBiasLowAlarmThreshold,
+                  gamDdmiStatusInterfaceA2TxBiasHighWarnThreshold,
+                  gamDdmiStatusInterfaceA2TxBiasLowWarnThreshold,
+                  gamDdmiStatusInterfaceA2CurrentTxPower,
+                  gamDdmiStatusInterfaceA2TxPowerHighAlarmThreshold,
+                  gamDdmiStatusInterfaceA2TxPowerLowAlarmThreshold,
+                  gamDdmiStatusInterfaceA2TxPowerHighWarnThreshold,
+                  gamDdmiStatusInterfaceA2TxPowerLowWarnThreshold,
+                  gamDdmiStatusInterfaceA2CurrentRxPower,
+                  gamDdmiStatusInterfaceA2RxPowerHighAlarmThreshold,
+                  gamDdmiStatusInterfaceA2RxPowerLowAlarmThreshold,
+                  gamDdmiStatusInterfaceA2RxPowerHighWarnThreshold,
+                  gamDdmiStatusInterfaceA2RxPowerLowWarnThreshold }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDdmiMibGroups 2 }
+
+gamDdmiMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamDdmiConfigGlobalsInfoGroup,
+                       gamDdmiStatusInterfaceTableInfoGroup }
+
+    ::= { gamDdmiMibCompliances 1 }
+
+END

@@ -1,0 +1,1696 @@
+-- *****************************************************************
+-- PERF-MONITOR-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-PERF-MONITOR-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMMepDmTimeUnit FROM GAM-TC
+    GAMMepInstanceDirection FROM GAM-TC
+    GAMMepTxRate FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    Counter64 FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamPerfMonitorMib MODULE-IDENTITY
+    LAST-UPDATED "201711160000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the Performance Monitor MIB."
+    REVISION    "201711160000Z"
+    DESCRIPTION
+        "Added PerfMonitorStatusStatisticsLmPeerTable to support multiple peers
+         for SLM."
+    REVISION    "201706260000Z"
+    DESCRIPTION
+        "Added MepFlowName object to LM and DM statistics tables."
+    REVISION    "201502040000Z"
+    DESCRIPTION
+        "Rename 'LossMeasuerment' to 'Lm', 'DelayMeasuerment' to 'Dm' in OIDs."
+    REVISION    "201410060000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { gamMgmt 117 }
+
+
+GAMPerfMonitorEvcPortType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates per port type for EVC statistics."
+    SYNTAX      INTEGER { evcNni(0), evcUni(1) }
+
+GAMPerfMonitorTransferMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates PM transfer interval mode."
+    SYNTAX      INTEGER { all(1), new(2), fixAmount(3) }
+
+gamPerfMonitorMibObjects OBJECT IDENTIFIER
+    ::= { gamPerfMonitorMib 1 }
+
+gamPerfMonitorConfig OBJECT IDENTIFIER
+    ::= { gamPerfMonitorMibObjects 2 }
+
+gamPerfMonitorConfigGlobals OBJECT IDENTIFIER
+    ::= { gamPerfMonitorConfig 1 }
+
+gamPerfMonitorConfigGlobalsMgmt OBJECT IDENTIFIER
+    ::= { gamPerfMonitorConfigGlobals 1 }
+
+gamPerfMonitorConfigGlobalsMgmtLmAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control for PM's LM function, TRUE is to enable
+         monitoring LM and FALSE is to disable it."
+    ::= { gamPerfMonitorConfigGlobalsMgmt 1 }
+
+gamPerfMonitorConfigGlobalsMgmtLmStorageState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control for storing PM's LM result, TRUE is to enable
+         storing LM statistics and FALSE is to disable it."
+    ::= { gamPerfMonitorConfigGlobalsMgmt 2 }
+
+gamPerfMonitorConfigGlobalsMgmtLmInterval OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (1..60)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Interval for tracking LM, in minute. The configurable value ranges from
+         1 to 60."
+    ::= { gamPerfMonitorConfigGlobalsMgmt 3 }
+
+gamPerfMonitorConfigGlobalsMgmtDmAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control for PM's DM function, TRUE is to enable
+         monitoring DM and FALSE is to disable it."
+    ::= { gamPerfMonitorConfigGlobalsMgmt 4 }
+
+gamPerfMonitorConfigGlobalsMgmtDmStorageState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control for storing PM's DM result, TRUE is to enable
+         storing DM statistics and FALSE is to disable it."
+    ::= { gamPerfMonitorConfigGlobalsMgmt 5 }
+
+gamPerfMonitorConfigGlobalsMgmtDmInterval OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (1..60)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Interval for tracking DM, in minute. The configurable value ranges from
+         1 to 60."
+    ::= { gamPerfMonitorConfigGlobalsMgmt 6 }
+
+gamPerfMonitorConfigGlobalsMgmtDmBinStorageState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control for storing PM's DM bucket result, TRUE is to
+         enable storing DM bucket statistics and FALSE is to disable it."
+    ::= { gamPerfMonitorConfigGlobalsMgmt 7 }
+
+gamPerfMonitorConfigGlobalsMgmtEvcAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control for PM's EVC monitoring function, TRUE is to
+         enable monitoring EVC and FALSE is to disable it."
+    ::= { gamPerfMonitorConfigGlobalsMgmt 8 }
+
+gamPerfMonitorConfigGlobalsMgmtEvcStorageState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control for storing PM's EVC monitoring result, TRUE is
+         to enable storing EVC statistics and FALSE is to disable it."
+    ::= { gamPerfMonitorConfigGlobalsMgmt 9 }
+
+gamPerfMonitorConfigGlobalsMgmtEvcMeasureInterval OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (1..60)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Interval for tracking EVC, in minute. The configurable value ranges
+         from 1 to 60."
+    ::= { gamPerfMonitorConfigGlobalsMgmt 10 }
+
+gamPerfMonitorConfigGlobalsTransfer OBJECT IDENTIFIER
+    ::= { gamPerfMonitorConfigGlobals 2 }
+
+gamPerfMonitorConfigGlobalsTransferAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control for PM's transfer function, TRUE is to enable
+         sending PM's monitoring result and FALSE is to disable it."
+    ::= { gamPerfMonitorConfigGlobalsTransfer 1 }
+
+gamPerfMonitorConfigGlobalsTransferServerUrl OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The URL for the server directory that keeps PM's monitoring result."
+    ::= { gamPerfMonitorConfigGlobalsTransfer 2 }
+
+gamPerfMonitorConfigGlobalsTransferIntervalMode OBJECT-TYPE
+    SYNTAX      GAMPerfMonitorTransferMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Transfer mode, based on selected interval type, for sending PM results.
+         When 'all' is set, PM result from all available intervals will be sent.
+         When 'new' is set, PM result from new intervals since last transfer
+         will be sent. When 'fixAmount' is set, PM result from a fixed number of
+         intervals will be sent."
+    ::= { gamPerfMonitorConfigGlobalsTransfer 3 }
+
+gamPerfMonitorConfigGlobalsTransferFixedNumberOfInterval OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (1..96)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "PM result from this fixed number of intervals will be sent. It is
+         working only when 'IntervalMode' is 'fixAmount'. The configurable value
+         ranges from 1 to 96."
+    ::= { gamPerfMonitorConfigGlobalsTransfer 4 }
+
+gamPerfMonitorConfigGlobalsTransferRetryIncompletedTransfer OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control to retry sending PM result from last incompleted
+         transmission, TRUE is to enable retrying the incompleted PM result
+         transfer and FALSE is to disable it."
+    ::= { gamPerfMonitorConfigGlobalsTransfer 5 }
+
+gamPerfMonitorConfigGlobalsXferSched OBJECT IDENTIFIER
+    ::= { gamPerfMonitorConfigGlobals 3 }
+
+gamPerfMonitorConfigGlobalsXferSchedHourTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPerfMonitorConfigGlobalsXferSchedHourEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing PM hourly scheduled transfer
+         configuration."
+    ::= { gamPerfMonitorConfigGlobalsXferSched 1 }
+
+gamPerfMonitorConfigGlobalsXferSchedHourEntry OBJECT-TYPE
+    SYNTAX      GAMPerfMonitorConfigGlobalsXferSchedHourEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamPerfMonitorConfigGlobalsXferSchedHourIndex }
+    ::= { gamPerfMonitorConfigGlobalsXferSchedHourTable 1 }
+
+GAMPerfMonitorConfigGlobalsXferSchedHourEntry ::= SEQUENCE {
+    gamPerfMonitorConfigGlobalsXferSchedHourIndex    Unsigned32,
+    gamPerfMonitorConfigGlobalsXferSchedHourEnabled  TruthValue
+}
+
+gamPerfMonitorConfigGlobalsXferSchedHourIndex OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..23)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Hour value in 24 hour time."
+    ::= { gamPerfMonitorConfigGlobalsXferSchedHourEntry 1 }
+
+gamPerfMonitorConfigGlobalsXferSchedHourEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control for managing the transfer schedule, TRUE is to
+         enable specific time for transfer schedule and FALSE is to disable it."
+    ::= { gamPerfMonitorConfigGlobalsXferSchedHourEntry 2 }
+
+gamPerfMonitorConfigGlobalsXferSchedQuarterTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPerfMonitorConfigGlobalsXferSchedQuarterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing PM quarterly scheduled transfer
+         configuration."
+    ::= { gamPerfMonitorConfigGlobalsXferSched 2 }
+
+gamPerfMonitorConfigGlobalsXferSchedQuarterEntry OBJECT-TYPE
+    SYNTAX      GAMPerfMonitorConfigGlobalsXferSchedQuarterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamPerfMonitorConfigGlobalsXferSchedQuarterIndex }
+    ::= { gamPerfMonitorConfigGlobalsXferSchedQuarterTable 1 }
+
+GAMPerfMonitorConfigGlobalsXferSchedQuarterEntry ::= SEQUENCE {
+    gamPerfMonitorConfigGlobalsXferSchedQuarterIndex    Unsigned32,
+    gamPerfMonitorConfigGlobalsXferSchedQuarterEnabled  TruthValue
+}
+
+gamPerfMonitorConfigGlobalsXferSchedQuarterIndex OBJECT-TYPE
+    SYNTAX      Unsigned32 (0..3)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Quarter value in a hour."
+    ::= { gamPerfMonitorConfigGlobalsXferSchedQuarterEntry 1 }
+
+gamPerfMonitorConfigGlobalsXferSchedQuarterEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Administrative control for managing the transfer schedule, TRUE is to
+         enable specific time for transfer schedule and FALSE is to disable it."
+    ::= { gamPerfMonitorConfigGlobalsXferSchedQuarterEntry 2 }
+
+gamPerfMonitorConfigGlobalsXferSchedOffset OBJECT IDENTIFIER
+    ::= { gamPerfMonitorConfigGlobalsXferSched 3 }
+
+gamPerfMonitorConfigGlobalsXferSchedOffsetMinute OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..15)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The scheduled transfer time offset by minutes. The configurable value
+         ranges from 0 to 15."
+    ::= { gamPerfMonitorConfigGlobalsXferSchedOffset 1 }
+
+gamPerfMonitorConfigGlobalsXferSchedOffsetRandomSecond OBJECT-TYPE
+    SYNTAX      GAMUnsigned16 (0..900)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The scheduled transfer time random offset by seconds. It provides a
+         range for choosing a random second offset. The configurable value
+         ranges from 0 to 900."
+    ::= { gamPerfMonitorConfigGlobalsXferSchedOffset 2 }
+
+gamPerfMonitorStatus OBJECT IDENTIFIER
+    ::= { gamPerfMonitorMibObjects 3 }
+
+gamPerfMonitorStatusStatistics OBJECT IDENTIFIER
+    ::= { gamPerfMonitorStatus 1 }
+
+gamPerfMonitorStatusStatisticsLmTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPerfMonitorStatusStatisticsLmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying PM loss measurement statistics."
+    ::= { gamPerfMonitorStatusStatistics 1 }
+
+gamPerfMonitorStatusStatisticsLmEntry OBJECT-TYPE
+    SYNTAX      GAMPerfMonitorStatusStatisticsLmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of LM statistics."
+    INDEX       { gamPerfMonitorStatusStatisticsLmIntervalId,
+                  gamPerfMonitorStatusStatisticsLmEntryId }
+    ::= { gamPerfMonitorStatusStatisticsLmTable 1 }
+
+GAMPerfMonitorStatusStatisticsLmEntry ::= SEQUENCE {
+    gamPerfMonitorStatusStatisticsLmIntervalId         Unsigned32,
+    gamPerfMonitorStatusStatisticsLmEntryId            Unsigned32,
+    gamPerfMonitorStatusStatisticsLmMepInstance        GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsLmResidencePort      GAMInterfaceIndex,
+    gamPerfMonitorStatusStatisticsLmMepId              GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsLmMepMacAddress      MacAddress,
+    gamPerfMonitorStatusStatisticsLmMepPeerMepId       GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsLmMepPeerMacAddress  MacAddress,
+    gamPerfMonitorStatusStatisticsLmMepDirection       GAMMepInstanceDirection,
+    gamPerfMonitorStatusStatisticsLmMepLevel           GAMUnsigned8,
+    gamPerfMonitorStatusStatisticsLmMepFlowInstance    GAMInterfaceIndex,
+    gamPerfMonitorStatusStatisticsLmMepTaggedVid       GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsLmPriority           Unsigned32,
+    gamPerfMonitorStatusStatisticsLmRate               GAMMepTxRate,
+    gamPerfMonitorStatusStatisticsLmTx                 Unsigned32,
+    gamPerfMonitorStatusStatisticsLmRx                 Unsigned32,
+    gamPerfMonitorStatusStatisticsLmNearEndLossCount   Unsigned32,
+    gamPerfMonitorStatusStatisticsLmNearEndLossRate    Unsigned32,
+    gamPerfMonitorStatusStatisticsLmFarEndLossCount    Unsigned32,
+    gamPerfMonitorStatusStatisticsLmFarEndLossRate     Unsigned32,
+    gamPerfMonitorStatusStatisticsLmMepFlowName        GAMDisplayString
+}
+
+gamPerfMonitorStatusStatisticsLmIntervalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The measurement interval identifier for the performance monitor data
+         sets."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 1 }
+
+gamPerfMonitorStatusStatisticsLmEntryId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The entry identifier for the performance monitor data sets."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 2 }
+
+gamPerfMonitorStatusStatisticsLmMepInstance OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MEP instance for the performance monitor data sets."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 3 }
+
+gamPerfMonitorStatusStatisticsLmResidencePort OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The residence port for the MEP."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 4 }
+
+gamPerfMonitorStatusStatisticsLmMepId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Two bytes CCM MEP ID in the transmitted CCM."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 5 }
+
+gamPerfMonitorStatusStatisticsLmMepMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "MAC address of this MEP which can be used by other MEP when unicast is
+         selected."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 6 }
+
+gamPerfMonitorStatusStatisticsLmMepPeerMepId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An expected MEP identifier in the received CCM."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 7 }
+
+gamPerfMonitorStatusStatisticsLmMepPeerMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "MAC address to be used when unicast is selected with the peer MEP.
+         Also, this MAC is used to create HW checking of receiving CCM PDU from
+         this MEP."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 8 }
+
+gamPerfMonitorStatusStatisticsLmMepDirection OBJECT-TYPE
+    SYNTAX      GAMMepInstanceDirection
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream or downstream that needs to be monitored."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 10 }
+
+gamPerfMonitorStatusStatisticsLmMepLevel OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MEG level of this MEP."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 11 }
+
+gamPerfMonitorStatusStatisticsLmMepFlowInstance OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MEP is related to this flow depends on 'MepDomain'."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 12 }
+
+gamPerfMonitorStatusStatisticsLmMepTaggedVid OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An outer C/S-tag or the subscriber VID that identifies the subscriber
+         flow in EVC where the MIP is active."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 13 }
+
+gamPerfMonitorStatusStatisticsLmPriority OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The priority to be inserted as PCP bits in TAG (if any)."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 14 }
+
+gamPerfMonitorStatusStatisticsLmRate OBJECT-TYPE
+    SYNTAX      GAMMepTxRate
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Frame rate of CCM/LMM PDU which is the inverse of transmission period
+         as described in Y.1731."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 15 }
+
+gamPerfMonitorStatusStatisticsLmTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frame transmitted."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 16 }
+
+gamPerfMonitorStatusStatisticsLmRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frame received."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 17 }
+
+gamPerfMonitorStatusStatisticsLmNearEndLossCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The near end loss count."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 18 }
+
+gamPerfMonitorStatusStatisticsLmNearEndLossRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The near end loss ratio."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 19 }
+
+gamPerfMonitorStatusStatisticsLmFarEndLossCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The far end loss count."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 20 }
+
+gamPerfMonitorStatusStatisticsLmFarEndLossRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The far end loss ratio."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 21 }
+
+gamPerfMonitorStatusStatisticsLmMepFlowName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the MEP flow instance."
+    ::= { gamPerfMonitorStatusStatisticsLmEntry 22 }
+
+gamPerfMonitorStatusStatisticsDmTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPerfMonitorStatusStatisticsDmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying PM delay measurement statistics."
+    ::= { gamPerfMonitorStatusStatistics 2 }
+
+gamPerfMonitorStatusStatisticsDmEntry OBJECT-TYPE
+    SYNTAX      GAMPerfMonitorStatusStatisticsDmEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of DM statistics."
+    INDEX       { gamPerfMonitorStatusStatisticsDmIntervalId,
+                  gamPerfMonitorStatusStatisticsDmEntryId }
+    ::= { gamPerfMonitorStatusStatisticsDmTable 1 }
+
+GAMPerfMonitorStatusStatisticsDmEntry ::= SEQUENCE {
+    gamPerfMonitorStatusStatisticsDmIntervalId                    Unsigned32,
+    gamPerfMonitorStatusStatisticsDmEntryId                       Unsigned32,
+    gamPerfMonitorStatusStatisticsDmMepInstance                   GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsDmResidencePort                 GAMInterfaceIndex,
+    gamPerfMonitorStatusStatisticsDmMepId                         GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsDmMepMacAddress                 MacAddress,
+    gamPerfMonitorStatusStatisticsDmMepPeerMepId                  GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsDmMepPeerMacAddress             MacAddress,
+    gamPerfMonitorStatusStatisticsDmMepDirection                  GAMMepInstanceDirection,
+    gamPerfMonitorStatusStatisticsDmMepLevel                      GAMUnsigned8,
+    gamPerfMonitorStatusStatisticsDmMepFlowInstance               GAMInterfaceIndex,
+    gamPerfMonitorStatusStatisticsDmMepTaggedVid                  GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsDmPriority                      Unsigned32,
+    gamPerfMonitorStatusStatisticsDmRate                          GAMUnsigned8,
+    gamPerfMonitorStatusStatisticsDmUnit                          GAMMepDmTimeUnit,
+    gamPerfMonitorStatusStatisticsDmTx                            Unsigned32,
+    gamPerfMonitorStatusStatisticsDmRx                            Unsigned32,
+    gamPerfMonitorStatusStatisticsDmFarNearDelayAverage           Unsigned32,
+    gamPerfMonitorStatusStatisticsDmFarNearDelayAverageVariation  Unsigned32,
+    gamPerfMonitorStatusStatisticsDmFarNearDelayMin               Unsigned32,
+    gamPerfMonitorStatusStatisticsDmFarNearDelayMax               Unsigned32,
+    gamPerfMonitorStatusStatisticsDmNearFarDelayAverage           Unsigned32,
+    gamPerfMonitorStatusStatisticsDmNearFarDelayAverageVariation  Unsigned32,
+    gamPerfMonitorStatusStatisticsDmNearFarDelayMin               Unsigned32,
+    gamPerfMonitorStatusStatisticsDmNearFarDelayMax               Unsigned32,
+    gamPerfMonitorStatusStatisticsDm2WayDelayAverage              Unsigned32,
+    gamPerfMonitorStatusStatisticsDm2WayDelayAverageVariation     Unsigned32,
+    gamPerfMonitorStatusStatisticsDm2WayDelayMin                  Unsigned32,
+    gamPerfMonitorStatusStatisticsDm2WayDelayMax                  Unsigned32,
+    gamPerfMonitorStatusStatisticsDmMepFlowName                   GAMDisplayString
+}
+
+gamPerfMonitorStatusStatisticsDmIntervalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The measurement interval identifier for the performance monitor data
+         sets."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 1 }
+
+gamPerfMonitorStatusStatisticsDmEntryId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The entry identifier for the performance monitor data sets."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 2 }
+
+gamPerfMonitorStatusStatisticsDmMepInstance OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MEP instance for the performance monitor data sets."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 3 }
+
+gamPerfMonitorStatusStatisticsDmResidencePort OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The residence port for the MEP."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 4 }
+
+gamPerfMonitorStatusStatisticsDmMepId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Two bytes CCM MEP ID in the transmitted CCM."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 5 }
+
+gamPerfMonitorStatusStatisticsDmMepMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "MAC address of this MEP which can be used by other MEP when unicast is
+         selected."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 6 }
+
+gamPerfMonitorStatusStatisticsDmMepPeerMepId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An expected MEP identifier in the received CCM."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 7 }
+
+gamPerfMonitorStatusStatisticsDmMepPeerMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "MAC address to be used when unicast is selected with the peer MEP.
+         Also, this MAC is used to create HW checking of receiving CCM PDU from
+         this MEP."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 8 }
+
+gamPerfMonitorStatusStatisticsDmMepDirection OBJECT-TYPE
+    SYNTAX      GAMMepInstanceDirection
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream or downstream that needs to be monitored."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 10 }
+
+gamPerfMonitorStatusStatisticsDmMepLevel OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MEG level of this MEP."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 11 }
+
+gamPerfMonitorStatusStatisticsDmMepFlowInstance OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MEP is related to this flow depends on 'MepDomain'."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 12 }
+
+gamPerfMonitorStatusStatisticsDmMepTaggedVid OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An outer C/S-tag or the subscriber VID that identifies the subscriber
+         flow in EVC where the MIP is active."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 13 }
+
+gamPerfMonitorStatusStatisticsDmPriority OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The priority to be inserted as PCP bits in TAG (if any)."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 14 }
+
+gamPerfMonitorStatusStatisticsDmRate OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The gap between transmitting 1DM/DMM PDU in 10ms. The range is 10 to
+         65535."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 15 }
+
+gamPerfMonitorStatusStatisticsDmUnit OBJECT-TYPE
+    SYNTAX      GAMMepDmTimeUnit
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The time resolution."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 16 }
+
+gamPerfMonitorStatusStatisticsDmTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frame transmitted."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 17 }
+
+gamPerfMonitorStatusStatisticsDmRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frame received."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 18 }
+
+gamPerfMonitorStatusStatisticsDmFarNearDelayAverage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The far to near average delay."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 19 }
+
+gamPerfMonitorStatusStatisticsDmFarNearDelayAverageVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The far to near average delay variation."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 20 }
+
+gamPerfMonitorStatusStatisticsDmFarNearDelayMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum far to near delay."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 21 }
+
+gamPerfMonitorStatusStatisticsDmFarNearDelayMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum far to near delay."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 22 }
+
+gamPerfMonitorStatusStatisticsDmNearFarDelayAverage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The near to far average delay."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 23 }
+
+gamPerfMonitorStatusStatisticsDmNearFarDelayAverageVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The near to far average delay variation."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 24 }
+
+gamPerfMonitorStatusStatisticsDmNearFarDelayMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum near to far delay."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 25 }
+
+gamPerfMonitorStatusStatisticsDmNearFarDelayMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum near to far delay."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 26 }
+
+gamPerfMonitorStatusStatisticsDm2WayDelayAverage OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The two-way average delay."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 27 }
+
+gamPerfMonitorStatusStatisticsDm2WayDelayAverageVariation OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The two-way average delay variation."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 28 }
+
+gamPerfMonitorStatusStatisticsDm2WayDelayMin OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The minimum two-way delay."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 29 }
+
+gamPerfMonitorStatusStatisticsDm2WayDelayMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The maximum two-way delay."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 30 }
+
+gamPerfMonitorStatusStatisticsDmMepFlowName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the MEP flow instance."
+    ::= { gamPerfMonitorStatusStatisticsDmEntry 31 }
+
+gamPerfMonitorStatusStatisticsDmBinTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPerfMonitorStatusStatisticsDmBinEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying PM bin delay measurement statistics."
+    ::= { gamPerfMonitorStatusStatistics 3 }
+
+gamPerfMonitorStatusStatisticsDmBinEntry OBJECT-TYPE
+    SYNTAX      GAMPerfMonitorStatusStatisticsDmBinEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of DM bin statistics."
+    INDEX       { gamPerfMonitorStatusStatisticsDmBinIntervalId,
+                  gamPerfMonitorStatusStatisticsDmBinEntryId,
+                  gamPerfMonitorStatusStatisticsDmBinType,
+                  gamPerfMonitorStatusStatisticsDmBinDirection,
+                  gamPerfMonitorStatusStatisticsDmBinBucketId }
+    ::= { gamPerfMonitorStatusStatisticsDmBinTable 1 }
+
+GAMPerfMonitorStatusStatisticsDmBinEntry ::= SEQUENCE {
+    gamPerfMonitorStatusStatisticsDmBinIntervalId  Unsigned32,
+    gamPerfMonitorStatusStatisticsDmBinEntryId     Unsigned32,
+    gamPerfMonitorStatusStatisticsDmBinType        Unsigned32,
+    gamPerfMonitorStatusStatisticsDmBinDirection   Unsigned32,
+    gamPerfMonitorStatusStatisticsDmBinBucketId    Unsigned32,
+    gamPerfMonitorStatusStatisticsDmBinHitCount    Unsigned32
+}
+
+gamPerfMonitorStatusStatisticsDmBinIntervalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The measurement interval identifier for the performance monitor data
+         sets."
+    ::= { gamPerfMonitorStatusStatisticsDmBinEntry 1 }
+
+gamPerfMonitorStatusStatisticsDmBinEntryId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The entry identifier for the performance monitor data sets."
+    ::= { gamPerfMonitorStatusStatisticsDmBinEntry 2 }
+
+gamPerfMonitorStatusStatisticsDmBinType OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..2)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The type for DM bin statistics. It's used for indicating what kinds of
+         delay frame are counted in the bin.'1' presents the frame delay.
+         
+         '2' presents the inter frame delay variation.
+         
+         "
+    ::= { gamPerfMonitorStatusStatisticsDmBinEntry 3 }
+
+gamPerfMonitorStatusStatisticsDmBinDirection OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..3)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The direction for DM bin statistics. It's used for indicating the
+         measuring method of the delay frame.
+         
+         '1' presents one-way delay from remote devices to the local devices.
+         
+         '2' presents one-way delay from local devices to the remote devices.
+         
+         '3' presents 2-way delay from near to far then far to near."
+    ::= { gamPerfMonitorStatusStatisticsDmBinEntry 4 }
+
+gamPerfMonitorStatusStatisticsDmBinBucketId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The bin ID."
+    ::= { gamPerfMonitorStatusStatisticsDmBinEntry 5 }
+
+gamPerfMonitorStatusStatisticsDmBinHitCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hit count for the DM bin"
+    ::= { gamPerfMonitorStatusStatisticsDmBinEntry 6 }
+
+gamPerfMonitorStatusStatisticsEvcTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPerfMonitorStatusStatisticsEvcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying PM EVC statistics."
+    ::= { gamPerfMonitorStatusStatistics 4 }
+
+gamPerfMonitorStatusStatisticsEvcEntry OBJECT-TYPE
+    SYNTAX      GAMPerfMonitorStatusStatisticsEvcEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of EVC statistics."
+    INDEX       { gamPerfMonitorStatusStatisticsEvcIntervalId,
+                  gamPerfMonitorStatusStatisticsEvcEntryId }
+    ::= { gamPerfMonitorStatusStatisticsEvcTable 1 }
+
+GAMPerfMonitorStatusStatisticsEvcEntry ::= SEQUENCE {
+    gamPerfMonitorStatusStatisticsEvcIntervalId         Unsigned32,
+    gamPerfMonitorStatusStatisticsEvcEntryId            Unsigned32,
+    gamPerfMonitorStatusStatisticsEvcEvcInstance        GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsEvcPortType           GAMPerfMonitorEvcPortType,
+    gamPerfMonitorStatusStatisticsEvcPort               GAMInterfaceIndex,
+    gamPerfMonitorStatusStatisticsEvcCos                Unsigned32,
+    gamPerfMonitorStatusStatisticsEvcGreenRxFrames      Counter64,
+    gamPerfMonitorStatusStatisticsEvcGreenTxFrames      Counter64,
+    gamPerfMonitorStatusStatisticsEvcGreenRxBytes       Counter64,
+    gamPerfMonitorStatusStatisticsEvcGreenTxBytes       Counter64,
+    gamPerfMonitorStatusStatisticsEvcYellowRxFrames     Counter64,
+    gamPerfMonitorStatusStatisticsEvcYellowTxFrames     Counter64,
+    gamPerfMonitorStatusStatisticsEvcYellowRxBytes      Counter64,
+    gamPerfMonitorStatusStatisticsEvcYellowTxBytes      Counter64,
+    gamPerfMonitorStatusStatisticsEvcRedRxFrames        Counter64,
+    gamPerfMonitorStatusStatisticsEvcRedRxBytes         Counter64,
+    gamPerfMonitorStatusStatisticsEvcDiscardedRxFrames  Counter64,
+    gamPerfMonitorStatusStatisticsEvcDiscardedTxFrames  Counter64,
+    gamPerfMonitorStatusStatisticsEvcDiscardedRxBytes   Counter64,
+    gamPerfMonitorStatusStatisticsEvcDiscardedTxBytes   Counter64
+}
+
+gamPerfMonitorStatusStatisticsEvcIntervalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The measurement interval identifier for the performance monitor data
+         sets."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 1 }
+
+gamPerfMonitorStatusStatisticsEvcEntryId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The entry identifier for the performance monitor data sets."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 2 }
+
+gamPerfMonitorStatusStatisticsEvcEvcInstance OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The EVC instance for the performance monitor data sets."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 3 }
+
+gamPerfMonitorStatusStatisticsEvcPortType OBJECT-TYPE
+    SYNTAX      GAMPerfMonitorEvcPortType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port type for the EVC."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 4 }
+
+gamPerfMonitorStatusStatisticsEvcPort OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The interface ID for the EVC."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 5 }
+
+gamPerfMonitorStatusStatisticsEvcCos OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The COS queue ID on the interface, '4294967295' indicates the port is
+         NNI port."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 6 }
+
+gamPerfMonitorStatusStatisticsEvcGreenRxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of green frames received."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 7 }
+
+gamPerfMonitorStatusStatisticsEvcGreenTxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of green frames transmitted."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 8 }
+
+gamPerfMonitorStatusStatisticsEvcGreenRxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of green bytes received."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 9 }
+
+gamPerfMonitorStatusStatisticsEvcGreenTxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of green bytes transmitted."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 10 }
+
+gamPerfMonitorStatusStatisticsEvcYellowRxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of yellow frames received."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 11 }
+
+gamPerfMonitorStatusStatisticsEvcYellowTxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of yellow frames transmitted."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 12 }
+
+gamPerfMonitorStatusStatisticsEvcYellowRxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of yellow bytes received."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 13 }
+
+gamPerfMonitorStatusStatisticsEvcYellowTxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of yellow bytes transmitted."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 14 }
+
+gamPerfMonitorStatusStatisticsEvcRedRxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of red frames received."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 15 }
+
+gamPerfMonitorStatusStatisticsEvcRedRxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of red bytes received."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 16 }
+
+gamPerfMonitorStatusStatisticsEvcDiscardedRxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frames discarded in the ingress queue system."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 17 }
+
+gamPerfMonitorStatusStatisticsEvcDiscardedTxFrames OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frames discarded in the egress queue system."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 18 }
+
+gamPerfMonitorStatusStatisticsEvcDiscardedRxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes discarded in the ingress queue system."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 19 }
+
+gamPerfMonitorStatusStatisticsEvcDiscardedTxBytes OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of bytes discarded in the egress queue system."
+    ::= { gamPerfMonitorStatusStatisticsEvcEntry 20 }
+
+gamPerfMonitorStatusStatisticsLmPeerTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPerfMonitorStatusStatisticsLmPeerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying PM loss measurement peer statistics."
+    ::= { gamPerfMonitorStatusStatistics 5 }
+
+gamPerfMonitorStatusStatisticsLmPeerEntry OBJECT-TYPE
+    SYNTAX      GAMPerfMonitorStatusStatisticsLmPeerEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of LM statistics for a peer MEP."
+    INDEX       { gamPerfMonitorStatusStatisticsLmPeerIntervalId,
+                  gamPerfMonitorStatusStatisticsLmPeerEntryId,
+                  gamPerfMonitorStatusStatisticsLmPeerPeerId }
+    ::= { gamPerfMonitorStatusStatisticsLmPeerTable 1 }
+
+GAMPerfMonitorStatusStatisticsLmPeerEntry ::= SEQUENCE {
+    gamPerfMonitorStatusStatisticsLmPeerIntervalId         Unsigned32,
+    gamPerfMonitorStatusStatisticsLmPeerEntryId            Unsigned32,
+    gamPerfMonitorStatusStatisticsLmPeerPeerId             Unsigned32,
+    gamPerfMonitorStatusStatisticsLmPeerMepInstance        GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsLmPeerResidencePort      GAMInterfaceIndex,
+    gamPerfMonitorStatusStatisticsLmPeerMepId              GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsLmPeerMepMacAddress      MacAddress,
+    gamPerfMonitorStatusStatisticsLmPeerMepPeerMepId       GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsLmPeerMepPeerMacAddress  MacAddress,
+    gamPerfMonitorStatusStatisticsLmPeerMepDirection       GAMMepInstanceDirection,
+    gamPerfMonitorStatusStatisticsLmPeerMepLevel           GAMUnsigned8,
+    gamPerfMonitorStatusStatisticsLmPeerMepFlowInstance    GAMInterfaceIndex,
+    gamPerfMonitorStatusStatisticsLmPeerMepTaggedVid       GAMUnsigned16,
+    gamPerfMonitorStatusStatisticsLmPeerPriority           Unsigned32,
+    gamPerfMonitorStatusStatisticsLmPeerRate               GAMMepTxRate,
+    gamPerfMonitorStatusStatisticsLmPeerTx                 Unsigned32,
+    gamPerfMonitorStatusStatisticsLmPeerRx                 Unsigned32,
+    gamPerfMonitorStatusStatisticsLmPeerNearEndLossCount   Unsigned32,
+    gamPerfMonitorStatusStatisticsLmPeerNearEndLossRate    Unsigned32,
+    gamPerfMonitorStatusStatisticsLmPeerFarEndLossCount    Unsigned32,
+    gamPerfMonitorStatusStatisticsLmPeerFarEndLossRate     Unsigned32,
+    gamPerfMonitorStatusStatisticsLmPeerMepFlowName        GAMDisplayString
+}
+
+gamPerfMonitorStatusStatisticsLmPeerIntervalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The measurement interval identifier for the performance monitor data
+         sets."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 1 }
+
+gamPerfMonitorStatusStatisticsLmPeerEntryId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The entry identifier for the performance monitor data sets."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 2 }
+
+gamPerfMonitorStatusStatisticsLmPeerPeerId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The entry identifier for the peer MEP."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 3 }
+
+gamPerfMonitorStatusStatisticsLmPeerMepInstance OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MEP instance for the performance monitor data sets."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 4 }
+
+gamPerfMonitorStatusStatisticsLmPeerResidencePort OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The residence port for the MEP."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 5 }
+
+gamPerfMonitorStatusStatisticsLmPeerMepId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Two bytes CCM MEP ID in the transmitted CCM."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 6 }
+
+gamPerfMonitorStatusStatisticsLmPeerMepMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "MAC address of this MEP which can be used by other MEP when unicast is
+         selected."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 7 }
+
+gamPerfMonitorStatusStatisticsLmPeerMepPeerMepId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An expected MEP identifier in the received CCM."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 8 }
+
+gamPerfMonitorStatusStatisticsLmPeerMepPeerMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "MAC address to be used when unicast is selected with the peer MEP.
+         Also, this MAC is used to create HW checking of receiving CCM PDU from
+         this MEP."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 9 }
+
+gamPerfMonitorStatusStatisticsLmPeerMepDirection OBJECT-TYPE
+    SYNTAX      GAMMepInstanceDirection
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Upstream or downstream that needs to be monitored."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 11 }
+
+gamPerfMonitorStatusStatisticsLmPeerMepLevel OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MEG level of this MEP."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 12 }
+
+gamPerfMonitorStatusStatisticsLmPeerMepFlowInstance OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The MEP is related to this flow depends on 'MepDomain'."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 13 }
+
+gamPerfMonitorStatusStatisticsLmPeerMepTaggedVid OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "An outer C/S-tag or the subscriber VID that identifies the subscriber
+         flow in EVC where the MIP is active."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 14 }
+
+gamPerfMonitorStatusStatisticsLmPeerPriority OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The priority to be inserted as PCP bits in TAG (if any)."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 15 }
+
+gamPerfMonitorStatusStatisticsLmPeerRate OBJECT-TYPE
+    SYNTAX      GAMMepTxRate
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Frame rate of CCM/LMM PDU which is the inverse of transmission period
+         as described in Y.1731."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 16 }
+
+gamPerfMonitorStatusStatisticsLmPeerTx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frame transmitted."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 17 }
+
+gamPerfMonitorStatusStatisticsLmPeerRx OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of frame received."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 18 }
+
+gamPerfMonitorStatusStatisticsLmPeerNearEndLossCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The near end loss count."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 19 }
+
+gamPerfMonitorStatusStatisticsLmPeerNearEndLossRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The near end loss ratio."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 20 }
+
+gamPerfMonitorStatusStatisticsLmPeerFarEndLossCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The far end loss count."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 21 }
+
+gamPerfMonitorStatusStatisticsLmPeerFarEndLossRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The far end loss ratio."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 22 }
+
+gamPerfMonitorStatusStatisticsLmPeerMepFlowName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the MEP flow instance."
+    ::= { gamPerfMonitorStatusStatisticsLmPeerEntry 23 }
+
+gamPerfMonitorStatusInterval OBJECT IDENTIFIER
+    ::= { gamPerfMonitorStatus 2 }
+
+gamPerfMonitorStatusIntervalInfoTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPerfMonitorStatusIntervalInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying per type and interval PM time
+         information."
+    ::= { gamPerfMonitorStatusInterval 1 }
+
+gamPerfMonitorStatusIntervalInfoEntry OBJECT-TYPE
+    SYNTAX      GAMPerfMonitorStatusIntervalInfoEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of time information."
+    INDEX       { gamPerfMonitorStatusIntervalInfoType,
+                  gamPerfMonitorStatusIntervalInfoIntervalId }
+    ::= { gamPerfMonitorStatusIntervalInfoTable 1 }
+
+GAMPerfMonitorStatusIntervalInfoEntry ::= SEQUENCE {
+    gamPerfMonitorStatusIntervalInfoType         Unsigned32,
+    gamPerfMonitorStatusIntervalInfoIntervalId   Unsigned32,
+    gamPerfMonitorStatusIntervalInfoStartTime    GAMDisplayString,
+    gamPerfMonitorStatusIntervalInfoEndTime      GAMDisplayString,
+    gamPerfMonitorStatusIntervalInfoElapsedTime  Counter64
+}
+
+gamPerfMonitorStatusIntervalInfoType OBJECT-TYPE
+    SYNTAX      Unsigned32 (1..3)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The type for the performance monitor interval information. '1' presents
+         LM; '2' presents DM; '3' presents EVC."
+    ::= { gamPerfMonitorStatusIntervalInfoEntry 1 }
+
+gamPerfMonitorStatusIntervalInfoIntervalId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The measurement interval identifier for the performance monitor data
+         sets."
+    ::= { gamPerfMonitorStatusIntervalInfoEntry 2 }
+
+gamPerfMonitorStatusIntervalInfoStartTime OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The date and time when PM starts."
+    ::= { gamPerfMonitorStatusIntervalInfoEntry 3 }
+
+gamPerfMonitorStatusIntervalInfoEndTime OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The date and time when PM stops."
+    ::= { gamPerfMonitorStatusIntervalInfoEntry 4 }
+
+gamPerfMonitorStatusIntervalInfoElapsedTime OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The elapsed time ticks for the specific monitoring type and the
+         corresponding interval identifier."
+    ::= { gamPerfMonitorStatusIntervalInfoEntry 5 }
+
+gamPerfMonitorControl OBJECT IDENTIFIER
+    ::= { gamPerfMonitorMibObjects 4 }
+
+gamPerfMonitorControlGlobals OBJECT IDENTIFIER
+    ::= { gamPerfMonitorControl 1 }
+
+gamPerfMonitorControlGlobalsAction OBJECT IDENTIFIER
+    ::= { gamPerfMonitorControlGlobals 1 }
+
+gamPerfMonitorControlGlobalsActionDeleteLmStatisticsAll OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Clear all the LM statistics."
+    ::= { gamPerfMonitorControlGlobalsAction 1 }
+
+gamPerfMonitorControlGlobalsActionDeleteDmStatisticsAll OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Clear all the DM statistics."
+    ::= { gamPerfMonitorControlGlobalsAction 2 }
+
+gamPerfMonitorControlGlobalsActionDeleteEvcStatisticsAll OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Clear all the EVC statistics."
+    ::= { gamPerfMonitorControlGlobalsAction 3 }
+
+gamPerfMonitorMibConformance OBJECT IDENTIFIER
+    ::= { gamPerfMonitorMib 2 }
+
+gamPerfMonitorMibCompliances OBJECT IDENTIFIER
+    ::= { gamPerfMonitorMibConformance 1 }
+
+gamPerfMonitorMibGroups OBJECT IDENTIFIER
+    ::= { gamPerfMonitorMibConformance 2 }
+
+gamPerfMonitorConfigGlobalsMgmtInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPerfMonitorConfigGlobalsMgmtLmAdminState,
+                  gamPerfMonitorConfigGlobalsMgmtLmStorageState,
+                  gamPerfMonitorConfigGlobalsMgmtLmInterval,
+                  gamPerfMonitorConfigGlobalsMgmtDmAdminState,
+                  gamPerfMonitorConfigGlobalsMgmtDmStorageState,
+                  gamPerfMonitorConfigGlobalsMgmtDmInterval,
+                  gamPerfMonitorConfigGlobalsMgmtDmBinStorageState,
+                  gamPerfMonitorConfigGlobalsMgmtEvcAdminState,
+                  gamPerfMonitorConfigGlobalsMgmtEvcStorageState,
+                  gamPerfMonitorConfigGlobalsMgmtEvcMeasureInterval }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 1 }
+
+gamPerfMonitorConfigGlobalsTransferInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPerfMonitorConfigGlobalsTransferAdminState,
+                  gamPerfMonitorConfigGlobalsTransferServerUrl,
+                  gamPerfMonitorConfigGlobalsTransferIntervalMode,
+                  gamPerfMonitorConfigGlobalsTransferFixedNumberOfInterval,
+                  gamPerfMonitorConfigGlobalsTransferRetryIncompletedTransfer }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 2 }
+
+gamPerfMonitorConfigGlobalsXferSchedHourTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPerfMonitorConfigGlobalsXferSchedHourIndex,
+                  gamPerfMonitorConfigGlobalsXferSchedHourEnabled }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 3 }
+
+gamPerfMonitorConfigGlobalsXferSchedQuarterTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPerfMonitorConfigGlobalsXferSchedQuarterIndex,
+                  gamPerfMonitorConfigGlobalsXferSchedQuarterEnabled }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 4 }
+
+gamPerfMonitorConfigGlobalsXferSchedOffsetInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPerfMonitorConfigGlobalsXferSchedOffsetMinute,
+                  gamPerfMonitorConfigGlobalsXferSchedOffsetRandomSecond }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 5 }
+
+gamPerfMonitorStatusStatisticsLmTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPerfMonitorStatusStatisticsLmIntervalId,
+                  gamPerfMonitorStatusStatisticsLmEntryId,
+                  gamPerfMonitorStatusStatisticsLmMepInstance,
+                  gamPerfMonitorStatusStatisticsLmResidencePort,
+                  gamPerfMonitorStatusStatisticsLmMepId,
+                  gamPerfMonitorStatusStatisticsLmMepMacAddress,
+                  gamPerfMonitorStatusStatisticsLmMepPeerMepId,
+                  gamPerfMonitorStatusStatisticsLmMepPeerMacAddress,
+                  gamPerfMonitorStatusStatisticsLmMepDirection,
+                  gamPerfMonitorStatusStatisticsLmMepLevel,
+                  gamPerfMonitorStatusStatisticsLmMepFlowInstance,
+                  gamPerfMonitorStatusStatisticsLmMepTaggedVid,
+                  gamPerfMonitorStatusStatisticsLmPriority,
+                  gamPerfMonitorStatusStatisticsLmRate,
+                  gamPerfMonitorStatusStatisticsLmTx,
+                  gamPerfMonitorStatusStatisticsLmRx,
+                  gamPerfMonitorStatusStatisticsLmNearEndLossCount,
+                  gamPerfMonitorStatusStatisticsLmNearEndLossRate,
+                  gamPerfMonitorStatusStatisticsLmFarEndLossCount,
+                  gamPerfMonitorStatusStatisticsLmFarEndLossRate,
+                  gamPerfMonitorStatusStatisticsLmMepFlowName }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 6 }
+
+gamPerfMonitorStatusStatisticsDmTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPerfMonitorStatusStatisticsDmIntervalId,
+                  gamPerfMonitorStatusStatisticsDmEntryId,
+                  gamPerfMonitorStatusStatisticsDmMepInstance,
+                  gamPerfMonitorStatusStatisticsDmResidencePort,
+                  gamPerfMonitorStatusStatisticsDmMepId,
+                  gamPerfMonitorStatusStatisticsDmMepMacAddress,
+                  gamPerfMonitorStatusStatisticsDmMepPeerMepId,
+                  gamPerfMonitorStatusStatisticsDmMepPeerMacAddress,
+                  gamPerfMonitorStatusStatisticsDmMepDirection,
+                  gamPerfMonitorStatusStatisticsDmMepLevel,
+                  gamPerfMonitorStatusStatisticsDmMepFlowInstance,
+                  gamPerfMonitorStatusStatisticsDmMepTaggedVid,
+                  gamPerfMonitorStatusStatisticsDmPriority,
+                  gamPerfMonitorStatusStatisticsDmRate,
+                  gamPerfMonitorStatusStatisticsDmUnit,
+                  gamPerfMonitorStatusStatisticsDmTx,
+                  gamPerfMonitorStatusStatisticsDmRx,
+                  gamPerfMonitorStatusStatisticsDmFarNearDelayAverage,
+                  gamPerfMonitorStatusStatisticsDmFarNearDelayAverageVariation,
+                  gamPerfMonitorStatusStatisticsDmFarNearDelayMin,
+                  gamPerfMonitorStatusStatisticsDmFarNearDelayMax,
+                  gamPerfMonitorStatusStatisticsDmNearFarDelayAverage,
+                  gamPerfMonitorStatusStatisticsDmNearFarDelayAverageVariation,
+                  gamPerfMonitorStatusStatisticsDmNearFarDelayMin,
+                  gamPerfMonitorStatusStatisticsDmNearFarDelayMax,
+                  gamPerfMonitorStatusStatisticsDm2WayDelayAverage,
+                  gamPerfMonitorStatusStatisticsDm2WayDelayAverageVariation,
+                  gamPerfMonitorStatusStatisticsDm2WayDelayMin,
+                  gamPerfMonitorStatusStatisticsDm2WayDelayMax,
+                  gamPerfMonitorStatusStatisticsDmMepFlowName }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 7 }
+
+gamPerfMonitorStatusStatisticsDmBinTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPerfMonitorStatusStatisticsDmBinIntervalId,
+                  gamPerfMonitorStatusStatisticsDmBinEntryId,
+                  gamPerfMonitorStatusStatisticsDmBinType,
+                  gamPerfMonitorStatusStatisticsDmBinDirection,
+                  gamPerfMonitorStatusStatisticsDmBinBucketId,
+                  gamPerfMonitorStatusStatisticsDmBinHitCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 8 }
+
+gamPerfMonitorStatusStatisticsEvcTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPerfMonitorStatusStatisticsEvcIntervalId,
+                  gamPerfMonitorStatusStatisticsEvcEntryId,
+                  gamPerfMonitorStatusStatisticsEvcEvcInstance,
+                  gamPerfMonitorStatusStatisticsEvcPortType,
+                  gamPerfMonitorStatusStatisticsEvcPort,
+                  gamPerfMonitorStatusStatisticsEvcCos,
+                  gamPerfMonitorStatusStatisticsEvcGreenRxFrames,
+                  gamPerfMonitorStatusStatisticsEvcGreenTxFrames,
+                  gamPerfMonitorStatusStatisticsEvcGreenRxBytes,
+                  gamPerfMonitorStatusStatisticsEvcGreenTxBytes,
+                  gamPerfMonitorStatusStatisticsEvcYellowRxFrames,
+                  gamPerfMonitorStatusStatisticsEvcYellowTxFrames,
+                  gamPerfMonitorStatusStatisticsEvcYellowRxBytes,
+                  gamPerfMonitorStatusStatisticsEvcYellowTxBytes,
+                  gamPerfMonitorStatusStatisticsEvcRedRxFrames,
+                  gamPerfMonitorStatusStatisticsEvcRedRxBytes,
+                  gamPerfMonitorStatusStatisticsEvcDiscardedRxFrames,
+                  gamPerfMonitorStatusStatisticsEvcDiscardedTxFrames,
+                  gamPerfMonitorStatusStatisticsEvcDiscardedRxBytes,
+                  gamPerfMonitorStatusStatisticsEvcDiscardedTxBytes }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 9 }
+
+gamPerfMonitorStatusStatisticsLmPeerTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPerfMonitorStatusStatisticsLmPeerIntervalId,
+                  gamPerfMonitorStatusStatisticsLmPeerEntryId,
+                  gamPerfMonitorStatusStatisticsLmPeerPeerId,
+                  gamPerfMonitorStatusStatisticsLmPeerMepInstance,
+                  gamPerfMonitorStatusStatisticsLmPeerResidencePort,
+                  gamPerfMonitorStatusStatisticsLmPeerMepId,
+                  gamPerfMonitorStatusStatisticsLmPeerMepMacAddress,
+                  gamPerfMonitorStatusStatisticsLmPeerMepPeerMepId,
+                  gamPerfMonitorStatusStatisticsLmPeerMepPeerMacAddress,
+                  gamPerfMonitorStatusStatisticsLmPeerMepDirection,
+                  gamPerfMonitorStatusStatisticsLmPeerMepLevel,
+                  gamPerfMonitorStatusStatisticsLmPeerMepFlowInstance,
+                  gamPerfMonitorStatusStatisticsLmPeerMepTaggedVid,
+                  gamPerfMonitorStatusStatisticsLmPeerPriority,
+                  gamPerfMonitorStatusStatisticsLmPeerRate,
+                  gamPerfMonitorStatusStatisticsLmPeerTx,
+                  gamPerfMonitorStatusStatisticsLmPeerRx,
+                  gamPerfMonitorStatusStatisticsLmPeerNearEndLossCount,
+                  gamPerfMonitorStatusStatisticsLmPeerNearEndLossRate,
+                  gamPerfMonitorStatusStatisticsLmPeerFarEndLossCount,
+                  gamPerfMonitorStatusStatisticsLmPeerFarEndLossRate,
+                  gamPerfMonitorStatusStatisticsLmPeerMepFlowName }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 10 }
+
+gamPerfMonitorStatusIntervalInfoTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPerfMonitorStatusIntervalInfoType,
+                  gamPerfMonitorStatusIntervalInfoIntervalId,
+                  gamPerfMonitorStatusIntervalInfoStartTime,
+                  gamPerfMonitorStatusIntervalInfoEndTime,
+                  gamPerfMonitorStatusIntervalInfoElapsedTime }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 11 }
+
+gamPerfMonitorControlGlobalsActionInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamPerfMonitorControlGlobalsActionDeleteLmStatisticsAll,
+                  gamPerfMonitorControlGlobalsActionDeleteDmStatisticsAll,
+                  gamPerfMonitorControlGlobalsActionDeleteEvcStatisticsAll }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPerfMonitorMibGroups 12 }
+
+gamPerfMonitorMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamPerfMonitorConfigGlobalsMgmtInfoGroup,
+                       gamPerfMonitorConfigGlobalsTransferInfoGroup,
+                       gamPerfMonitorConfigGlobalsXferSchedHourTableInfoGroup,
+                       gamPerfMonitorConfigGlobalsXferSchedQuarterTableInfoGroup,
+                       gamPerfMonitorConfigGlobalsXferSchedOffsetInfoGroup,
+                       gamPerfMonitorStatusStatisticsLmTableInfoGroup,
+                       gamPerfMonitorStatusStatisticsDmTableInfoGroup,
+                       gamPerfMonitorStatusStatisticsDmBinTableInfoGroup,
+                       gamPerfMonitorStatusStatisticsEvcTableInfoGroup,
+                       gamPerfMonitorStatusStatisticsLmPeerTableInfoGroup,
+                       gamPerfMonitorStatusIntervalInfoTableInfoGroup,
+                       gamPerfMonitorControlGlobalsActionInfoGroup }
+
+    ::= { gamPerfMonitorMibCompliances 1 }
+
+END

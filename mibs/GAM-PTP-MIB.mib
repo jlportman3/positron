@@ -1,0 +1,2828 @@
+-- *****************************************************************
+-- PTP-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-PTP-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInteger16 FROM GAM-TC
+    GAMInteger32e-9 FROM GAM-TC
+    GAMInteger64 FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    GAMUnsigned64 FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamPtpMib MODULE-IDENTITY
+    LAST-UPDATED "201604290000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "Private PTP MIB."
+    REVISION    "201604290000Z"
+    DESCRIPTION
+        "Added statistic parameters for PTP port."
+    REVISION    "201604200000Z"
+    DESCRIPTION
+        "Removed vlanTagEnable parameter."
+    REVISION    "201511100000Z"
+    DESCRIPTION
+        "Added virtual port parameters."
+    REVISION    "201510280000Z"
+    DESCRIPTION
+        "Added parameters for specifying leap event."
+    REVISION    "201506030000Z"
+    DESCRIPTION
+        "Added MS-PDV parameters"
+    REVISION    "201503260000Z"
+    DESCRIPTION
+        "Added attribute Dscp to PtpConfigClocksDefaultDs"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 65 }
+
+
+GAMPtp8021asPortRole ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { disabledPort(3), masterPort(6),
+                          passivePort(7), slavePort(9) }
+
+GAMPtpClockPortState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { initializing(0), faulty(1), disabled(2),
+                          listening(3), preMaster(4), master(5),
+                          passive(6), uncalibrated(7), slave(8),
+                          p2pTransparent(9), e2eTransparent(10),
+                          frontend(11) }
+
+GAMPtpDestAdrType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { default(0), linkLocal(1) }
+
+GAMPtpDeviceType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { none(0), ordBound(1), p2pTransparent(2),
+                          e2eTransparent(3), masterOnly(4),
+                          slaveOnly(5), bcFrontend(6) }
+
+GAMPtpLeapSecondType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { leap59(0), leap61(1) }
+
+GAMPtpProfile ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { noProfile(0), ieee1588(1), g8265(2),
+                          g8275(3), ieee802d1as(4) }
+
+GAMPtpProtocol ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { ethernet(0), ethernetMixed(1), ip4multi(2),
+                          ip4mixed(3), ip4uni(4), oam(5), onePps(6) }
+
+GAMPtpServoClockOption ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { clockFree(0), clockSyncE(1) }
+
+GAMPtpSlaveClockState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { slaveClockStateFreerun(0),
+                          slaveClockStateFreqLocking(1),
+                          slaveClockStateFreqLocked(2),
+                          slaveClockStatePhaseLocking(3),
+                          slaveClockStatePhaseLocked(4),
+                          slaveClockStateHoldover(5),
+                          slaveClockStateInvalid(6) }
+
+GAMPtpSystemTimeSyncMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { systemTimeNoSync(0), systemTimeSyncGet(1),
+                          systemTimeSyncSet(2) }
+
+GAMPtpUcCommState ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "-"
+    SYNTAX      INTEGER { idle(0), initializing(1), connected(2),
+                          selected(3), synced(4) }
+
+gamPtpMibObjects OBJECT IDENTIFIER
+    ::= { gamPtpMib 1 }
+
+gamPtpCapabilities OBJECT IDENTIFIER
+    ::= { gamPtpMibObjects 1 }
+
+gamPtpCapabilitiesGlobals OBJECT IDENTIFIER
+    ::= { gamPtpCapabilities 1 }
+
+gamPtpCapabilitiesGlobalsClockCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of PTP clocks supported by the device."
+    ::= { gamPtpCapabilitiesGlobals 1 }
+
+gamPtpCapabilitiesGlobalsHasMsPdv OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, the build supports the MS-PDV."
+    ::= { gamPtpCapabilitiesGlobals 2 }
+
+gamPtpCapabilitiesGlobalsHasHwClkDomains OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, the build supports hardware clock domains."
+    ::= { gamPtpCapabilitiesGlobals 3 }
+
+gamPtpConfig OBJECT IDENTIFIER
+    ::= { gamPtpMibObjects 2 }
+
+gamPtpConfigGlobals OBJECT IDENTIFIER
+    ::= { gamPtpConfig 1 }
+
+gamPtpConfigGlobalsSystemTimeSyncMode OBJECT IDENTIFIER
+    ::= { gamPtpConfigGlobals 2 }
+
+gamPtpConfigGlobalsSystemTimeSyncModeMode OBJECT-TYPE
+    SYNTAX      GAMPtpSystemTimeSyncMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Mode of the System time <-> ptp time synchronization."
+    ::= { gamPtpConfigGlobalsSystemTimeSyncMode 1 }
+
+gamPtpConfigClocks OBJECT IDENTIFIER
+    ::= { gamPtpConfig 2 }
+
+gamPtpConfigClocksDefaultDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpConfigClocksDefaultDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the configurable part of the PTP clocks DefaultDS."
+    ::= { gamPtpConfigClocks 1 }
+
+gamPtpConfigClocksDefaultDsEntry OBJECT-TYPE
+    SYNTAX      GAMPtpConfigClocksDefaultDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpConfigClocksDefaultDsClockId }
+    ::= { gamPtpConfigClocksDefaultDsTable 1 }
+
+GAMPtpConfigClocksDefaultDsEntry ::= SEQUENCE {
+    gamPtpConfigClocksDefaultDsClockId          Integer32,
+    gamPtpConfigClocksDefaultDsDeviceType       GAMPtpDeviceType,
+    gamPtpConfigClocksDefaultDsTwoStepFlag      TruthValue,
+    gamPtpConfigClocksDefaultDsPriority1        GAMUnsigned8,
+    gamPtpConfigClocksDefaultDsPriority2        GAMUnsigned8,
+    gamPtpConfigClocksDefaultDsOneWay           TruthValue,
+    gamPtpConfigClocksDefaultDsDomainNumber     GAMUnsigned8,
+    gamPtpConfigClocksDefaultDsProtocol         GAMPtpProtocol,
+    gamPtpConfigClocksDefaultDsVid              GAMUnsigned16,
+    gamPtpConfigClocksDefaultDsPcp              GAMUnsigned8,
+    gamPtpConfigClocksDefaultDsMep              Integer32,
+    gamPtpConfigClocksDefaultDsClkDom           Unsigned32,
+    gamPtpConfigClocksDefaultDsDscp             GAMUnsigned8,
+    gamPtpConfigClocksDefaultDsProfile          GAMPtpProfile,
+    gamPtpConfigClocksDefaultDsLocalPriority    GAMUnsigned8,
+    gamPtpConfigClocksDefaultDsFilterType       Unsigned32,
+    gamPtpConfigClocksDefaultDsPathTraceEnable  TruthValue,
+    gamPtpConfigClocksDefaultDsAction           GAMRowEditorState
+}
+
+gamPtpConfigClocksDefaultDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpConfigClocksDefaultDsEntry 1 }
+
+gamPtpConfigClocksDefaultDsDeviceType OBJECT-TYPE
+    SYNTAX      GAMPtpDeviceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The PTP clock type."
+    ::= { gamPtpConfigClocksDefaultDsEntry 2 }
+
+gamPtpConfigClocksDefaultDsTwoStepFlag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Determines whether clock uses follow-up packets."
+    ::= { gamPtpConfigClocksDefaultDsEntry 3 }
+
+gamPtpConfigClocksDefaultDsPriority1 OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The priority1 value."
+    ::= { gamPtpConfigClocksDefaultDsEntry 4 }
+
+gamPtpConfigClocksDefaultDsPriority2 OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The priority2 value."
+    ::= { gamPtpConfigClocksDefaultDsEntry 5 }
+
+gamPtpConfigClocksDefaultDsOneWay OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Determines whether clock uses sync packets only."
+    ::= { gamPtpConfigClocksDefaultDsEntry 6 }
+
+gamPtpConfigClocksDefaultDsDomainNumber OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The domain number."
+    ::= { gamPtpConfigClocksDefaultDsEntry 7 }
+
+gamPtpConfigClocksDefaultDsProtocol OBJECT-TYPE
+    SYNTAX      GAMPtpProtocol
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The protocol to be used for the encapsulation of the PTP packets."
+    ::= { gamPtpConfigClocksDefaultDsEntry 8 }
+
+gamPtpConfigClocksDefaultDsVid OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VLAN id for this PTP instance."
+    ::= { gamPtpConfigClocksDefaultDsEntry 10 }
+
+gamPtpConfigClocksDefaultDsPcp OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The PCP value for this PTP instance."
+    ::= { gamPtpConfigClocksDefaultDsEntry 11 }
+
+gamPtpConfigClocksDefaultDsMep OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The mep instance number (if protocol is OAM)."
+    ::= { gamPtpConfigClocksDefaultDsEntry 12 }
+
+gamPtpConfigClocksDefaultDsClkDom OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Clock domain used.
+         
+         This object is only available if the capability object
+         'gamPtpCapabilitiesGlobalsHasHwClkDomains' is True."
+    ::= { gamPtpConfigClocksDefaultDsEntry 13 }
+
+gamPtpConfigClocksDefaultDsDscp OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The DSCP field value (if protocol is IPv4)."
+    ::= { gamPtpConfigClocksDefaultDsEntry 14 }
+
+gamPtpConfigClocksDefaultDsProfile OBJECT-TYPE
+    SYNTAX      GAMPtpProfile
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The PTP profile."
+    ::= { gamPtpConfigClocksDefaultDsEntry 15 }
+
+gamPtpConfigClocksDefaultDsLocalPriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The local priority value."
+    ::= { gamPtpConfigClocksDefaultDsEntry 16 }
+
+gamPtpConfigClocksDefaultDsFilterType OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Selects the type of filter/servo used."
+    ::= { gamPtpConfigClocksDefaultDsEntry 17 }
+
+gamPtpConfigClocksDefaultDsPathTraceEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Announce Path Trace supported."
+    ::= { gamPtpConfigClocksDefaultDsEntry 18 }
+
+gamPtpConfigClocksDefaultDsAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamPtpConfigClocksDefaultDsEntry 100 }
+
+gamPtpConfigClocksDefaultDsTableRowEditor OBJECT IDENTIFIER
+    ::= { gamPtpConfigClocks 2 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 1 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorDeviceType OBJECT-TYPE
+    SYNTAX      GAMPtpDeviceType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The PTP clock type."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 2 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorTwoStepFlag OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Determines whether clock uses follow-up packets."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 3 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorPriority1 OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The priority1 value."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 4 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorPriority2 OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The priority2 value."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 5 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorOneWay OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Determines whether clock uses sync packets only."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 6 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorDomainNumber OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The domain number."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 7 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorProtocol OBJECT-TYPE
+    SYNTAX      GAMPtpProtocol
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The protocol to be used for the encapsulation of the PTP packets."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 8 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorVid OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VLAN id for this PTP instance."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 10 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorPcp OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The PCP value for this PTP instance."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 11 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorMep OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The mep instance number (if protocol is OAM)."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 12 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorClkDom OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Clock domain used.
+         
+         This object is only available if the capability object
+         'gamPtpCapabilitiesGlobalsHasHwClkDomains' is True."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 13 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorDscp OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The DSCP field value (if protocol is IPv4)."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 14 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorProfile OBJECT-TYPE
+    SYNTAX      GAMPtpProfile
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The PTP profile."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 15 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorLocalPriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The local priority value."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 16 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorFilterType OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Selects the type of filter/servo used."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 17 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorPathTraceEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The Announce Path Trace supported."
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 18 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamPtpConfigClocksDefaultDsTableRowEditor 100 }
+
+gamPtpConfigClocksTimePropertiesDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpConfigClocksTimePropertiesDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the configurable part of the PTP clocks TimePropertiesDS."
+    ::= { gamPtpConfigClocks 3 }
+
+gamPtpConfigClocksTimePropertiesDsEntry OBJECT-TYPE
+    SYNTAX      GAMPtpConfigClocksTimePropertiesDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpConfigClocksTimePropertiesDsClockId }
+    ::= { gamPtpConfigClocksTimePropertiesDsTable 1 }
+
+GAMPtpConfigClocksTimePropertiesDsEntry ::= SEQUENCE {
+    gamPtpConfigClocksTimePropertiesDsClockId                Integer32,
+    gamPtpConfigClocksTimePropertiesDsCurrentUtcOffset       GAMInteger16,
+    gamPtpConfigClocksTimePropertiesDsCurrentUtcOffsetValid  TruthValue,
+    gamPtpConfigClocksTimePropertiesDsLeap59                 TruthValue,
+    gamPtpConfigClocksTimePropertiesDsLeap61                 TruthValue,
+    gamPtpConfigClocksTimePropertiesDsTimeTraceable          TruthValue,
+    gamPtpConfigClocksTimePropertiesDsFrequencyTraceable     TruthValue,
+    gamPtpConfigClocksTimePropertiesDsPtpTimescale           TruthValue,
+    gamPtpConfigClocksTimePropertiesDsTimeSource             GAMUnsigned8,
+    gamPtpConfigClocksTimePropertiesDsPendingLeap            TruthValue,
+    gamPtpConfigClocksTimePropertiesDsLeapDate               GAMUnsigned16,
+    gamPtpConfigClocksTimePropertiesDsLeapType               GAMPtpLeapSecondType
+}
+
+gamPtpConfigClocksTimePropertiesDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 1 }
+
+gamPtpConfigClocksTimePropertiesDsCurrentUtcOffset OBJECT-TYPE
+    SYNTAX      GAMInteger16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The current UTC time offset."
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 2 }
+
+gamPtpConfigClocksTimePropertiesDsCurrentUtcOffsetValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether the current UTC time offset value is valid."
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 3 }
+
+gamPtpConfigClocksTimePropertiesDsLeap59 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates that the last minute of the day has only 59 seconds."
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 4 }
+
+gamPtpConfigClocksTimePropertiesDsLeap61 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates that the last minute of the day has 61 seconds."
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 5 }
+
+gamPtpConfigClocksTimePropertiesDsTimeTraceable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates that time is traceable to a primary reference."
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 6 }
+
+gamPtpConfigClocksTimePropertiesDsFrequencyTraceable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates that frequency is traceable to a primary reference."
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 7 }
+
+gamPtpConfigClocksTimePropertiesDsPtpTimescale OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether timescale of the grandmaster clock is PTP."
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 8 }
+
+gamPtpConfigClocksTimePropertiesDsTimeSource OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Source of time used by the grandmaster clock."
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 9 }
+
+gamPtpConfigClocksTimePropertiesDsPendingLeap OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether a leap event is pending."
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 10 }
+
+gamPtpConfigClocksTimePropertiesDsLeapDate OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Date of leap event represented as number of days after 1970/01/01"
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 11 }
+
+gamPtpConfigClocksTimePropertiesDsLeapType OBJECT-TYPE
+    SYNTAX      GAMPtpLeapSecondType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of leap event i.e. leap59 or leap61."
+    ::= { gamPtpConfigClocksTimePropertiesDsEntry 12 }
+
+gamPtpConfigClocksFilterParametersTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpConfigClocksFilterParametersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the configurable part of the PTP clocks filter parameters."
+    ::= { gamPtpConfigClocks 4 }
+
+gamPtpConfigClocksFilterParametersEntry OBJECT-TYPE
+    SYNTAX      GAMPtpConfigClocksFilterParametersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpConfigClocksFilterParametersClockId }
+    ::= { gamPtpConfigClocksFilterParametersTable 1 }
+
+GAMPtpConfigClocksFilterParametersEntry ::= SEQUENCE {
+    gamPtpConfigClocksFilterParametersClockId      Integer32,
+    gamPtpConfigClocksFilterParametersDelayFilter  Unsigned32,
+    gamPtpConfigClocksFilterParametersPeriod       Unsigned32,
+    gamPtpConfigClocksFilterParametersDist         Unsigned32
+}
+
+gamPtpConfigClocksFilterParametersClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpConfigClocksFilterParametersEntry 1 }
+
+gamPtpConfigClocksFilterParametersDelayFilter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Defines the time constant of the delay filter."
+    ::= { gamPtpConfigClocksFilterParametersEntry 2 }
+
+gamPtpConfigClocksFilterParametersPeriod OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Defines the period of the offset filter."
+    ::= { gamPtpConfigClocksFilterParametersEntry 4 }
+
+gamPtpConfigClocksFilterParametersDist OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Sets the dist value of the offset filter."
+    ::= { gamPtpConfigClocksFilterParametersEntry 5 }
+
+gamPtpConfigClocksServoParametersTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpConfigClocksServoParametersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the configurable part of the PTP clocks servo parameters."
+    ::= { gamPtpConfigClocks 5 }
+
+gamPtpConfigClocksServoParametersEntry OBJECT-TYPE
+    SYNTAX      GAMPtpConfigClocksServoParametersEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpConfigClocksServoParametersClockId }
+    ::= { gamPtpConfigClocksServoParametersTable 1 }
+
+GAMPtpConfigClocksServoParametersEntry ::= SEQUENCE {
+    gamPtpConfigClocksServoParametersClockId             Integer32,
+    gamPtpConfigClocksServoParametersDisplay             TruthValue,
+    gamPtpConfigClocksServoParametersPEnable             TruthValue,
+    gamPtpConfigClocksServoParametersIEnable             TruthValue,
+    gamPtpConfigClocksServoParametersDEnable             TruthValue,
+    gamPtpConfigClocksServoParametersPval                Unsigned32,
+    gamPtpConfigClocksServoParametersIval                Unsigned32,
+    gamPtpConfigClocksServoParametersDval                Unsigned32,
+    gamPtpConfigClocksServoParametersSrvOption           GAMPtpServoClockOption,
+    gamPtpConfigClocksServoParametersSynceThreshold      Unsigned32,
+    gamPtpConfigClocksServoParametersSynceAp             Unsigned32,
+    gamPtpConfigClocksServoParametersHoFilter            Integer32,
+    gamPtpConfigClocksServoParametersStableAdjThreshold  GAMUnsigned64,
+    gamPtpConfigClocksServoParametersGain                Unsigned32
+}
+
+gamPtpConfigClocksServoParametersClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpConfigClocksServoParametersEntry 1 }
+
+gamPtpConfigClocksServoParametersDisplay OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether output shall be sent to the debug terminal."
+    ::= { gamPtpConfigClocksServoParametersEntry 2 }
+
+gamPtpConfigClocksServoParametersPEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether P-value of servo algorithm shall be used."
+    ::= { gamPtpConfigClocksServoParametersEntry 3 }
+
+gamPtpConfigClocksServoParametersIEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether I-value of servo algorithm shall be used."
+    ::= { gamPtpConfigClocksServoParametersEntry 4 }
+
+gamPtpConfigClocksServoParametersDEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether D-value of servo algorithm shall be used."
+    ::= { gamPtpConfigClocksServoParametersEntry 5 }
+
+gamPtpConfigClocksServoParametersPval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "P-value of the offset filter."
+    ::= { gamPtpConfigClocksServoParametersEntry 6 }
+
+gamPtpConfigClocksServoParametersIval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "I-value of the offset filter."
+    ::= { gamPtpConfigClocksServoParametersEntry 7 }
+
+gamPtpConfigClocksServoParametersDval OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "D-value of the offset filter."
+    ::= { gamPtpConfigClocksServoParametersEntry 8 }
+
+gamPtpConfigClocksServoParametersSrvOption OBJECT-TYPE
+    SYNTAX      GAMPtpServoClockOption
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether clock is free running or locked to SyncE."
+    ::= { gamPtpConfigClocksServoParametersEntry 9 }
+
+gamPtpConfigClocksServoParametersSynceThreshold OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SyncE Threshold"
+    ::= { gamPtpConfigClocksServoParametersEntry 10 }
+
+gamPtpConfigClocksServoParametersSynceAp OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "SyncE Ap"
+    ::= { gamPtpConfigClocksServoParametersEntry 11 }
+
+gamPtpConfigClocksServoParametersHoFilter OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Holdoff low pass filter constant."
+    ::= { gamPtpConfigClocksServoParametersEntry 12 }
+
+gamPtpConfigClocksServoParametersStableAdjThreshold OBJECT-TYPE
+    SYNTAX      GAMUnsigned64
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Threshold at which offset is assumed to be stable."
+    ::= { gamPtpConfigClocksServoParametersEntry 13 }
+
+gamPtpConfigClocksServoParametersGain OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "gain-value of the offset filter."
+    ::= { gamPtpConfigClocksServoParametersEntry 14 }
+
+gamPtpConfigClocksSlaveConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpConfigClocksSlaveConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the configurable part of the PTP clocks slave configuration."
+    ::= { gamPtpConfigClocks 6 }
+
+gamPtpConfigClocksSlaveConfigEntry OBJECT-TYPE
+    SYNTAX      GAMPtpConfigClocksSlaveConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpConfigClocksSlaveConfigClockId }
+    ::= { gamPtpConfigClocksSlaveConfigTable 1 }
+
+GAMPtpConfigClocksSlaveConfigEntry ::= SEQUENCE {
+    gamPtpConfigClocksSlaveConfigClockId       Integer32,
+    gamPtpConfigClocksSlaveConfigStableOffset  Unsigned32,
+    gamPtpConfigClocksSlaveConfigOffsetOk      Unsigned32,
+    gamPtpConfigClocksSlaveConfigOffsetFail    Unsigned32
+}
+
+gamPtpConfigClocksSlaveConfigClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpConfigClocksSlaveConfigEntry 1 }
+
+gamPtpConfigClocksSlaveConfigStableOffset OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Stable offset threshold in ns."
+    ::= { gamPtpConfigClocksSlaveConfigEntry 2 }
+
+gamPtpConfigClocksSlaveConfigOffsetOk OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Offset OK threshold in ns."
+    ::= { gamPtpConfigClocksSlaveConfigEntry 3 }
+
+gamPtpConfigClocksSlaveConfigOffsetFail OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Offset fail threshold in ns."
+    ::= { gamPtpConfigClocksSlaveConfigEntry 4 }
+
+gamPtpConfigClocksUnicastSlaveConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpConfigClocksUnicastSlaveConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the configurable part of the PTP clocks unicast slave
+         configuration."
+    ::= { gamPtpConfigClocks 7 }
+
+gamPtpConfigClocksUnicastSlaveConfigEntry OBJECT-TYPE
+    SYNTAX      GAMPtpConfigClocksUnicastSlaveConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpConfigClocksUnicastSlaveConfigClockId,
+                  gamPtpConfigClocksUnicastSlaveConfigMasterId }
+    ::= { gamPtpConfigClocksUnicastSlaveConfigTable 1 }
+
+GAMPtpConfigClocksUnicastSlaveConfigEntry ::= SEQUENCE {
+    gamPtpConfigClocksUnicastSlaveConfigClockId    Integer32,
+    gamPtpConfigClocksUnicastSlaveConfigMasterId   Integer32,
+    gamPtpConfigClocksUnicastSlaveConfigDuration   Unsigned32,
+    gamPtpConfigClocksUnicastSlaveConfigIpAddress  IpAddress
+}
+
+gamPtpConfigClocksUnicastSlaveConfigClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpConfigClocksUnicastSlaveConfigEntry 1 }
+
+gamPtpConfigClocksUnicastSlaveConfigMasterId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpConfigClocksUnicastSlaveConfigEntry 2 }
+
+gamPtpConfigClocksUnicastSlaveConfigDuration OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of seconds for which the Announce/Sync messages are requested."
+    ::= { gamPtpConfigClocksUnicastSlaveConfigEntry 3 }
+
+gamPtpConfigClocksUnicastSlaveConfigIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "IPv4 address of requested master clock."
+    ::= { gamPtpConfigClocksUnicastSlaveConfigEntry 4 }
+
+gamPtpConfigClocksPortDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpConfigClocksPortDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the configurable part of the PTP clocks PortDS."
+    ::= { gamPtpConfigClocks 8 }
+
+gamPtpConfigClocksPortDsEntry OBJECT-TYPE
+    SYNTAX      GAMPtpConfigClocksPortDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpConfigClocksPortDsClockId,
+                  gamPtpConfigClocksPortDsPortId }
+    ::= { gamPtpConfigClocksPortDsTable 1 }
+
+GAMPtpConfigClocksPortDsEntry ::= SEQUENCE {
+    gamPtpConfigClocksPortDsClockId                         Integer32,
+    gamPtpConfigClocksPortDsPortId                          GAMInterfaceIndex,
+    gamPtpConfigClocksPortDsEnabled                         GAMUnsigned8,
+    gamPtpConfigClocksPortDsLogAnnounceInterval             GAMInteger16,
+    gamPtpConfigClocksPortDsAnnounceReceiptTimeout          GAMUnsigned8,
+    gamPtpConfigClocksPortDsLogSyncInterval                 GAMInteger16,
+    gamPtpConfigClocksPortDsDelayMechanism                  GAMUnsigned8,
+    gamPtpConfigClocksPortDsLogMinPdelayReqInterval         GAMInteger16,
+    gamPtpConfigClocksPortDsDelayAsymmetry                  GAMInteger64,
+    gamPtpConfigClocksPortDsIngressLatency                  GAMInteger64,
+    gamPtpConfigClocksPortDsEgressLatency                   GAMInteger64,
+    gamPtpConfigClocksPortDsPortInternal                    TruthValue,
+    gamPtpConfigClocksPortDsVersionNumber                   GAMUnsigned16,
+    gamPtpConfigClocksPortDsMcastAddr                       GAMPtpDestAdrType,
+    gamPtpConfigClocksPortDsNotSlave                        TruthValue,
+    gamPtpConfigClocksPortDsLocalPriority                   GAMUnsigned8,
+    gamPtpConfigClocksPortDsC8021asNeighborPropDelayThresh  GAMInteger64,
+    gamPtpConfigClocksPortDsC8021asSyncReceiptTimeout       GAMUnsigned8,
+    gamPtpConfigClocksPortDsC8021asAllowedLostResponses     GAMUnsigned16
+}
+
+gamPtpConfigClocksPortDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpConfigClocksPortDsEntry 1 }
+
+gamPtpConfigClocksPortDsPortId OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpConfigClocksPortDsEntry 2 }
+
+gamPtpConfigClocksPortDsEnabled OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Defines whether port is enabled."
+    ::= { gamPtpConfigClocksPortDsEntry 3 }
+
+gamPtpConfigClocksPortDsLogAnnounceInterval OBJECT-TYPE
+    SYNTAX      GAMInteger16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Interval between announce message transmissions."
+    ::= { gamPtpConfigClocksPortDsEntry 4 }
+
+gamPtpConfigClocksPortDsAnnounceReceiptTimeout OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The timeout for receiving announce messages on the port."
+    ::= { gamPtpConfigClocksPortDsEntry 5 }
+
+gamPtpConfigClocksPortDsLogSyncInterval OBJECT-TYPE
+    SYNTAX      GAMInteger16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The interval for issuing sync meesages in the master."
+    ::= { gamPtpConfigClocksPortDsEntry 6 }
+
+gamPtpConfigClocksPortDsDelayMechanism OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The delay mechanism used for the port."
+    ::= { gamPtpConfigClocksPortDsEntry 7 }
+
+gamPtpConfigClocksPortDsLogMinPdelayReqInterval OBJECT-TYPE
+    SYNTAX      GAMInteger16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The value of logMinPdelayReqInterval"
+    ::= { gamPtpConfigClocksPortDsEntry 8 }
+
+gamPtpConfigClocksPortDsDelayAsymmetry OBJECT-TYPE
+    SYNTAX      GAMInteger64
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The value for the communication path asymmetry."
+    ::= { gamPtpConfigClocksPortDsEntry 9 }
+
+gamPtpConfigClocksPortDsIngressLatency OBJECT-TYPE
+    SYNTAX      GAMInteger64
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Ingress delay for port."
+    ::= { gamPtpConfigClocksPortDsEntry 10 }
+
+gamPtpConfigClocksPortDsEgressLatency OBJECT-TYPE
+    SYNTAX      GAMInteger64
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Egress delay for port."
+    ::= { gamPtpConfigClocksPortDsEntry 11 }
+
+gamPtpConfigClocksPortDsPortInternal OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Defines whether port is enabled as an internal interface."
+    ::= { gamPtpConfigClocksPortDsEntry 12 }
+
+gamPtpConfigClocksPortDsVersionNumber OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The version of PTP being used by the port."
+    ::= { gamPtpConfigClocksPortDsEntry 13 }
+
+gamPtpConfigClocksPortDsMcastAddr OBJECT-TYPE
+    SYNTAX      GAMPtpDestAdrType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The multicast address used (default or link local)."
+    ::= { gamPtpConfigClocksPortDsEntry 14 }
+
+gamPtpConfigClocksPortDsNotSlave OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When true, the port will not act as a slave."
+    ::= { gamPtpConfigClocksPortDsEntry 15 }
+
+gamPtpConfigClocksPortDsLocalPriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The local priority value."
+    ::= { gamPtpConfigClocksPortDsEntry 16 }
+
+gamPtpConfigClocksPortDsC8021asNeighborPropDelayThresh OBJECT-TYPE
+    SYNTAX      GAMInteger64
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "max allowed neighborPropDelay."
+    ::= { gamPtpConfigClocksPortDsEntry 17 }
+
+gamPtpConfigClocksPortDsC8021asSyncReceiptTimeout OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of time-synchronization transmission intervals that a slave port
+         waits without receiving synchronization information."
+    ::= { gamPtpConfigClocksPortDsEntry 18 }
+
+gamPtpConfigClocksPortDsC8021asAllowedLostResponses OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Number of Pdelay_Req messages for which a valid response is not
+         received, above which a port is considered to not be exchanging peer
+         delay messages with its neighbor."
+    ::= { gamPtpConfigClocksPortDsEntry 19 }
+
+gamPtpConfigClocksVirtualPortCfgTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpConfigClocksVirtualPortCfgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the configurable part of the PTP clocks virtual port
+         parameters."
+    ::= { gamPtpConfigClocks 9 }
+
+gamPtpConfigClocksVirtualPortCfgEntry OBJECT-TYPE
+    SYNTAX      GAMPtpConfigClocksVirtualPortCfgEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpConfigClocksVirtualPortCfgClockId }
+    ::= { gamPtpConfigClocksVirtualPortCfgTable 1 }
+
+GAMPtpConfigClocksVirtualPortCfgEntry ::= SEQUENCE {
+    gamPtpConfigClocksVirtualPortCfgClockId                         Integer32,
+    gamPtpConfigClocksVirtualPortCfgEnable                          TruthValue,
+    gamPtpConfigClocksVirtualPortCfgIoPin                           GAMUnsigned16,
+    gamPtpConfigClocksVirtualPortCfgClockQualityClockClass          GAMUnsigned8,
+    gamPtpConfigClocksVirtualPortCfgClockQualityClockAccuracy       GAMUnsigned8,
+    gamPtpConfigClocksVirtualPortCfgClockQualityOffsetScaledLogVar  GAMUnsigned16,
+    gamPtpConfigClocksVirtualPortCfgPriority1                       GAMUnsigned8,
+    gamPtpConfigClocksVirtualPortCfgPriority2                       GAMUnsigned8,
+    gamPtpConfigClocksVirtualPortCfgLocalPriority                   GAMUnsigned8
+}
+
+gamPtpConfigClocksVirtualPortCfgClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpConfigClocksVirtualPortCfgEntry 1 }
+
+gamPtpConfigClocksVirtualPortCfgEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Determines whether the virtual port is enabled."
+    ::= { gamPtpConfigClocksVirtualPortCfgEntry 2 }
+
+gamPtpConfigClocksVirtualPortCfgIoPin OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Defines the I/O-pin used by the virtual port."
+    ::= { gamPtpConfigClocksVirtualPortCfgEntry 3 }
+
+gamPtpConfigClocksVirtualPortCfgClockQualityClockClass OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is the clock class field of the clock quality structure."
+    ::= { gamPtpConfigClocksVirtualPortCfgEntry 4 }
+
+gamPtpConfigClocksVirtualPortCfgClockQualityClockAccuracy OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is the clock accuracy field of the clock quality structure."
+    ::= { gamPtpConfigClocksVirtualPortCfgEntry 5 }
+
+gamPtpConfigClocksVirtualPortCfgClockQualityOffsetScaledLogVar OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is the offsetScaledLogVariance field of the clock quality
+         structure."
+    ::= { gamPtpConfigClocksVirtualPortCfgEntry 6 }
+
+gamPtpConfigClocksVirtualPortCfgPriority1 OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The priority1 value."
+    ::= { gamPtpConfigClocksVirtualPortCfgEntry 7 }
+
+gamPtpConfigClocksVirtualPortCfgPriority2 OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The priority2 value."
+    ::= { gamPtpConfigClocksVirtualPortCfgEntry 8 }
+
+gamPtpConfigClocksVirtualPortCfgLocalPriority OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The local priority value."
+    ::= { gamPtpConfigClocksVirtualPortCfgEntry 9 }
+
+gamPtpStatus OBJECT IDENTIFIER
+    ::= { gamPtpMibObjects 3 }
+
+gamPtpStatusClocks OBJECT IDENTIFIER
+    ::= { gamPtpStatus 1 }
+
+gamPtpStatusClocksDefaultDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpStatusClocksDefaultDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the dynamic (status) part of the PTP clocks DefaultDS."
+    ::= { gamPtpStatusClocks 1 }
+
+gamPtpStatusClocksDefaultDsEntry OBJECT-TYPE
+    SYNTAX      GAMPtpStatusClocksDefaultDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpStatusClocksDefaultDsClockId }
+    ::= { gamPtpStatusClocksDefaultDsTable 1 }
+
+GAMPtpStatusClocksDefaultDsEntry ::= SEQUENCE {
+    gamPtpStatusClocksDefaultDsClockId                         Integer32,
+    gamPtpStatusClocksDefaultDsClockIdentity                   OCTET STRING,
+    gamPtpStatusClocksDefaultDsClockQualityClockClass          GAMUnsigned8,
+    gamPtpStatusClocksDefaultDsClockQualityClockAccuracy       GAMUnsigned8,
+    gamPtpStatusClocksDefaultDsClockQualityOffsetScaledLogVar  GAMUnsigned16,
+    gamPtpStatusClocksDefaultDsS8021asGmCapable                TruthValue
+}
+
+gamPtpStatusClocksDefaultDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksDefaultDsEntry 1 }
+
+gamPtpStatusClocksDefaultDsClockIdentity OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the unique 8 byte clockIdentify field from the DefaultDS
+         structure."
+    ::= { gamPtpStatusClocksDefaultDsEntry 2 }
+
+gamPtpStatusClocksDefaultDsClockQualityClockClass OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the clock class field of the clock quality structure."
+    ::= { gamPtpStatusClocksDefaultDsEntry 3 }
+
+gamPtpStatusClocksDefaultDsClockQualityClockAccuracy OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the clock accuracy field of the clock quality structure."
+    ::= { gamPtpStatusClocksDefaultDsEntry 4 }
+
+gamPtpStatusClocksDefaultDsClockQualityOffsetScaledLogVar OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the offsetScaledLogVariance field of the clock quality
+         structure."
+    ::= { gamPtpStatusClocksDefaultDsEntry 5 }
+
+gamPtpStatusClocksDefaultDsS8021asGmCapable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Defines IEEE 802.1AS specific default_DS status parameters, TRUE if the
+         time-aware system is capable of being a Grandmaster."
+    ::= { gamPtpStatusClocksDefaultDsEntry 6 }
+
+gamPtpStatusClocksCurrentDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpStatusClocksCurrentDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the dynamic (status) part of the PTP clocks CurrentDS."
+    ::= { gamPtpStatusClocks 2 }
+
+gamPtpStatusClocksCurrentDsEntry OBJECT-TYPE
+    SYNTAX      GAMPtpStatusClocksCurrentDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpStatusClocksCurrentDsClockId }
+    ::= { gamPtpStatusClocksCurrentDsTable 1 }
+
+GAMPtpStatusClocksCurrentDsEntry ::= SEQUENCE {
+    gamPtpStatusClocksCurrentDsClockId                               Integer32,
+    gamPtpStatusClocksCurrentDsStepsRemoved                          GAMUnsigned16,
+    gamPtpStatusClocksCurrentDsOffsetFromMaster                      GAMInteger64,
+    gamPtpStatusClocksCurrentDsMeanPathDelay                         GAMInteger64,
+    gamPtpStatusClocksCurrentDsCur8021asLastGMPhaseChangeLow         GAMUnsigned64,
+    gamPtpStatusClocksCurrentDsCur8021asLastGMPhaseChangeHigh        Integer32,
+    gamPtpStatusClocksCurrentDsCur8021asLastGMFreqChange             GAMInteger32e-9,
+    gamPtpStatusClocksCurrentDsCur8021asGmTimeBaseIndicator          GAMUnsigned16,
+    gamPtpStatusClocksCurrentDsCur8021asGmChangeCount                Unsigned32,
+    gamPtpStatusClocksCurrentDsCur8021asTimeOfLastGMChangeEvt        Unsigned32,
+    gamPtpStatusClocksCurrentDsCur8021asTimeOfLastGMPhaseChangeEvt   Unsigned32,
+    gamPtpStatusClocksCurrentDsCur8021asTimeOfLastGMFreqChangeEvent  Unsigned32
+}
+
+gamPtpStatusClocksCurrentDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksCurrentDsEntry 1 }
+
+gamPtpStatusClocksCurrentDsStepsRemoved OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of PTP clocks traversed from the grandmaster to the local
+         PTP clock."
+    ::= { gamPtpStatusClocksCurrentDsEntry 2 }
+
+gamPtpStatusClocksCurrentDsOffsetFromMaster OBJECT-TYPE
+    SYNTAX      GAMInteger64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The time differece in ns from the grandmaster to the local PTP clock."
+    ::= { gamPtpStatusClocksCurrentDsEntry 3 }
+
+gamPtpStatusClocksCurrentDsMeanPathDelay OBJECT-TYPE
+    SYNTAX      GAMInteger64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The mean path delay from the master to the local slave."
+    ::= { gamPtpStatusClocksCurrentDsEntry 4 }
+
+gamPtpStatusClocksCurrentDsCur8021asLastGMPhaseChangeLow OBJECT-TYPE
+    SYNTAX      GAMUnsigned64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The system time when the most recent change in grandmaster phase
+         occurred due to a change of either the grandmaster or grandmaster time
+         base 64 ls bits."
+    ::= { gamPtpStatusClocksCurrentDsEntry 5 }
+
+gamPtpStatusClocksCurrentDsCur8021asLastGMPhaseChangeHigh OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The system time when the most recent change in grandmaster phase
+         occurred due to a change of either the grandmaster or grandmaster time
+         base in 32 ms bits"
+    ::= { gamPtpStatusClocksCurrentDsEntry 6 }
+
+gamPtpStatusClocksCurrentDsCur8021asLastGMFreqChange OBJECT-TYPE
+    SYNTAX      GAMInteger32e-9
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if the time-aware system is capable of being a Grandmaster."
+    ::= { gamPtpStatusClocksCurrentDsEntry 7 }
+
+gamPtpStatusClocksCurrentDsCur8021asGmTimeBaseIndicator OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TimeBaseIndicator of the current grandmaster."
+    ::= { gamPtpStatusClocksCurrentDsEntry 8 }
+
+gamPtpStatusClocksCurrentDsCur8021asGmChangeCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of times the grandmaster has changed in a gPTP domain."
+    ::= { gamPtpStatusClocksCurrentDsEntry 9 }
+
+gamPtpStatusClocksCurrentDsCur8021asTimeOfLastGMChangeEvt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The system time when the most recent grandmaster change occurred."
+    ::= { gamPtpStatusClocksCurrentDsEntry 10 }
+
+gamPtpStatusClocksCurrentDsCur8021asTimeOfLastGMPhaseChangeEvt OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The system time when the most recent change in grandmaster phase
+         occurred due to a change of either the grandmaster or grandmaster time
+         base."
+    ::= { gamPtpStatusClocksCurrentDsEntry 11 }
+
+gamPtpStatusClocksCurrentDsCur8021asTimeOfLastGMFreqChangeEvent OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The system time when the most recent change in grandmaster frequency
+         occurred due to a change of either the grandmaster or grandmaster time
+         base."
+    ::= { gamPtpStatusClocksCurrentDsEntry 12 }
+
+gamPtpStatusClocksParentDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpStatusClocksParentDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the dynamic (status) part of the PTP clocks ParentDS."
+    ::= { gamPtpStatusClocks 3 }
+
+gamPtpStatusClocksParentDsEntry OBJECT-TYPE
+    SYNTAX      GAMPtpStatusClocksParentDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpStatusClocksParentDsClockId }
+    ::= { gamPtpStatusClocksParentDsTable 1 }
+
+GAMPtpStatusClocksParentDsEntry ::= SEQUENCE {
+    gamPtpStatusClocksParentDsClockId                             Integer32,
+    gamPtpStatusClocksParentDsParentPortIdentityClockIdentity     OCTET STRING,
+    gamPtpStatusClocksParentDsParentPortIdentityPortNumber        GAMUnsigned16,
+    gamPtpStatusClocksParentDsParentStats                         TruthValue,
+    gamPtpStatusClocksParentDsObservedParentOffsetScaledLogVar    GAMUnsigned16,
+    gamPtpStatusClocksParentDsObservedParentClockPhaseChangeRate  Integer32,
+    gamPtpStatusClocksParentDsGrmstrIdentity                      OCTET STRING,
+    gamPtpStatusClocksParentDsGrmstrClkQualClockClass             GAMUnsigned8,
+    gamPtpStatusClocksParentDsGmstrClkQualClockAccuracy           GAMUnsigned8,
+    gamPtpStatusClocksParentDsGmstrClkQualOffsetScaledLogVar      GAMUnsigned16,
+    gamPtpStatusClocksParentDsGmstrPriority1                      GAMUnsigned8,
+    gamPtpStatusClocksParentDsGmstrPriority2                      GAMUnsigned8,
+    gamPtpStatusClocksParentDsPar8021asCumulativeRateRatio        Integer32
+}
+
+gamPtpStatusClocksParentDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksParentDsEntry 1 }
+
+gamPtpStatusClocksParentDsParentPortIdentityClockIdentity OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the 8 byte unique clock identity of the parent port."
+    ::= { gamPtpStatusClocksParentDsEntry 2 }
+
+gamPtpStatusClocksParentDsParentPortIdentityPortNumber OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the port number on the parent associated with the parent clock."
+    ::= { gamPtpStatusClocksParentDsEntry 3 }
+
+gamPtpStatusClocksParentDsParentStats OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Parents stats (always false)."
+    ::= { gamPtpStatusClocksParentDsEntry 4 }
+
+gamPtpStatusClocksParentDsObservedParentOffsetScaledLogVar OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This field is optional and is not computed (as signaled by parentStats
+         being false)."
+    ::= { gamPtpStatusClocksParentDsEntry 5 }
+
+gamPtpStatusClocksParentDsObservedParentClockPhaseChangeRate OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This field is optional and is not computed (as signaled by parentStats
+         being false)."
+    ::= { gamPtpStatusClocksParentDsEntry 6 }
+
+gamPtpStatusClocksParentDsGrmstrIdentity OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the 8 byte unique clock identity of the grand master clock."
+    ::= { gamPtpStatusClocksParentDsEntry 7 }
+
+gamPtpStatusClocksParentDsGrmstrClkQualClockClass OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the clock class of the clock quality structure of the grand
+         master clock."
+    ::= { gamPtpStatusClocksParentDsEntry 8 }
+
+gamPtpStatusClocksParentDsGmstrClkQualClockAccuracy OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the clock accuracy of the clock quality structure of the grand
+         master clock."
+    ::= { gamPtpStatusClocksParentDsEntry 9 }
+
+gamPtpStatusClocksParentDsGmstrClkQualOffsetScaledLogVar OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the offsetScaledLogVariance field of the clock quality
+         structure of the grand master clock."
+    ::= { gamPtpStatusClocksParentDsEntry 10 }
+
+gamPtpStatusClocksParentDsGmstrPriority1 OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Grandmaster Priority1 value."
+    ::= { gamPtpStatusClocksParentDsEntry 11 }
+
+gamPtpStatusClocksParentDsGmstrPriority2 OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Grandmaster Priority2 value."
+    ::= { gamPtpStatusClocksParentDsEntry 12 }
+
+gamPtpStatusClocksParentDsPar8021asCumulativeRateRatio OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The ratio of the frequency og the grandmaster to the frequencu of the
+         Local CLock entity, expressed as fractional frequency offset * 2**41 ."
+    ::= { gamPtpStatusClocksParentDsEntry 13 }
+
+gamPtpStatusClocksTimePropertiesDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpStatusClocksTimePropertiesDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the dynamic (status) part of the PTP clocks TimePropertiesDS."
+    ::= { gamPtpStatusClocks 4 }
+
+gamPtpStatusClocksTimePropertiesDsEntry OBJECT-TYPE
+    SYNTAX      GAMPtpStatusClocksTimePropertiesDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpStatusClocksTimePropertiesDsClockId }
+    ::= { gamPtpStatusClocksTimePropertiesDsTable 1 }
+
+GAMPtpStatusClocksTimePropertiesDsEntry ::= SEQUENCE {
+    gamPtpStatusClocksTimePropertiesDsClockId                Integer32,
+    gamPtpStatusClocksTimePropertiesDsCurrentUtcOffset       GAMInteger16,
+    gamPtpStatusClocksTimePropertiesDsCurrentUtcOffsetValid  TruthValue,
+    gamPtpStatusClocksTimePropertiesDsLeap59                 TruthValue,
+    gamPtpStatusClocksTimePropertiesDsLeap61                 TruthValue,
+    gamPtpStatusClocksTimePropertiesDsTimeTraceable          TruthValue,
+    gamPtpStatusClocksTimePropertiesDsFrequencyTraceable     TruthValue,
+    gamPtpStatusClocksTimePropertiesDsPtpTimescale           TruthValue,
+    gamPtpStatusClocksTimePropertiesDsTimeSource             GAMUnsigned8,
+    gamPtpStatusClocksTimePropertiesDsPendingLeap            TruthValue,
+    gamPtpStatusClocksTimePropertiesDsLeapDate               GAMUnsigned16,
+    gamPtpStatusClocksTimePropertiesDsLeapType               GAMPtpLeapSecondType
+}
+
+gamPtpStatusClocksTimePropertiesDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 1 }
+
+gamPtpStatusClocksTimePropertiesDsCurrentUtcOffset OBJECT-TYPE
+    SYNTAX      GAMInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The current UTC time offset."
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 2 }
+
+gamPtpStatusClocksTimePropertiesDsCurrentUtcOffsetValid OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether the current UTC time offset value is valid."
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 3 }
+
+gamPtpStatusClocksTimePropertiesDsLeap59 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates that the last minute of the day has only 59 seconds."
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 4 }
+
+gamPtpStatusClocksTimePropertiesDsLeap61 OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates that the last minute of the day has 61 seconds."
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 5 }
+
+gamPtpStatusClocksTimePropertiesDsTimeTraceable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates that time is traceable to a primary reference."
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 6 }
+
+gamPtpStatusClocksTimePropertiesDsFrequencyTraceable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates that frequency is traceable to a primary reference."
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 7 }
+
+gamPtpStatusClocksTimePropertiesDsPtpTimescale OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether timescale of the grandmaster clock is PTP."
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 8 }
+
+gamPtpStatusClocksTimePropertiesDsTimeSource OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Source of time used by the grandmaster clock."
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 9 }
+
+gamPtpStatusClocksTimePropertiesDsPendingLeap OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Indicates whether a leap event is pending."
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 10 }
+
+gamPtpStatusClocksTimePropertiesDsLeapDate OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Date of leap event represented as number of days after 1970/01/01"
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 11 }
+
+gamPtpStatusClocksTimePropertiesDsLeapType OBJECT-TYPE
+    SYNTAX      GAMPtpLeapSecondType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Type of leap event i.e. leap59 or leap61."
+    ::= { gamPtpStatusClocksTimePropertiesDsEntry 12 }
+
+gamPtpStatusClocksSlaveDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpStatusClocksSlaveDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the dynamic (status) part of the PTP clocks SlaveDS."
+    ::= { gamPtpStatusClocks 5 }
+
+gamPtpStatusClocksSlaveDsEntry OBJECT-TYPE
+    SYNTAX      GAMPtpStatusClocksSlaveDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpStatusClocksSlaveDsClockId }
+    ::= { gamPtpStatusClocksSlaveDsTable 1 }
+
+GAMPtpStatusClocksSlaveDsEntry ::= SEQUENCE {
+    gamPtpStatusClocksSlaveDsClockId         Integer32,
+    gamPtpStatusClocksSlaveDsSlavePort       GAMUnsigned16,
+    gamPtpStatusClocksSlaveDsSlaveState      GAMPtpSlaveClockState,
+    gamPtpStatusClocksSlaveDsHoldoverStable  GAMUnsigned8,
+    gamPtpStatusClocksSlaveDsHoldoverAdj     GAMInteger64
+}
+
+gamPtpStatusClocksSlaveDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksSlaveDsEntry 1 }
+
+gamPtpStatusClocksSlaveDsSlavePort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "0 => no slave port, 1..n => selected slave port."
+    ::= { gamPtpStatusClocksSlaveDsEntry 2 }
+
+gamPtpStatusClocksSlaveDsSlaveState OBJECT-TYPE
+    SYNTAX      GAMPtpSlaveClockState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The slaves state."
+    ::= { gamPtpStatusClocksSlaveDsEntry 3 }
+
+gamPtpStatusClocksSlaveDsHoldoverStable OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "True if the stabilization period has expired."
+    ::= { gamPtpStatusClocksSlaveDsEntry 4 }
+
+gamPtpStatusClocksSlaveDsHoldoverAdj OBJECT-TYPE
+    SYNTAX      GAMInteger64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The calculated holdover offset (ppb*10)."
+    ::= { gamPtpStatusClocksSlaveDsEntry 5 }
+
+gamPtpStatusClocksUnicastMasterTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpStatusClocksUnicastMasterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the dynamic (status) part of the PTP clocks unicast master
+         table."
+    ::= { gamPtpStatusClocks 6 }
+
+gamPtpStatusClocksUnicastMasterEntry OBJECT-TYPE
+    SYNTAX      GAMPtpStatusClocksUnicastMasterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpStatusClocksUnicastMasterClockId,
+                  gamPtpStatusClocksUnicastMasterSlaveIp }
+    ::= { gamPtpStatusClocksUnicastMasterTable 1 }
+
+GAMPtpStatusClocksUnicastMasterEntry ::= SEQUENCE {
+    gamPtpStatusClocksUnicastMasterClockId          Integer32,
+    gamPtpStatusClocksUnicastMasterSlaveIp          IpAddress,
+    gamPtpStatusClocksUnicastMasterSlaveMac         MacAddress,
+    gamPtpStatusClocksUnicastMasterPort             GAMUnsigned16,
+    gamPtpStatusClocksUnicastMasterAnnLogMsgPeriod  GAMInteger16,
+    gamPtpStatusClocksUnicastMasterAnn              TruthValue,
+    gamPtpStatusClocksUnicastMasterLogMsgPeriod     GAMInteger16,
+    gamPtpStatusClocksUnicastMasterSync             TruthValue
+}
+
+gamPtpStatusClocksUnicastMasterClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksUnicastMasterEntry 1 }
+
+gamPtpStatusClocksUnicastMasterSlaveIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksUnicastMasterEntry 2 }
+
+gamPtpStatusClocksUnicastMasterSlaveMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksUnicastMasterEntry 3 }
+
+gamPtpStatusClocksUnicastMasterPort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Port on the master that slave is connected to."
+    ::= { gamPtpStatusClocksUnicastMasterEntry 4 }
+
+gamPtpStatusClocksUnicastMasterAnnLogMsgPeriod OBJECT-TYPE
+    SYNTAX      GAMInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The granted Announce interval."
+    ::= { gamPtpStatusClocksUnicastMasterEntry 5 }
+
+gamPtpStatusClocksUnicastMasterAnn OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "True if sending announce messages."
+    ::= { gamPtpStatusClocksUnicastMasterEntry 6 }
+
+gamPtpStatusClocksUnicastMasterLogMsgPeriod OBJECT-TYPE
+    SYNTAX      GAMInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The granted sync interval."
+    ::= { gamPtpStatusClocksUnicastMasterEntry 7 }
+
+gamPtpStatusClocksUnicastMasterSync OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "True if sending sync messages."
+    ::= { gamPtpStatusClocksUnicastMasterEntry 8 }
+
+gamPtpStatusClocksUnicastSlaveTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpStatusClocksUnicastSlaveEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the dynamic (status) part of the PTP clocks unicast slave
+         table."
+    ::= { gamPtpStatusClocks 7 }
+
+gamPtpStatusClocksUnicastSlaveEntry OBJECT-TYPE
+    SYNTAX      GAMPtpStatusClocksUnicastSlaveEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpStatusClocksUnicastSlaveClockId,
+                  gamPtpStatusClocksUnicastSlaveMasterId }
+    ::= { gamPtpStatusClocksUnicastSlaveTable 1 }
+
+GAMPtpStatusClocksUnicastSlaveEntry ::= SEQUENCE {
+    gamPtpStatusClocksUnicastSlaveClockId                          Integer32,
+    gamPtpStatusClocksUnicastSlaveMasterId                         Integer32,
+    gamPtpStatusClocksUnicastSlaveMasterIp                         IpAddress,
+    gamPtpStatusClocksUnicastSlaveMasterMac                        MacAddress,
+    gamPtpStatusClocksUnicastSlaveSourcePortIdentityClockIdentity  OCTET STRING,
+    gamPtpStatusClocksUnicastSlaveSourcePortIdentityPortNumber     GAMUnsigned16,
+    gamPtpStatusClocksUnicastSlavePort                             GAMUnsigned16,
+    gamPtpStatusClocksUnicastSlaveLogMsgPeriod                     GAMInteger16,
+    gamPtpStatusClocksUnicastSlaveCommState                        GAMPtpUcCommState,
+    gamPtpStatusClocksUnicastSlaveConfMasterIp                     IpAddress
+}
+
+gamPtpStatusClocksUnicastSlaveClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksUnicastSlaveEntry 1 }
+
+gamPtpStatusClocksUnicastSlaveMasterId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksUnicastSlaveEntry 2 }
+
+gamPtpStatusClocksUnicastSlaveMasterIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the IP address of the master."
+    ::= { gamPtpStatusClocksUnicastSlaveEntry 3 }
+
+gamPtpStatusClocksUnicastSlaveMasterMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the MAC address of the master."
+    ::= { gamPtpStatusClocksUnicastSlaveEntry 4 }
+
+gamPtpStatusClocksUnicastSlaveSourcePortIdentityClockIdentity OBJECT-TYPE
+    SYNTAX      OCTET STRING (SIZE(8))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is the 8 byte unique clock identity of the source port."
+    ::= { gamPtpStatusClocksUnicastSlaveEntry 5 }
+
+gamPtpStatusClocksUnicastSlaveSourcePortIdentityPortNumber OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "This is port number of the port used on the source."
+    ::= { gamPtpStatusClocksUnicastSlaveEntry 6 }
+
+gamPtpStatusClocksUnicastSlavePort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The port (on the slave) connected to the master."
+    ::= { gamPtpStatusClocksUnicastSlaveEntry 7 }
+
+gamPtpStatusClocksUnicastSlaveLogMsgPeriod OBJECT-TYPE
+    SYNTAX      GAMInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The granted sync interval."
+    ::= { gamPtpStatusClocksUnicastSlaveEntry 8 }
+
+gamPtpStatusClocksUnicastSlaveCommState OBJECT-TYPE
+    SYNTAX      GAMPtpUcCommState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Communication state."
+    ::= { gamPtpStatusClocksUnicastSlaveEntry 9 }
+
+gamPtpStatusClocksUnicastSlaveConfMasterIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Copy of the destination ip address."
+    ::= { gamPtpStatusClocksUnicastSlaveEntry 10 }
+
+gamPtpStatusClocksPortsDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpStatusClocksPortsDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the dynamic (status) part of the PTP clocks PortDS."
+    ::= { gamPtpStatusClocks 8 }
+
+gamPtpStatusClocksPortsDsEntry OBJECT-TYPE
+    SYNTAX      GAMPtpStatusClocksPortsDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpStatusClocksPortsDsClockId,
+                  gamPtpStatusClocksPortsDsPortId }
+    ::= { gamPtpStatusClocksPortsDsTable 1 }
+
+GAMPtpStatusClocksPortsDsEntry ::= SEQUENCE {
+    gamPtpStatusClocksPortsDsClockId                              Integer32,
+    gamPtpStatusClocksPortsDsPortId                               GAMInterfaceIndex,
+    gamPtpStatusClocksPortsDsPortState                            GAMPtpClockPortState,
+    gamPtpStatusClocksPortsDsLogMinDelayReqInterval               GAMInteger16,
+    gamPtpStatusClocksPortsDsPeerMeanPathDelay                    GAMInteger64,
+    gamPtpStatusClocksPortsDsPeerDelayOk                          TruthValue,
+    gamPtpStatusClocksPortsDsS8021asPortRole                      GAMPtp8021asPortRole,
+    gamPtpStatusClocksPortsDsS8021asIsMeasuringDelay              TruthValue,
+    gamPtpStatusClocksPortsDsS8021asAsCapable                     TruthValue,
+    gamPtpStatusClocksPortsDsS8021asNeighborRateRatio             Integer32,
+    gamPtpStatusClocksPortsDsS8021asCurrentLogAnnounceInterval    GAMDisplayString,
+    gamPtpStatusClocksPortsDsS8021asCurrentLogSyncInterval        GAMDisplayString,
+    gamPtpStatusClocksPortsDsS8021asSyncReceiptTimeInterval       GAMInteger64,
+    gamPtpStatusClocksPortsDsS8021asCurrentLogPDelayReqInterval   GAMDisplayString,
+    gamPtpStatusClocksPortsDsS8021asAcceptableMasterTableEnabled  TruthValue,
+    gamPtpStatusClocksPortsDsS8021asVersionNumber                 GAMUnsigned16
+}
+
+gamPtpStatusClocksPortsDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksPortsDsEntry 1 }
+
+gamPtpStatusClocksPortsDsPortId OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksPortsDsEntry 2 }
+
+gamPtpStatusClocksPortsDsPortState OBJECT-TYPE
+    SYNTAX      GAMPtpClockPortState
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksPortsDsEntry 3 }
+
+gamPtpStatusClocksPortsDsLogMinDelayReqInterval OBJECT-TYPE
+    SYNTAX      GAMInteger16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksPortsDsEntry 4 }
+
+gamPtpStatusClocksPortsDsPeerMeanPathDelay OBJECT-TYPE
+    SYNTAX      GAMInteger64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksPortsDsEntry 5 }
+
+gamPtpStatusClocksPortsDsPeerDelayOk OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatusClocksPortsDsEntry 6 }
+
+gamPtpStatusClocksPortsDsS8021asPortRole OBJECT-TYPE
+    SYNTAX      GAMPtp8021asPortRole
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Port role of this port."
+    ::= { gamPtpStatusClocksPortsDsEntry 8 }
+
+gamPtpStatusClocksPortsDsS8021asIsMeasuringDelay OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if the port is measuring link propagation delay."
+    ::= { gamPtpStatusClocksPortsDsEntry 9 }
+
+gamPtpStatusClocksPortsDsS8021asAsCapable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "TRUE if the time-aware system at the other end of the link is 802.1AS
+         capable."
+    ::= { gamPtpStatusClocksPortsDsEntry 10 }
+
+gamPtpStatusClocksPortsDsS8021asNeighborRateRatio OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Calculated neighbor rate ratio expressed as the fractional frequency
+         offset multiplied by 2**41."
+    ::= { gamPtpStatusClocksPortsDsEntry 11 }
+
+gamPtpStatusClocksPortsDsS8021asCurrentLogAnnounceInterval OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..0))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "log2 of the current announce interval."
+    ::= { gamPtpStatusClocksPortsDsEntry 12 }
+
+gamPtpStatusClocksPortsDsS8021asCurrentLogSyncInterval OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..0))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "log2 of the current sync interval."
+    ::= { gamPtpStatusClocksPortsDsEntry 13 }
+
+gamPtpStatusClocksPortsDsS8021asSyncReceiptTimeInterval OBJECT-TYPE
+    SYNTAX      GAMInteger64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Time interval after which sync receipt timeout occurs if
+         time-synchronization information has not been received during the
+         interval."
+    ::= { gamPtpStatusClocksPortsDsEntry 14 }
+
+gamPtpStatusClocksPortsDsS8021asCurrentLogPDelayReqInterval OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..0))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "log2 of the current Pdelay_Req interval."
+    ::= { gamPtpStatusClocksPortsDsEntry 15 }
+
+gamPtpStatusClocksPortsDsS8021asAcceptableMasterTableEnabled OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Always FALSE."
+    ::= { gamPtpStatusClocksPortsDsEntry 16 }
+
+gamPtpStatusClocksPortsDsS8021asVersionNumber OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "IEEE 1588 PTP version number (always 2)."
+    ::= { gamPtpStatusClocksPortsDsEntry 17 }
+
+gamPtpControl OBJECT IDENTIFIER
+    ::= { gamPtpMibObjects 4 }
+
+gamPtpControlClocksTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpControlClocksEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the PTP clocks control structure."
+    ::= { gamPtpControl 1 }
+
+gamPtpControlClocksEntry OBJECT-TYPE
+    SYNTAX      GAMPtpControlClocksEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpControlClocksClockId }
+    ::= { gamPtpControlClocksTable 1 }
+
+GAMPtpControlClocksEntry ::= SEQUENCE {
+    gamPtpControlClocksClockId            Integer32,
+    gamPtpControlClocksSyncToSystemClock  GAMUnsigned8
+}
+
+gamPtpControlClocksClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpControlClocksEntry 1 }
+
+gamPtpControlClocksSyncToSystemClock OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpControlClocksEntry 2 }
+
+gamPtpStatistics OBJECT IDENTIFIER
+    ::= { gamPtpMibObjects 5 }
+
+gamPtpStatisticsClocks OBJECT IDENTIFIER
+    ::= { gamPtpStatistics 1 }
+
+gamPtpStatisticsClocksPortsDsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMPtpStatisticsClocksPortsDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is the dynamic (status) part of the PTP port parameter statistics."
+    ::= { gamPtpStatisticsClocks 1 }
+
+gamPtpStatisticsClocksPortsDsEntry OBJECT-TYPE
+    SYNTAX      GAMPtpStatisticsClocksPortsDsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The clockId index must be a value must be a value from 0 up to the
+         number of PTP clocks minus one."
+    INDEX       { gamPtpStatisticsClocksPortsDsClockId,
+                  gamPtpStatisticsClocksPortsDsPortId }
+    ::= { gamPtpStatisticsClocksPortsDsTable 1 }
+
+GAMPtpStatisticsClocksPortsDsEntry ::= SEQUENCE {
+    gamPtpStatisticsClocksPortsDsClockId                        Integer32,
+    gamPtpStatisticsClocksPortsDsPortId                         GAMInterfaceIndex,
+    gamPtpStatisticsClocksPortsDsRxSyncCount                    Unsigned32,
+    gamPtpStatisticsClocksPortsDsRxFollowUpCount                Unsigned32,
+    gamPtpStatisticsClocksPortsDsRxPdelayRequestCount           Unsigned32,
+    gamPtpStatisticsClocksPortsDsRxPdelayResponseCount          Unsigned32,
+    gamPtpStatisticsClocksPortsDsRxPdelayResponseFollowUpCount  Unsigned32,
+    gamPtpStatisticsClocksPortsDsRxAnnounceCount                Unsigned32,
+    gamPtpStatisticsClocksPortsDsRxPTPPacketDiscardCount        Unsigned32,
+    gamPtpStatisticsClocksPortsDsSyncReceiptTimeoutCount        Unsigned32,
+    gamPtpStatisticsClocksPortsDsAnnounceReceiptTimeoutCount    Unsigned32,
+    gamPtpStatisticsClocksPortsDsPdelayAllowedLostResExcCount   Unsigned32,
+    gamPtpStatisticsClocksPortsDsTxSyncCount                    Unsigned32,
+    gamPtpStatisticsClocksPortsDsTxFollowUpCount                Unsigned32,
+    gamPtpStatisticsClocksPortsDsTxPdelayRequestCount           Unsigned32,
+    gamPtpStatisticsClocksPortsDsTxPdelayResponseCount          Unsigned32,
+    gamPtpStatisticsClocksPortsDsTxPdelayResponseFollowUpCount  Unsigned32,
+    gamPtpStatisticsClocksPortsDsTxAnnounceCount                Unsigned32
+}
+
+gamPtpStatisticsClocksPortsDsClockId OBJECT-TYPE
+    SYNTAX      Integer32 (0..32767)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatisticsClocksPortsDsEntry 1 }
+
+gamPtpStatisticsClocksPortsDsPortId OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "-"
+    ::= { gamPtpStatisticsClocksPortsDsEntry 2 }
+
+gamPtpStatisticsClocksPortsDsRxSyncCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time synchronization is received."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 3 }
+
+gamPtpStatisticsClocksPortsDsRxFollowUpCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time a Follow_Up is received."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 4 }
+
+gamPtpStatisticsClocksPortsDsRxPdelayRequestCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time a Pdelay_Req is received."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 5 }
+
+gamPtpStatisticsClocksPortsDsRxPdelayResponseCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time a Pdelay_Resp is received."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 6 }
+
+gamPtpStatisticsClocksPortsDsRxPdelayResponseFollowUpCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time a Pdelay_Resp_Follow_Up is received."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 7 }
+
+gamPtpStatisticsClocksPortsDsRxAnnounceCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time a Announce message is received."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 8 }
+
+gamPtpStatisticsClocksPortsDsRxPTPPacketDiscardCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time a PTP message is discarded due to the conditions
+         described in IEEE 802.1AS clause 14.7.8."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 9 }
+
+gamPtpStatisticsClocksPortsDsSyncReceiptTimeoutCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time sync receipt timeout occurs."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 10 }
+
+gamPtpStatisticsClocksPortsDsAnnounceReceiptTimeoutCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time announce receipt timeout occurs."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 11 }
+
+gamPtpStatisticsClocksPortsDsPdelayAllowedLostResExcCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time the value of the variable lostResponses exceeds
+         the value of the variable allowedLostResponses."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 12 }
+
+gamPtpStatisticsClocksPortsDsTxSyncCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time synchronization information is transmitted."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 13 }
+
+gamPtpStatisticsClocksPortsDsTxFollowUpCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time a Follow_Up message is transmitted."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 14 }
+
+gamPtpStatisticsClocksPortsDsTxPdelayRequestCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time a Pdelay_Req message is transmitted."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 15 }
+
+gamPtpStatisticsClocksPortsDsTxPdelayResponseCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time a Pdelay_Resp message is transmitted."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 16 }
+
+gamPtpStatisticsClocksPortsDsTxPdelayResponseFollowUpCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time a Pdelay_Resp_Follow_Up message is transmitted."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 17 }
+
+gamPtpStatisticsClocksPortsDsTxAnnounceCount OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Increments every time an Announce message is transmitted."
+    ::= { gamPtpStatisticsClocksPortsDsEntry 18 }
+
+gamPtpMibConformance OBJECT IDENTIFIER
+    ::= { gamPtpMib 2 }
+
+gamPtpMibCompliances OBJECT IDENTIFIER
+    ::= { gamPtpMibConformance 1 }
+
+gamPtpMibGroups OBJECT IDENTIFIER
+    ::= { gamPtpMibConformance 2 }
+
+gamPtpCapabilitiesGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpCapabilitiesGlobalsClockCount,
+                  gamPtpCapabilitiesGlobalsHasMsPdv,
+                  gamPtpCapabilitiesGlobalsHasHwClkDomains }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 1 }
+
+gamPtpConfigGlobalsSystemTimeSyncModeInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpConfigGlobalsSystemTimeSyncModeMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 2 }
+
+gamPtpConfigClocksDefaultDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpConfigClocksDefaultDsClockId,
+                  gamPtpConfigClocksDefaultDsDeviceType,
+                  gamPtpConfigClocksDefaultDsTwoStepFlag,
+                  gamPtpConfigClocksDefaultDsPriority1,
+                  gamPtpConfigClocksDefaultDsPriority2,
+                  gamPtpConfigClocksDefaultDsOneWay,
+                  gamPtpConfigClocksDefaultDsDomainNumber,
+                  gamPtpConfigClocksDefaultDsProtocol,
+                  gamPtpConfigClocksDefaultDsVid,
+                  gamPtpConfigClocksDefaultDsPcp,
+                  gamPtpConfigClocksDefaultDsMep,
+                  gamPtpConfigClocksDefaultDsClkDom,
+                  gamPtpConfigClocksDefaultDsDscp,
+                  gamPtpConfigClocksDefaultDsProfile,
+                  gamPtpConfigClocksDefaultDsLocalPriority,
+                  gamPtpConfigClocksDefaultDsFilterType,
+                  gamPtpConfigClocksDefaultDsPathTraceEnable,
+                  gamPtpConfigClocksDefaultDsAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 3 }
+
+gamPtpConfigClocksDefaultDsTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpConfigClocksDefaultDsTableRowEditorClockId,
+                  gamPtpConfigClocksDefaultDsTableRowEditorDeviceType,
+                  gamPtpConfigClocksDefaultDsTableRowEditorTwoStepFlag,
+                  gamPtpConfigClocksDefaultDsTableRowEditorPriority1,
+                  gamPtpConfigClocksDefaultDsTableRowEditorPriority2,
+                  gamPtpConfigClocksDefaultDsTableRowEditorOneWay,
+                  gamPtpConfigClocksDefaultDsTableRowEditorDomainNumber,
+                  gamPtpConfigClocksDefaultDsTableRowEditorProtocol,
+                  gamPtpConfigClocksDefaultDsTableRowEditorVid,
+                  gamPtpConfigClocksDefaultDsTableRowEditorPcp,
+                  gamPtpConfigClocksDefaultDsTableRowEditorMep,
+                  gamPtpConfigClocksDefaultDsTableRowEditorClkDom,
+                  gamPtpConfigClocksDefaultDsTableRowEditorDscp,
+                  gamPtpConfigClocksDefaultDsTableRowEditorProfile,
+                  gamPtpConfigClocksDefaultDsTableRowEditorLocalPriority,
+                  gamPtpConfigClocksDefaultDsTableRowEditorFilterType,
+                  gamPtpConfigClocksDefaultDsTableRowEditorPathTraceEnable,
+                  gamPtpConfigClocksDefaultDsTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 4 }
+
+gamPtpConfigClocksTimePropertiesDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpConfigClocksTimePropertiesDsClockId,
+                  gamPtpConfigClocksTimePropertiesDsCurrentUtcOffset,
+                  gamPtpConfigClocksTimePropertiesDsCurrentUtcOffsetValid,
+                  gamPtpConfigClocksTimePropertiesDsLeap59,
+                  gamPtpConfigClocksTimePropertiesDsLeap61,
+                  gamPtpConfigClocksTimePropertiesDsTimeTraceable,
+                  gamPtpConfigClocksTimePropertiesDsFrequencyTraceable,
+                  gamPtpConfigClocksTimePropertiesDsPtpTimescale,
+                  gamPtpConfigClocksTimePropertiesDsTimeSource,
+                  gamPtpConfigClocksTimePropertiesDsPendingLeap,
+                  gamPtpConfigClocksTimePropertiesDsLeapDate,
+                  gamPtpConfigClocksTimePropertiesDsLeapType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 5 }
+
+gamPtpConfigClocksFilterParametersTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpConfigClocksFilterParametersClockId,
+                  gamPtpConfigClocksFilterParametersDelayFilter,
+                  gamPtpConfigClocksFilterParametersPeriod,
+                  gamPtpConfigClocksFilterParametersDist }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 6 }
+
+gamPtpConfigClocksServoParametersTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpConfigClocksServoParametersClockId,
+                  gamPtpConfigClocksServoParametersDisplay,
+                  gamPtpConfigClocksServoParametersPEnable,
+                  gamPtpConfigClocksServoParametersIEnable,
+                  gamPtpConfigClocksServoParametersDEnable,
+                  gamPtpConfigClocksServoParametersPval,
+                  gamPtpConfigClocksServoParametersIval,
+                  gamPtpConfigClocksServoParametersDval,
+                  gamPtpConfigClocksServoParametersSrvOption,
+                  gamPtpConfigClocksServoParametersSynceThreshold,
+                  gamPtpConfigClocksServoParametersSynceAp,
+                  gamPtpConfigClocksServoParametersHoFilter,
+                  gamPtpConfigClocksServoParametersStableAdjThreshold,
+                  gamPtpConfigClocksServoParametersGain }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 7 }
+
+gamPtpConfigClocksSlaveConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpConfigClocksSlaveConfigClockId,
+                  gamPtpConfigClocksSlaveConfigStableOffset,
+                  gamPtpConfigClocksSlaveConfigOffsetOk,
+                  gamPtpConfigClocksSlaveConfigOffsetFail }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 8 }
+
+gamPtpConfigClocksUnicastSlaveConfigTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpConfigClocksUnicastSlaveConfigClockId,
+                  gamPtpConfigClocksUnicastSlaveConfigMasterId,
+                  gamPtpConfigClocksUnicastSlaveConfigDuration,
+                  gamPtpConfigClocksUnicastSlaveConfigIpAddress }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 9 }
+
+gamPtpConfigClocksPortDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpConfigClocksPortDsClockId,
+                  gamPtpConfigClocksPortDsPortId,
+                  gamPtpConfigClocksPortDsEnabled,
+                  gamPtpConfigClocksPortDsLogAnnounceInterval,
+                  gamPtpConfigClocksPortDsAnnounceReceiptTimeout,
+                  gamPtpConfigClocksPortDsLogSyncInterval,
+                  gamPtpConfigClocksPortDsDelayMechanism,
+                  gamPtpConfigClocksPortDsLogMinPdelayReqInterval,
+                  gamPtpConfigClocksPortDsDelayAsymmetry,
+                  gamPtpConfigClocksPortDsIngressLatency,
+                  gamPtpConfigClocksPortDsEgressLatency,
+                  gamPtpConfigClocksPortDsPortInternal,
+                  gamPtpConfigClocksPortDsVersionNumber,
+                  gamPtpConfigClocksPortDsMcastAddr,
+                  gamPtpConfigClocksPortDsNotSlave,
+                  gamPtpConfigClocksPortDsLocalPriority,
+                  gamPtpConfigClocksPortDsC8021asNeighborPropDelayThresh,
+                  gamPtpConfigClocksPortDsC8021asSyncReceiptTimeout,
+                  gamPtpConfigClocksPortDsC8021asAllowedLostResponses }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 10 }
+
+gamPtpConfigClocksVirtualPortCfgTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpConfigClocksVirtualPortCfgClockId,
+                  gamPtpConfigClocksVirtualPortCfgEnable,
+                  gamPtpConfigClocksVirtualPortCfgIoPin,
+                  gamPtpConfigClocksVirtualPortCfgClockQualityClockClass,
+                  gamPtpConfigClocksVirtualPortCfgClockQualityClockAccuracy,
+                  gamPtpConfigClocksVirtualPortCfgClockQualityOffsetScaledLogVar,
+                  gamPtpConfigClocksVirtualPortCfgPriority1,
+                  gamPtpConfigClocksVirtualPortCfgPriority2,
+                  gamPtpConfigClocksVirtualPortCfgLocalPriority }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 11 }
+
+gamPtpStatusClocksDefaultDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpStatusClocksDefaultDsClockId,
+                  gamPtpStatusClocksDefaultDsClockIdentity,
+                  gamPtpStatusClocksDefaultDsClockQualityClockClass,
+                  gamPtpStatusClocksDefaultDsClockQualityClockAccuracy,
+                  gamPtpStatusClocksDefaultDsClockQualityOffsetScaledLogVar,
+                  gamPtpStatusClocksDefaultDsS8021asGmCapable }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 12 }
+
+gamPtpStatusClocksCurrentDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpStatusClocksCurrentDsClockId,
+                  gamPtpStatusClocksCurrentDsStepsRemoved,
+                  gamPtpStatusClocksCurrentDsOffsetFromMaster,
+                  gamPtpStatusClocksCurrentDsMeanPathDelay,
+                  gamPtpStatusClocksCurrentDsCur8021asLastGMPhaseChangeLow,
+                  gamPtpStatusClocksCurrentDsCur8021asLastGMPhaseChangeHigh,
+                  gamPtpStatusClocksCurrentDsCur8021asLastGMFreqChange,
+                  gamPtpStatusClocksCurrentDsCur8021asGmTimeBaseIndicator,
+                  gamPtpStatusClocksCurrentDsCur8021asGmChangeCount,
+                  gamPtpStatusClocksCurrentDsCur8021asTimeOfLastGMChangeEvt,
+                  gamPtpStatusClocksCurrentDsCur8021asTimeOfLastGMPhaseChangeEvt,
+                  gamPtpStatusClocksCurrentDsCur8021asTimeOfLastGMFreqChangeEvent }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 13 }
+
+gamPtpStatusClocksParentDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpStatusClocksParentDsClockId,
+                  gamPtpStatusClocksParentDsParentPortIdentityClockIdentity,
+                  gamPtpStatusClocksParentDsParentPortIdentityPortNumber,
+                  gamPtpStatusClocksParentDsParentStats,
+                  gamPtpStatusClocksParentDsObservedParentOffsetScaledLogVar,
+                  gamPtpStatusClocksParentDsObservedParentClockPhaseChangeRate,
+                  gamPtpStatusClocksParentDsGrmstrIdentity,
+                  gamPtpStatusClocksParentDsGrmstrClkQualClockClass,
+                  gamPtpStatusClocksParentDsGmstrClkQualClockAccuracy,
+                  gamPtpStatusClocksParentDsGmstrClkQualOffsetScaledLogVar,
+                  gamPtpStatusClocksParentDsGmstrPriority1,
+                  gamPtpStatusClocksParentDsGmstrPriority2,
+                  gamPtpStatusClocksParentDsPar8021asCumulativeRateRatio }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 14 }
+
+gamPtpStatusClocksTimePropertiesDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpStatusClocksTimePropertiesDsClockId,
+                  gamPtpStatusClocksTimePropertiesDsCurrentUtcOffset,
+                  gamPtpStatusClocksTimePropertiesDsCurrentUtcOffsetValid,
+                  gamPtpStatusClocksTimePropertiesDsLeap59,
+                  gamPtpStatusClocksTimePropertiesDsLeap61,
+                  gamPtpStatusClocksTimePropertiesDsTimeTraceable,
+                  gamPtpStatusClocksTimePropertiesDsFrequencyTraceable,
+                  gamPtpStatusClocksTimePropertiesDsPtpTimescale,
+                  gamPtpStatusClocksTimePropertiesDsTimeSource,
+                  gamPtpStatusClocksTimePropertiesDsPendingLeap,
+                  gamPtpStatusClocksTimePropertiesDsLeapDate,
+                  gamPtpStatusClocksTimePropertiesDsLeapType }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 15 }
+
+gamPtpStatusClocksSlaveDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpStatusClocksSlaveDsClockId,
+                  gamPtpStatusClocksSlaveDsSlavePort,
+                  gamPtpStatusClocksSlaveDsSlaveState,
+                  gamPtpStatusClocksSlaveDsHoldoverStable,
+                  gamPtpStatusClocksSlaveDsHoldoverAdj }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 16 }
+
+gamPtpStatusClocksUnicastMasterTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpStatusClocksUnicastMasterClockId,
+                  gamPtpStatusClocksUnicastMasterSlaveIp,
+                  gamPtpStatusClocksUnicastMasterSlaveMac,
+                  gamPtpStatusClocksUnicastMasterPort,
+                  gamPtpStatusClocksUnicastMasterAnnLogMsgPeriod,
+                  gamPtpStatusClocksUnicastMasterAnn,
+                  gamPtpStatusClocksUnicastMasterLogMsgPeriod,
+                  gamPtpStatusClocksUnicastMasterSync }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 17 }
+
+gamPtpStatusClocksUnicastSlaveTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpStatusClocksUnicastSlaveClockId,
+                  gamPtpStatusClocksUnicastSlaveMasterId,
+                  gamPtpStatusClocksUnicastSlaveMasterIp,
+                  gamPtpStatusClocksUnicastSlaveMasterMac,
+                  gamPtpStatusClocksUnicastSlaveSourcePortIdentityClockIdentity,
+                  gamPtpStatusClocksUnicastSlaveSourcePortIdentityPortNumber,
+                  gamPtpStatusClocksUnicastSlavePort,
+                  gamPtpStatusClocksUnicastSlaveLogMsgPeriod,
+                  gamPtpStatusClocksUnicastSlaveCommState,
+                  gamPtpStatusClocksUnicastSlaveConfMasterIp }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 18 }
+
+gamPtpStatusClocksPortsDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpStatusClocksPortsDsClockId,
+                  gamPtpStatusClocksPortsDsPortId,
+                  gamPtpStatusClocksPortsDsPortState,
+                  gamPtpStatusClocksPortsDsLogMinDelayReqInterval,
+                  gamPtpStatusClocksPortsDsPeerMeanPathDelay,
+                  gamPtpStatusClocksPortsDsPeerDelayOk,
+                  gamPtpStatusClocksPortsDsS8021asPortRole,
+                  gamPtpStatusClocksPortsDsS8021asIsMeasuringDelay,
+                  gamPtpStatusClocksPortsDsS8021asAsCapable,
+                  gamPtpStatusClocksPortsDsS8021asNeighborRateRatio,
+                  gamPtpStatusClocksPortsDsS8021asCurrentLogAnnounceInterval,
+                  gamPtpStatusClocksPortsDsS8021asCurrentLogSyncInterval,
+                  gamPtpStatusClocksPortsDsS8021asSyncReceiptTimeInterval,
+                  gamPtpStatusClocksPortsDsS8021asCurrentLogPDelayReqInterval,
+                  gamPtpStatusClocksPortsDsS8021asAcceptableMasterTableEnabled,
+                  gamPtpStatusClocksPortsDsS8021asVersionNumber }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 19 }
+
+gamPtpControlClocksTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpControlClocksClockId,
+                  gamPtpControlClocksSyncToSystemClock }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 20 }
+
+gamPtpStatisticsClocksPortsDsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamPtpStatisticsClocksPortsDsClockId,
+                  gamPtpStatisticsClocksPortsDsPortId,
+                  gamPtpStatisticsClocksPortsDsRxSyncCount,
+                  gamPtpStatisticsClocksPortsDsRxFollowUpCount,
+                  gamPtpStatisticsClocksPortsDsRxPdelayRequestCount,
+                  gamPtpStatisticsClocksPortsDsRxPdelayResponseCount,
+                  gamPtpStatisticsClocksPortsDsRxPdelayResponseFollowUpCount,
+                  gamPtpStatisticsClocksPortsDsRxAnnounceCount,
+                  gamPtpStatisticsClocksPortsDsRxPTPPacketDiscardCount,
+                  gamPtpStatisticsClocksPortsDsSyncReceiptTimeoutCount,
+                  gamPtpStatisticsClocksPortsDsAnnounceReceiptTimeoutCount,
+                  gamPtpStatisticsClocksPortsDsPdelayAllowedLostResExcCount,
+                  gamPtpStatisticsClocksPortsDsTxSyncCount,
+                  gamPtpStatisticsClocksPortsDsTxFollowUpCount,
+                  gamPtpStatisticsClocksPortsDsTxPdelayRequestCount,
+                  gamPtpStatisticsClocksPortsDsTxPdelayResponseCount,
+                  gamPtpStatisticsClocksPortsDsTxPdelayResponseFollowUpCount,
+                  gamPtpStatisticsClocksPortsDsTxAnnounceCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamPtpMibGroups 21 }
+
+gamPtpMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamPtpCapabilitiesGlobalsInfoGroup,
+                       gamPtpConfigGlobalsSystemTimeSyncModeInfoGroup,
+                       gamPtpConfigClocksDefaultDsTableInfoGroup,
+                       gamPtpConfigClocksDefaultDsTableRowEditorInfoGroup,
+                       gamPtpConfigClocksTimePropertiesDsTableInfoGroup,
+                       gamPtpConfigClocksFilterParametersTableInfoGroup,
+                       gamPtpConfigClocksServoParametersTableInfoGroup,
+                       gamPtpConfigClocksSlaveConfigTableInfoGroup,
+                       gamPtpConfigClocksUnicastSlaveConfigTableInfoGroup,
+                       gamPtpConfigClocksPortDsTableInfoGroup,
+                       gamPtpConfigClocksVirtualPortCfgTableInfoGroup,
+                       gamPtpStatusClocksDefaultDsTableInfoGroup,
+                       gamPtpStatusClocksCurrentDsTableInfoGroup,
+                       gamPtpStatusClocksParentDsTableInfoGroup,
+                       gamPtpStatusClocksTimePropertiesDsTableInfoGroup,
+                       gamPtpStatusClocksSlaveDsTableInfoGroup,
+                       gamPtpStatusClocksUnicastMasterTableInfoGroup,
+                       gamPtpStatusClocksUnicastSlaveTableInfoGroup,
+                       gamPtpStatusClocksPortsDsTableInfoGroup,
+                       gamPtpControlClocksTableInfoGroup,
+                       gamPtpStatisticsClocksPortsDsTableInfoGroup }
+
+    ::= { gamPtpMibCompliances 1 }
+
+END

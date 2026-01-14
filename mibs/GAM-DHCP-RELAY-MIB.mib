@@ -1,0 +1,323 @@
+-- *****************************************************************
+-- DHCP-RELAY-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-DHCP-RELAY-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamDhcpRelayMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the DHCP Relay MIB"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 55 }
+
+
+GAMDhcpRelayInformationPolicyType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the DHCP relay information policy type."
+    SYNTAX      INTEGER { replace(0), keep(1), drop(2) }
+
+gamDhcpRelayMibObjects OBJECT IDENTIFIER
+    ::= { gamDhcpRelayMib 1 }
+
+gamDhcpRelayConfig OBJECT IDENTIFIER
+    ::= { gamDhcpRelayMibObjects 2 }
+
+gamDhcpRelayConfigGlobals OBJECT IDENTIFIER
+    ::= { gamDhcpRelayConfig 1 }
+
+gamDhcpRelayConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Global mode of DHCP relay. true is to enable DHCP relay and false is to
+         disable it."
+    ::= { gamDhcpRelayConfigGlobals 1 }
+
+gamDhcpRelayConfigGlobalsServerIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Server IP address. This IP address is for DHCP server where the DHCP
+         relay will relay DHCP packets to."
+    ::= { gamDhcpRelayConfigGlobals 2 }
+
+gamDhcpRelayConfigGlobalsInformationMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the DHCP relay information mode option operation. Possible
+         modes are - Enabled: Enable DHCP relay information mode operation. When
+         DHCP relay information mode operation is enabled, the agent inserts
+         specific information (option 82) into a DHCP message when forwarding to
+         DHCP server and removes it from a DHCP message when transferring to
+         DHCP client. It only works when DHCP relay operation mode is enabled.
+         Disabled: Disable DHCP relay information mode operation."
+    ::= { gamDhcpRelayConfigGlobals 3 }
+
+gamDhcpRelayConfigGlobalsInformationPolicy OBJECT-TYPE
+    SYNTAX      GAMDhcpRelayInformationPolicyType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the DHCP relay information option policy. When DHCP relay
+         information mode operation is enabled, if the agent receives a DHCP
+         message that already contains relay agent information it will enforce
+         the policy. The 'Replace' policy is invalid when relay information mode
+         is disabled."
+    ::= { gamDhcpRelayConfigGlobals 4 }
+
+gamDhcpRelayConfigGlobalsInformationAccessNodeId OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the DHCP relay information access node ID"
+    ::= { gamDhcpRelayConfigGlobals 5 }
+
+gamDhcpRelayConfigGlobalsInformationIndexOneBase OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates if the DHCP relay information indices are generated one-based"
+    ::= { gamDhcpRelayConfigGlobals 6 }
+
+gamDhcpRelayStatus OBJECT IDENTIFIER
+    ::= { gamDhcpRelayMibObjects 3 }
+
+gamDhcpRelayStatusStatistics OBJECT IDENTIFIER
+    ::= { gamDhcpRelayStatus 1 }
+
+gamDhcpRelayStatusStatisticsServerPacketsRelayed OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Packets relayed from server to client."
+    ::= { gamDhcpRelayStatusStatistics 1 }
+
+gamDhcpRelayStatusStatisticsServerPacketErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Errors sending packets to servers."
+    ::= { gamDhcpRelayStatusStatistics 2 }
+
+gamDhcpRelayStatusStatisticsClientPacketsRelayed OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Packets relayed from client to server."
+    ::= { gamDhcpRelayStatusStatistics 3 }
+
+gamDhcpRelayStatusStatisticsClientPacketErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Errors sending packets to clients."
+    ::= { gamDhcpRelayStatusStatistics 4 }
+
+gamDhcpRelayStatusStatisticsAgentOptionErrors OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets forwarded without agent options because there was no
+         room."
+    ::= { gamDhcpRelayStatusStatistics 5 }
+
+gamDhcpRelayStatusStatisticsMissingAgentOption OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Number of packets dropped because no RAI option matching our ID was
+         found."
+    ::= { gamDhcpRelayStatusStatistics 6 }
+
+gamDhcpRelayStatusStatisticsBadCircuitId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Circuit ID option in matching RAI option did not match any known
+         circuit ID."
+    ::= { gamDhcpRelayStatusStatistics 7 }
+
+gamDhcpRelayStatusStatisticsMissingCircuitId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Circuit ID option in matching RAI option was missing."
+    ::= { gamDhcpRelayStatusStatistics 8 }
+
+gamDhcpRelayStatusStatisticsBadRemoteId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Remote ID option in matching RAI option did not match any known remote
+         ID."
+    ::= { gamDhcpRelayStatusStatistics 9 }
+
+gamDhcpRelayStatusStatisticsMissingRemoteId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Remote ID option in matching RAI option was missing."
+    ::= { gamDhcpRelayStatusStatistics 10 }
+
+gamDhcpRelayStatusStatisticsReceiveServerPackets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Receive DHCP message from server."
+    ::= { gamDhcpRelayStatusStatistics 11 }
+
+gamDhcpRelayStatusStatisticsReceiveClientPackets OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Receive DHCP message from client."
+    ::= { gamDhcpRelayStatusStatistics 12 }
+
+gamDhcpRelayStatusStatisticsReceiveClientAgentOption OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Receive relay agent information option from client."
+    ::= { gamDhcpRelayStatusStatistics 13 }
+
+gamDhcpRelayStatusStatisticsReplaceAgentOption OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Replace relay agent information option."
+    ::= { gamDhcpRelayStatusStatistics 14 }
+
+gamDhcpRelayStatusStatisticsKeepAgentOption OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Keep relay agent information option."
+    ::= { gamDhcpRelayStatusStatistics 15 }
+
+gamDhcpRelayStatusStatisticsDropAgentOption OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Drop relay agent information option."
+    ::= { gamDhcpRelayStatusStatistics 16 }
+
+gamDhcpRelayControl OBJECT IDENTIFIER
+    ::= { gamDhcpRelayMibObjects 4 }
+
+gamDhcpRelayControlClearStatistics OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The action to clear statistics. true is to clear the statistics data.
+         false, then, does nothing."
+    ::= { gamDhcpRelayControl 1 }
+
+gamDhcpRelayMibConformance OBJECT IDENTIFIER
+    ::= { gamDhcpRelayMib 2 }
+
+gamDhcpRelayMibCompliances OBJECT IDENTIFIER
+    ::= { gamDhcpRelayMibConformance 1 }
+
+gamDhcpRelayMibGroups OBJECT IDENTIFIER
+    ::= { gamDhcpRelayMibConformance 2 }
+
+gamDhcpRelayConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpRelayConfigGlobalsMode,
+                  gamDhcpRelayConfigGlobalsServerIpAddress,
+                  gamDhcpRelayConfigGlobalsInformationMode,
+                  gamDhcpRelayConfigGlobalsInformationPolicy,
+                  gamDhcpRelayConfigGlobalsInformationAccessNodeId,
+                  gamDhcpRelayConfigGlobalsInformationIndexOneBase }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpRelayMibGroups 1 }
+
+gamDhcpRelayStatusStatisticsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpRelayStatusStatisticsServerPacketsRelayed,
+                  gamDhcpRelayStatusStatisticsServerPacketErrors,
+                  gamDhcpRelayStatusStatisticsClientPacketsRelayed,
+                  gamDhcpRelayStatusStatisticsClientPacketErrors,
+                  gamDhcpRelayStatusStatisticsAgentOptionErrors,
+                  gamDhcpRelayStatusStatisticsMissingAgentOption,
+                  gamDhcpRelayStatusStatisticsBadCircuitId,
+                  gamDhcpRelayStatusStatisticsMissingCircuitId,
+                  gamDhcpRelayStatusStatisticsBadRemoteId,
+                  gamDhcpRelayStatusStatisticsMissingRemoteId,
+                  gamDhcpRelayStatusStatisticsReceiveServerPackets,
+                  gamDhcpRelayStatusStatisticsReceiveClientPackets,
+                  gamDhcpRelayStatusStatisticsReceiveClientAgentOption,
+                  gamDhcpRelayStatusStatisticsReplaceAgentOption,
+                  gamDhcpRelayStatusStatisticsKeepAgentOption,
+                  gamDhcpRelayStatusStatisticsDropAgentOption }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpRelayMibGroups 2 }
+
+gamDhcpRelayControlInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpRelayControlClearStatistics }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpRelayMibGroups 3 }
+
+gamDhcpRelayMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamDhcpRelayConfigGlobalsInfoGroup,
+                       gamDhcpRelayStatusStatisticsInfoGroup,
+                       gamDhcpRelayControlInfoGroup }
+
+    ::= { gamDhcpRelayMibCompliances 1 }
+
+END

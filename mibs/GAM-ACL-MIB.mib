@@ -1,0 +1,2853 @@
+-- *****************************************************************
+-- ACL-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-ACL-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMASRType FROM GAM-TC
+    GAMASType FROM GAM-TC
+    GAMAdvDestMacType FROM GAM-TC
+    GAMBitType FROM GAM-TC
+    GAMDisplayString FROM GAM-TC
+    GAMInterfaceIndex FROM GAM-TC
+    GAMPortList FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    GAMVlanTagPriority FROM GAM-TC
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamAclMib MODULE-IDENTITY
+    LAST-UPDATED "201501120000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of ACL"
+    REVISION    "201501120000Z"
+    DESCRIPTION
+        "Add ACE parameters for stacking device"
+    REVISION    "201411130000Z"
+    DESCRIPTION
+        "Add ACE Ingress parameters"
+    REVISION    "201408050000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 17 }
+
+
+GAMAclAceArpOp ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "ARP opcode."
+    SYNTAX      INTEGER { any(0), arp(1), rarp(2), other(3) }
+
+GAMAclAceFrameType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The frame type of the ACE."
+    SYNTAX      INTEGER { any(0), etype(1), arp(4), ipv4(5), ipv6(6) }
+
+GAMAclAceIngressPortListMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The ingress port list mode of the ACE."
+    SYNTAX      INTEGER { any(0), specific(1), switch(2),
+                          switchport(3) }
+
+GAMAclAceVlanTagged ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "VLAN tagged/untagged."
+    SYNTAX      INTEGER { any(0), untagged(1), tagged(2) }
+
+GAMAclHitAction ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "The hit action."
+    SYNTAX      INTEGER { permit(0), deny(1), redirect(2), egress(3) }
+
+gamAclMibObjects OBJECT IDENTIFIER
+    ::= { gamAclMib 1 }
+
+gamAclCapabilities OBJECT IDENTIFIER
+    ::= { gamAclMibObjects 1 }
+
+gamAclCapabilitiesAceIdMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum ID of ACE."
+    ::= { gamAclCapabilities 1 }
+
+gamAclCapabilitiesPolicyIdMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum ID of policy."
+    ::= { gamAclCapabilities 2 }
+
+gamAclCapabilitiesRateLimiterIdMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum ID of rate limiter."
+    ::= { gamAclCapabilities 3 }
+
+gamAclCapabilitiesEvcPolicerIdMax OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Maximum ID of EVC policer."
+    ::= { gamAclCapabilities 4 }
+
+gamAclCapabilitiesRateLimiterBitRateSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, the rate limiter can be configured by bit rate."
+    ::= { gamAclCapabilities 5 }
+
+gamAclCapabilitiesEvcPolicerSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, EVC policer can be configured."
+    ::= { gamAclCapabilities 6 }
+
+gamAclCapabilitiesMirrorSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, mirror action is supported."
+    ::= { gamAclCapabilities 7 }
+
+gamAclCapabilitiesMultipleRedirectPortsSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, redirect port list can be configured with multiple ports. If
+         false, redirect port list can be configured with only one single port."
+    ::= { gamAclCapabilities 8 }
+
+gamAclCapabilitiesSecondLookupSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, second lookup can be configured."
+    ::= { gamAclCapabilities 9 }
+
+gamAclCapabilitiesMultipleIngressPortsSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, ingress port list can be configured with multiple ports. If
+         false, ingress port list can be configured with only one single port."
+    ::= { gamAclCapabilities 10 }
+
+gamAclCapabilitiesEgressPortSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, egress port list can be configured."
+    ::= { gamAclCapabilities 11 }
+
+gamAclCapabilitiesVlanTaggedSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, VLAN tagged can be configured."
+    ::= { gamAclCapabilities 12 }
+
+gamAclCapabilitiesStackableAceSupported OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "If true, stackable ACE is supported. The 'switch' and 'switchport' ACE
+         ingress type can be configured. Otherwize, only 'any' and 'specific'
+         ACE ingress type can be configured."
+    ::= { gamAclCapabilities 13 }
+
+gamAclConfig OBJECT IDENTIFIER
+    ::= { gamAclMibObjects 2 }
+
+gamAclConfigInterface OBJECT IDENTIFIER
+    ::= { gamAclConfig 2 }
+
+gamAclConfigInterfaceConfigTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAclConfigInterfaceConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of interface configuration"
+    ::= { gamAclConfigInterface 1 }
+
+gamAclConfigInterfaceConfigEntry OBJECT-TYPE
+    SYNTAX      GAMAclConfigInterfaceConfigEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each interface has a set of parameters"
+    INDEX       { gamAclConfigInterfaceConfigIfIndex }
+    ::= { gamAclConfigInterfaceConfigTable 1 }
+
+GAMAclConfigInterfaceConfigEntry ::= SEQUENCE {
+    gamAclConfigInterfaceConfigIfIndex           GAMInterfaceIndex,
+    gamAclConfigInterfaceConfigPolicyId          Unsigned32,
+    gamAclConfigInterfaceConfigHitAction         GAMAclHitAction,
+    gamAclConfigInterfaceConfigRedirectPortList  GAMPortList,
+    gamAclConfigInterfaceConfigRateLimiterId     Unsigned32,
+    gamAclConfigInterfaceConfigEvcPolicerId      GAMUnsigned16,
+    gamAclConfigInterfaceConfigMirror            TruthValue,
+    gamAclConfigInterfaceConfigLogging           TruthValue,
+    gamAclConfigInterfaceConfigShutdown          TruthValue
+}
+
+gamAclConfigInterfaceConfigIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The index of logical interface."
+    ::= { gamAclConfigInterfaceConfigEntry 1 }
+
+gamAclConfigInterfaceConfigPolicyId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The policy ID."
+    ::= { gamAclConfigInterfaceConfigEntry 2 }
+
+gamAclConfigInterfaceConfigHitAction OBJECT-TYPE
+    SYNTAX      GAMAclHitAction
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The hit action operation for this interface. egress(2) is not
+         supported."
+    ::= { gamAclConfigInterfaceConfigEntry 101 }
+
+gamAclConfigInterfaceConfigRedirectPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The redirect port list for this interface."
+    ::= { gamAclConfigInterfaceConfigEntry 102 }
+
+gamAclConfigInterfaceConfigRateLimiterId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The rate limiter ID. 0 means to be disabled."
+    ::= { gamAclConfigInterfaceConfigEntry 103 }
+
+gamAclConfigInterfaceConfigEvcPolicerId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The EVC policer ID. 0 means to be disabled.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesEvcPolicerSupported' is True."
+    ::= { gamAclConfigInterfaceConfigEntry 104 }
+
+gamAclConfigInterfaceConfigMirror OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The mirror operation. Frames matching this interface rule are mirrored
+         to the destination mirror port that is configured in the mirror
+         modules.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesMirrorSupported' is True."
+    ::= { gamAclConfigInterfaceConfigEntry 105 }
+
+gamAclConfigInterfaceConfigLogging OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the logging operation of the interface. Notice that the logging
+         message doesn't include the 4 bytes CRC information. The allowed values
+         are: True - Frames matching the ACE are stored in the System Log. False
+         - Frames matching the ACE are not logged. Note: The logging feature
+         only works when the packet length is less than 1518(without VLAN tags)
+         and the System Log memory size and logging rate is limited."
+    ::= { gamAclConfigInterfaceConfigEntry 106 }
+
+gamAclConfigInterfaceConfigShutdown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the port shut down operation of the interface. The allowed
+         values are: True - If a frame matches the interface rule, the ingress
+         port will be disabled. False - Port shut down is disabled for the
+         interface. Note: The shutdown feature only works when the packet length
+         is less than 1518(without VLAN tags)."
+    ::= { gamAclConfigInterfaceConfigEntry 107 }
+
+gamAclConfigRateLimiterTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAclConfigRateLimiterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of rate limiter configuration"
+    ::= { gamAclConfig 3 }
+
+gamAclConfigRateLimiterEntry OBJECT-TYPE
+    SYNTAX      GAMAclConfigRateLimiterEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each rate limiter has a set of parameters"
+    INDEX       { gamAclConfigRateLimiterRateLimiterId }
+    ::= { gamAclConfigRateLimiterTable 1 }
+
+GAMAclConfigRateLimiterEntry ::= SEQUENCE {
+    gamAclConfigRateLimiterRateLimiterId  Integer32,
+    gamAclConfigRateLimiterBitRateEnable  TruthValue,
+    gamAclConfigRateLimiterBitRate        Unsigned32,
+    gamAclConfigRateLimiterPacketRate     Unsigned32
+}
+
+gamAclConfigRateLimiterRateLimiterId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The rate limter ID."
+    ::= { gamAclConfigRateLimiterEntry 1 }
+
+gamAclConfigRateLimiterBitRateEnable OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Use bit rate policing instead of packet rate. True means bit rate is
+         used and false means packet rate is used.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesRateLimiterBitRateSupported' is True."
+    ::= { gamAclConfigRateLimiterEntry 2 }
+
+gamAclConfigRateLimiterBitRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Bit rate in kbps.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesRateLimiterBitRateSupported' is True."
+    ::= { gamAclConfigRateLimiterEntry 3 }
+
+gamAclConfigRateLimiterPacketRate OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Packet rate in pps."
+    ::= { gamAclConfigRateLimiterEntry 4 }
+
+gamAclConfigAce OBJECT IDENTIFIER
+    ::= { gamAclConfig 4 }
+
+gamAclConfigAceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAclConfigAceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "The ACL ACE configuration table."
+    ::= { gamAclConfigAce 1 }
+
+gamAclConfigAceEntry OBJECT-TYPE
+    SYNTAX      GAMAclConfigAceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains a set of parameters."
+    INDEX       { gamAclConfigAceAceId }
+    ::= { gamAclConfigAceTable 1 }
+
+GAMAclConfigAceEntry ::= SEQUENCE {
+    gamAclConfigAceAceId                       Integer32,
+    gamAclConfigAceNextAceId                   Unsigned32,
+    gamAclConfigAceHitAction                   GAMAclHitAction,
+    gamAclConfigAceRedirectPortList            GAMPortList,
+    gamAclConfigAceRedirectPortListSwitchPort  Unsigned32,
+    gamAclConfigAceEgressPortList              GAMPortList,
+    gamAclConfigAceRateLimiterId               Unsigned32,
+    gamAclConfigAceEvcPolicerId                GAMUnsigned16,
+    gamAclConfigAceMirror                      TruthValue,
+    gamAclConfigAceLogging                     TruthValue,
+    gamAclConfigAceShutdown                    TruthValue,
+    gamAclConfigAceIngressPortListMode         GAMAclAceIngressPortListMode,
+    gamAclConfigAceIngressPortList             GAMPortList,
+    gamAclConfigAceIngressPortListSwitch       Unsigned32,
+    gamAclConfigAceIngressPortListSwitchPort   Unsigned32,
+    gamAclConfigAcePolicyValue                 GAMUnsigned8,
+    gamAclConfigAcePolicyMask                  GAMUnsigned8,
+    gamAclConfigAceSecondLookup                TruthValue,
+    gamAclConfigAceVlanId                      GAMUnsigned16,
+    gamAclConfigAceVlanTagPriority             GAMVlanTagPriority,
+    gamAclConfigAceVlanTagged                  GAMAclAceVlanTagged,
+    gamAclConfigAceFrameType                   GAMAclAceFrameType,
+    gamAclConfigAceDestMacOp                   GAMAdvDestMacType,
+    gamAclConfigAceEtherSrcMacOp               GAMASType,
+    gamAclConfigAceEtherSrcMac                 MacAddress,
+    gamAclConfigAceEtherDestMac                MacAddress,
+    gamAclConfigAceEtherType                   GAMUnsigned16,
+    gamAclConfigAceArpSrcMacOp                 GAMASType,
+    gamAclConfigAceArpSrcMac                   MacAddress,
+    gamAclConfigAceArpSenderIp                 IpAddress,
+    gamAclConfigAceArpSenderIpMask             IpAddress,
+    gamAclConfigAceArpTargetIp                 IpAddress,
+    gamAclConfigAceArpTargetIpMask             IpAddress,
+    gamAclConfigAceArpOpcode                   GAMAclAceArpOp,
+    gamAclConfigAceArpFlagReq                  GAMBitType,
+    gamAclConfigAceArpFlagSha                  GAMBitType,
+    gamAclConfigAceArpFlagTha                  GAMBitType,
+    gamAclConfigAceArpFlagHln                  GAMBitType,
+    gamAclConfigAceArpFlagHrd                  GAMBitType,
+    gamAclConfigAceArpFlagPro                  GAMBitType,
+    gamAclConfigAceIpv4ProtocolOp              GAMASType,
+    gamAclConfigAceIpv4Protocol                GAMUnsigned8,
+    gamAclConfigAceIpv4SrcIp                   IpAddress,
+    gamAclConfigAceIpv4SrcIpMask               IpAddress,
+    gamAclConfigAceIpv4DestIp                  IpAddress,
+    gamAclConfigAceIpv4DestIpMask              IpAddress,
+    gamAclConfigAceIpv4IcmpTypeOp              GAMASType,
+    gamAclConfigAceIpv4IcmpType                GAMUnsigned8,
+    gamAclConfigAceIpv4IcmpCodeOp              GAMASType,
+    gamAclConfigAceIpv4IcmpCode                GAMUnsigned8,
+    gamAclConfigAceIpv4SrcPortOp               GAMASRType,
+    gamAclConfigAceIpv4SrcPort                 GAMUnsigned16,
+    gamAclConfigAceIpv4SrcPortRange            GAMUnsigned16,
+    gamAclConfigAceIpv4DestPortOp              GAMASRType,
+    gamAclConfigAceIpv4DestPort                GAMUnsigned16,
+    gamAclConfigAceIpv4DestPortRange           GAMUnsigned16,
+    gamAclConfigAceIpv4FlagTtl                 GAMBitType,
+    gamAclConfigAceIpv4FlagFragment            GAMBitType,
+    gamAclConfigAceIpv4FlagIpOption            GAMBitType,
+    gamAclConfigAceIpv4TcpFlagFin              GAMBitType,
+    gamAclConfigAceIpv4TcpFlagSyn              GAMBitType,
+    gamAclConfigAceIpv4TcpFlagRst              GAMBitType,
+    gamAclConfigAceIpv4TcpFlagPsh              GAMBitType,
+    gamAclConfigAceIpv4TcpFlagAck              GAMBitType,
+    gamAclConfigAceIpv4TcpFlagUrg              GAMBitType,
+    gamAclConfigAceIpv6NextHeaderOp            GAMASType,
+    gamAclConfigAceIpv6NextHeader              GAMUnsigned8,
+    gamAclConfigAceIpv6Icmpv6TypeOp            GAMASType,
+    gamAclConfigAceIpv6Icmpv6Type              GAMUnsigned8,
+    gamAclConfigAceIpv6Icmpv6CodeOp            GAMASType,
+    gamAclConfigAceIpv6Icmpv6Code              GAMUnsigned8,
+    gamAclConfigAceIpv6SrcIp                   InetAddressIPv6,
+    gamAclConfigAceIpv6SrcIpMask               InetAddressIPv6,
+    gamAclConfigAceIpv6SrcPortOp               GAMASRType,
+    gamAclConfigAceIpv6SrcPort                 GAMUnsigned16,
+    gamAclConfigAceIpv6SrcPortRange            GAMUnsigned16,
+    gamAclConfigAceIpv6DestPortOp              GAMASRType,
+    gamAclConfigAceIpv6DestPort                GAMUnsigned16,
+    gamAclConfigAceIpv6DestPortRange           GAMUnsigned16,
+    gamAclConfigAceIpv6FlagTtl                 GAMBitType,
+    gamAclConfigAceIpv6TcpFlagFin              GAMBitType,
+    gamAclConfigAceIpv6TcpFlagSyn              GAMBitType,
+    gamAclConfigAceIpv6TcpFlagRst              GAMBitType,
+    gamAclConfigAceIpv6TcpFlagPsh              GAMBitType,
+    gamAclConfigAceIpv6TcpFlagAck              GAMBitType,
+    gamAclConfigAceIpv6TcpFlagUrg              GAMBitType,
+    gamAclConfigAceAction                      GAMRowEditorState
+}
+
+gamAclConfigAceAceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The ACE ID."
+    ::= { gamAclConfigAceEntry 1 }
+
+gamAclConfigAceNextAceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ID of ACE next to this ACE."
+    ::= { gamAclConfigAceEntry 2 }
+
+gamAclConfigAceHitAction OBJECT-TYPE
+    SYNTAX      GAMAclHitAction
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The hit action operation for this ACE."
+    ::= { gamAclConfigAceEntry 101 }
+
+gamAclConfigAceRedirectPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The redirect port list for this ACE."
+    ::= { gamAclConfigAceEntry 102 }
+
+gamAclConfigAceRedirectPortListSwitchPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The redirect switch port for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switchport. And it is used when this ACE
+         is applied on specific switch port of all switches in stackable
+         devices.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesStackableAceSupported' is True."
+    ::= { gamAclConfigAceEntry 103 }
+
+gamAclConfigAceEgressPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The egress port list. The port list is to define what ports are allowed
+         to be egress ports. If the egress port of an incoming frame is in the
+         port list then the frame will be forwared to that port. Otherwise, if
+         the egress port is not in the port list then the egress port is not
+         allowed and the incoming frame will be dropped.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesEgressPortSupported' is True."
+    ::= { gamAclConfigAceEntry 104 }
+
+gamAclConfigAceRateLimiterId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The rate limiter ID. 0 means to be disabled."
+    ::= { gamAclConfigAceEntry 105 }
+
+gamAclConfigAceEvcPolicerId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The EVC policer ID. 0 means to be disabled.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesEvcPolicerSupported' is True."
+    ::= { gamAclConfigAceEntry 106 }
+
+gamAclConfigAceMirror OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The mirror operation. Frames matching this ACE are mirrored to the
+         destination mirror port that is configured in the mirror module.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesMirrorSupported' is True."
+    ::= { gamAclConfigAceEntry 107 }
+
+gamAclConfigAceLogging OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the logging operation of the ACE. Notice that the logging
+         message doesn't include the 4 bytes CRC information. The allowed values
+         are: True - Frames matching the ACE are stored in the System Log. False
+         - Frames matching the ACE are not logged. Note: The logging feature
+         only works when the packet length is less than 1518(without VLAN tags)
+         and the system log memory size and logging rate is limited."
+    ::= { gamAclConfigAceEntry 108 }
+
+gamAclConfigAceShutdown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the port shut down operation of the ACE. The allowed values
+         are: True: If a frame matches the ACE, the ingress port will be shuted
+         down. False: Port shut down is disabled for the ACE. Note: The shutdown
+         feature only works when the packet length is less than 1518(without
+         VLAN tags)."
+    ::= { gamAclConfigAceEntry 109 }
+
+gamAclConfigAceIngressPortListMode OBJECT-TYPE
+    SYNTAX      GAMAclAceIngressPortListMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ingress port list mode for this ACE. The possible mode are: 'any':
+         Indicates this ACE is applied on all switches and all ports.
+         'specific': Indicates this ACE is applied on specific switch and
+         specific ports. 'switch': Indicates this ACE is applied on all ports of
+         specific switch in stackable devices. 'switchport': Indicates this ACE
+         is applied on specific switch port of all switches in stackable
+         devices."
+    ::= { gamAclConfigAceEntry 201 }
+
+gamAclConfigAceIngressPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ingress port list for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is specific. And it is used when this ACE is
+         applied on specific switch and specific ports."
+    ::= { gamAclConfigAceEntry 202 }
+
+gamAclConfigAceIngressPortListSwitch OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ingress switch ID for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switch. And it is used when this ACE is
+         applied on specific switch port of all switches in stackable devices.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesStackableAceSupported' is True."
+    ::= { gamAclConfigAceEntry 203 }
+
+gamAclConfigAceIngressPortListSwitchPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ingress switch port for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switchport. And it is used when this ACE
+         is applied on specific switch port of all switches in stackable
+         devices.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesStackableAceSupported' is True."
+    ::= { gamAclConfigAceEntry 204 }
+
+gamAclConfigAcePolicyValue OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The policy number for this ACE."
+    ::= { gamAclConfigAceEntry 205 }
+
+gamAclConfigAcePolicyMask OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The policy mask for this ACE. The allowed range is 0x0 to 0xff. If the
+         binary bit value is '0', it means this bit is don't-care. The real
+         matched pattern is [policy_value & policy_bitmask]. For example, if the
+         policy value is 3 and the policy bitmask is 0x10(bit 0 is don't-care
+         bit), then policy 2 and 3 are applied to this rule."
+    ::= { gamAclConfigAceEntry 206 }
+
+gamAclConfigAceSecondLookup OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The second lookup operation for this ACE.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesSecondLookupSupported' is True."
+    ::= { gamAclConfigAceEntry 207 }
+
+gamAclConfigAceVlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VLAN ID for this ACE. Possible values are: 0(disabled), 1-4095."
+    ::= { gamAclConfigAceEntry 301 }
+
+gamAclConfigAceVlanTagPriority OBJECT-TYPE
+    SYNTAX      GAMVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VLAN tag priority for this ACE."
+    ::= { gamAclConfigAceEntry 302 }
+
+gamAclConfigAceVlanTagged OBJECT-TYPE
+    SYNTAX      GAMAclAceVlanTagged
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The 802.1Q VLAN tagged for this ACE.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesVlanTaggedSupported' is True."
+    ::= { gamAclConfigAceEntry 303 }
+
+gamAclConfigAceFrameType OBJECT-TYPE
+    SYNTAX      GAMAclAceFrameType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The frame type for this ACE."
+    ::= { gamAclConfigAceEntry 401 }
+
+gamAclConfigAceDestMacOp OBJECT-TYPE
+    SYNTAX      GAMAdvDestMacType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a packet's destination MAC address to be matched."
+    ::= { gamAclConfigAceEntry 402 }
+
+gamAclConfigAceEtherSrcMacOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a Ethernet type packet's source MAC address to be
+         matched. This object is only available if FrameType is ether(1)."
+    ::= { gamAclConfigAceEntry 501 }
+
+gamAclConfigAceEtherSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the 48 bits source MAC address. This object is only available
+         if FrameType is ether(1) and EtherSrcMacOp is specific(1)."
+    ::= { gamAclConfigAceEntry 502 }
+
+gamAclConfigAceEtherDestMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the 48 bits destination MAC address. This object is only
+         available if FrameType is ether(1) and EtherDestMacOp is specific(1)."
+    ::= { gamAclConfigAceEntry 503 }
+
+gamAclConfigAceEtherType OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the packet's 16 bit Ethernet type field. Possible values are:
+         0(disabled), 0x600-0xFFFF but excluding 0x800(IPv4), 0x806(ARP) and
+         0x86DD(IPv6). This object is only available if FrameType is ether(1)
+         and EtherDestMacOp is specific(1)."
+    ::= { gamAclConfigAceEntry 504 }
+
+gamAclConfigAceArpSrcMacOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's source MAC address to be matched. This
+         object is only available if FrameType is arp(4)."
+    ::= { gamAclConfigAceEntry 601 }
+
+gamAclConfigAceArpSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the 48 bits source MAC address. This object is only available
+         if FrameType is arp(4) and ArpSrcMacOp is specific(1)."
+    ::= { gamAclConfigAceEntry 602 }
+
+gamAclConfigAceArpSenderIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified ARP sender IP address. The packet's sender address is
+         AND-ed with the value of ArpSenderIpMask and then compared with the
+         value of this object. If ArpSenderIp and ArpSrcIpMask are 0.0.0.0, this
+         entry matches any sender IP address. This object is only available if
+         FrameType is arp(4)."
+    ::= { gamAclConfigAceEntry 603 }
+
+gamAclConfigAceArpSenderIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified ARP sender IP address mask. This object is only available
+         if FrameType is arp(4)."
+    ::= { gamAclConfigAceEntry 604 }
+
+gamAclConfigAceArpTargetIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified ARP target IP address. The packet's target address is
+         AND-ed with the value of ArpTragetIpMask and then compared with the
+         value of this object. If ArpTragetIp and ArpSrcIpMask are 0.0.0.0, this
+         entry matches any target IP address. This object is only available if
+         FrameType is arp(4)."
+    ::= { gamAclConfigAceEntry 605 }
+
+gamAclConfigAceArpTargetIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified ARP target IP address mask. This object is only available
+         if FrameType is arp(4)."
+    ::= { gamAclConfigAceEntry 606 }
+
+gamAclConfigAceArpOpcode OBJECT-TYPE
+    SYNTAX      GAMAclAceArpOp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's opcode to be matched. This object is only
+         available if FrameType is arp(4)."
+    ::= { gamAclConfigAceEntry 607 }
+
+gamAclConfigAceArpFlagReq OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's request/reply opcode is to be compared.
+         This object is only available if FrameType is arp(4)."
+    ::= { gamAclConfigAceEntry 608 }
+
+gamAclConfigAceArpFlagSha OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's sender hardware address field (SHA) to be
+         compared. This object is only available if FrameType is arp(4)."
+    ::= { gamAclConfigAceEntry 609 }
+
+gamAclConfigAceArpFlagTha OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's target hardware address field (THA) is to
+         be compared. This object is only available if FrameType is arp(4)."
+    ::= { gamAclConfigAceEntry 610 }
+
+gamAclConfigAceArpFlagHln OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's s hardware address length field (HLN) is
+         to be compared. The value 0 means any HLN value is allowed (don't-care
+         field), value 1 means HLN is not equal to Ethernet (0x06) or the (PLN)
+         is not equal to IPv4 (0x04) and value 2 means HLN is equal to Ethernet
+         (0x06) or the (PLN) is not equal to IPv4 (0x04). This object is only
+         available if FrameType is arp(4)."
+    ::= { gamAclConfigAceEntry 611 }
+
+gamAclConfigAceArpFlagHrd OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's hardware address space field (HRD) is to
+         be compared. The value 0 means any HRD value is allowed (don't-care
+         field), value 1 means HRD is not equal to Ethernet (1) and value 2
+         means HRD is equal to Ethernet (1). This object is only available if
+         FrameType is arp(4)."
+    ::= { gamAclConfigAceEntry 612 }
+
+gamAclConfigAceArpFlagPro OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's protocol address space field (PRO) is to
+         be compared. The value 0 means any PRO value is allowed (don't-care
+         field), value 1 means PRO is not equal to IP (0x800) and value 2 means
+         PRO is equal to IP (0x800). This object is only available if FrameType
+         is arp(4)."
+    ::= { gamAclConfigAceEntry 613 }
+
+gamAclConfigAceIpv4ProtocolOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's protocol field is to be compared. This
+         object is only available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceEntry 701 }
+
+gamAclConfigAceIpv4Protocol OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The protocol number field in the IPv4 header used to indicate a higher
+         layer protocol. Possible values are 0-255. This object is only
+         available if FrameType is ipv4(5) and Ipv4ProtocolOp is specific(1)."
+    ::= { gamAclConfigAceEntry 702 }
+
+gamAclConfigAceIpv4SrcIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified source IPv4 address. The packet's sender address is
+         AND-ed with the value of Ipv4SrcIpMask and then compared with the value
+         of this object. If Ipv4SrcIp and Ipv4SrcIpMask are 0.0.0.0, this entry
+         matches any source IP address. This object is only available if
+         FrameType is ipv4(5)."
+    ::= { gamAclConfigAceEntry 703 }
+
+gamAclConfigAceIpv4SrcIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified source IPv4 address mask. This object is only available
+         if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceEntry 704 }
+
+gamAclConfigAceIpv4DestIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified destination IPv4 address. The packet's sender address is
+         AND-ed with the value of Ipv4DestIpMask and then compared with the
+         value of this object. If Ipv4DestIp and Ipv4DestIpMask are 0.0.0.0,
+         this entry matches any destination IP address. This object is only
+         available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceEntry 705 }
+
+gamAclConfigAceIpv4DestIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified destination IPv4 address mask. This object is only
+         available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceEntry 706 }
+
+gamAclConfigAceIpv4IcmpTypeOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's ICMP type field is to be compared. This
+         object is only available if FrameType is ipv4(5) and Ipv4Protocol is
+         icmp(1)."
+    ::= { gamAclConfigAceEntry 707 }
+
+gamAclConfigAceIpv4IcmpType OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ICMP type field in the IPv4 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv4(5), Ipv4Protocol is
+         icmp(1) and Ipv4IcmpTypeOp is specific(1)."
+    ::= { gamAclConfigAceEntry 708 }
+
+gamAclConfigAceIpv4IcmpCodeOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's ICMP code field is to be compared. This
+         object is only available if FrameType is ipv4(5) and Ipv4Protocol is
+         icmp(1)."
+    ::= { gamAclConfigAceEntry 709 }
+
+gamAclConfigAceIpv4IcmpCode OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ICMP code field in the IPv4 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv4(5), Ipv4Protocol is
+         icmp(1) and Ipv4IcmpCodeOp is specific(1)."
+    ::= { gamAclConfigAceEntry 710 }
+
+gamAclConfigAceIpv4SrcPortOp OBJECT-TYPE
+    SYNTAX      GAMASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         This object is only available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceEntry 711 }
+
+gamAclConfigAceIpv4SrcPort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The source port number of the TCP or UDP protocol. If the Ipv4SrcPortOp
+         object is range(2), this object will be the starting port number of the
+         port range. Valid range is 0-65535. This object is only available if
+         FrameType is ipv4(5) and Ipv4SrcPortOp is not any(0)."
+    ::= { gamAclConfigAceEntry 712 }
+
+gamAclConfigAceIpv4SrcPortRange OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The source port number of the TCP or UDP protocol. If the Ipv4SrcPortOp
+         object is range(2), this object will be the ending port number of the
+         port range. Valid range is 0-65535. This object is only available if
+         FrameType is ipv4(5) and Ipv4SrcPortOp is range(2)."
+    ::= { gamAclConfigAceEntry 713 }
+
+gamAclConfigAceIpv4DestPortOp OBJECT-TYPE
+    SYNTAX      GAMASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared. This object is only available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceEntry 714 }
+
+gamAclConfigAceIpv4DestPort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv4DestPortOp object in the same row is range(2), this object will be
+         the starting port number of the port range. Valid range is 0-65535.
+         This object is only available if FrameType is ipv4(5) and
+         Ipv4DestPortOp is not any(0)."
+    ::= { gamAclConfigAceEntry 715 }
+
+gamAclConfigAceIpv4DestPortRange OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv4DestPortOp object in the same row is range(2), this object will be
+         the ending port number of the port range. Valid range is 0-65535. This
+         object is only available if FrameType is ipv4(5) and Ipv4DestPortOp is
+         range(2)."
+    ::= { gamAclConfigAceEntry 716 }
+
+gamAclConfigAceIpv4FlagTtl OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's Time-to-Live field (TTL) is to be
+         compared. The value 0 means any TTL value is allowed (don't-care
+         field), value 1 means TTL is not equal zero and value 2 means TTL is
+         equal to zero. This object is only available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceEntry 717 }
+
+gamAclConfigAceIpv4FlagFragment OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's More-Fragments field (MF) is to be
+         compared. The value 0 means any MF value is allowed (don't-care field),
+         value 1 means MF is not equal one (MF field isn't set) and value 2
+         means MF is equal to one (MF field is set). This object is only
+         available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceEntry 718 }
+
+gamAclConfigAceIpv4FlagIpOption OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's options field is to be compared. This
+         object is only available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceEntry 719 }
+
+gamAclConfigAceIpv4TcpFlagFin OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP FIN flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceEntry 720 }
+
+gamAclConfigAceIpv4TcpFlagSyn OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP SYN flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceEntry 721 }
+
+gamAclConfigAceIpv4TcpFlagRst OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP RST flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceEntry 722 }
+
+gamAclConfigAceIpv4TcpFlagPsh OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP PSH flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceEntry 723 }
+
+gamAclConfigAceIpv4TcpFlagAck OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP ACK flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceEntry 724 }
+
+gamAclConfigAceIpv4TcpFlagUrg OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP URG flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceEntry 725 }
+
+gamAclConfigAceIpv6NextHeaderOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the IPv6 next header filter for this ACE. This object is only
+         available if FrameType is ipv6(6)."
+    ::= { gamAclConfigAceEntry 801 }
+
+gamAclConfigAceIpv6NextHeader OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When 'Specific' is selected for the IPv6 next header value, you can
+         enter a specific value. The allowed range is 0 to 255. A frame that
+         hits this ACE matches this IPv6 protocol value. This object is only
+         available if FrameType is ipv6(6) and Ipv6NextHeaderOp is specific(1)."
+    ::= { gamAclConfigAceEntry 802 }
+
+gamAclConfigAceIpv6Icmpv6TypeOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 packet's ICMPv6 type field is to be compared. This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         icmpv6(58)."
+    ::= { gamAclConfigAceEntry 803 }
+
+gamAclConfigAceIpv6Icmpv6Type OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ICMPv6 type field in the IPv6 header. Possible values are 0-255.
+         This object is only available if FrameType is ipv6(6), Ipv6NextHeader
+         is icmpv6(58) and Ipv6Icmpv6TypeOp is specific(1)."
+    ::= { gamAclConfigAceEntry 804 }
+
+gamAclConfigAceIpv6Icmpv6CodeOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 packet's ICMPv6 code field is to be compared. This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         icmpv6(58)."
+    ::= { gamAclConfigAceEntry 805 }
+
+gamAclConfigAceIpv6Icmpv6Code OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ICMP code field in the IPv6 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv6(6), Ipv6NextHeader is
+         icmpv6(58) and Ipv6Icmpv6CodeOp is specific(1)."
+    ::= { gamAclConfigAceEntry 806 }
+
+gamAclConfigAceIpv6SrcIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified source IPv6 address. The packet's sender address is
+         AND-ed with the value of Ipv6SrcIpMask and then compared with the value
+         of this object. If Ipv6SrcIp and Ipv4SrcIpMask are 0::, this entry
+         matches any source IP address. This object is only available if
+         FrameType is ipv6(6)."
+    ::= { gamAclConfigAceEntry 807 }
+
+gamAclConfigAceIpv6SrcIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified source IPv6 address mask. This object is only available
+         if FrameType is ipv6(6)."
+    ::= { gamAclConfigAceEntry 808 }
+
+gamAclConfigAceIpv6SrcPortOp OBJECT-TYPE
+    SYNTAX      GAMASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         This object is only available if FrameType is ipv6(6)."
+    ::= { gamAclConfigAceEntry 809 }
+
+gamAclConfigAceIpv6SrcPort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The source port number of the TCP or UDP protocol. If the Ipv6SrcPortOp
+         object in the same row is range(2), this object will be the starting
+         port number of the port range. Valid range is 0-65535. This object is
+         only available if FrameType is ipv6(6) and Ipv6SrcPortOp is not any(0)."
+    ::= { gamAclConfigAceEntry 810 }
+
+gamAclConfigAceIpv6SrcPortRange OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The source port number of the TCP or UDP protocol. If the Ipv6SrcPortOp
+         object in the same row is range(2), this object will be the ending port
+         number of the port range. Valid range is 0-65535. This object is only
+         available if FrameType is ipv6(6) and Ipv6SrcPortOp is range(2)."
+    ::= { gamAclConfigAceEntry 811 }
+
+gamAclConfigAceIpv6DestPortOp OBJECT-TYPE
+    SYNTAX      GAMASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared. This object is only available if FrameType is ipv6(6)."
+    ::= { gamAclConfigAceEntry 812 }
+
+gamAclConfigAceIpv6DestPort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv6DestPortOp object in the same row is range(2), this object will be
+         the starting port number of the port range. Valid range is 0-65535.
+         This object is only available if FrameType is ipv6(6) and
+         Ipv6DestPortOp is not any(0)."
+    ::= { gamAclConfigAceEntry 813 }
+
+gamAclConfigAceIpv6DestPortRange OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv6DestPortOp object in the same row is range(2), this object will be
+         the ending port number of the port range. Valid range is 0-65535. This
+         object is only available if FrameType is ipv6(6) and Ipv6DestPortOp is
+         range(2)."
+    ::= { gamAclConfigAceEntry 814 }
+
+gamAclConfigAceIpv6FlagTtl OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 packet's Time-to-Live field (TTL) is to be
+         compared. The value 0 means any TTL value is allowed (don't-care
+         field), value 1 means TTL is not equal zero and value 2 means TTL is
+         equal to zero. This object is only available if FrameType is ipv6(6)."
+    ::= { gamAclConfigAceEntry 815 }
+
+gamAclConfigAceIpv6TcpFlagFin OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'No more data from sender' field
+         (FIN) is to be compared. The value 0 means any FIN value is allowed
+         (don't-care field), value 1 means FIN is not equal one (FIN field isn't
+         set) and value 2 means FIN is equal to one (FIN field is set). This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         tcp(6)."
+    ::= { gamAclConfigAceEntry 816 }
+
+gamAclConfigAceIpv6TcpFlagSyn OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'Synchronize sequence numbers' field
+         (SYN) is to be compared. The value 0 means any SYN value is allowed
+         (don't-care field), value 1 means SYN is not equal one (FIN field isn't
+         set) and value 2 means SYN is equal to one (FIN field is set). This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         tcp(6)."
+    ::= { gamAclConfigAceEntry 817 }
+
+gamAclConfigAceIpv6TcpFlagRst OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'Reset the connection' field (RST) is
+         to be compared. The value 0 means any RST value is allowed (don't-care
+         field), value 1 means RST is not equal one (FIN field isn't set) and
+         value 2 means RST is equal to one (FIN field is set). This object is
+         only available if FrameType is ipv6(6) and Ipv6NextHeader is tcp(6)."
+    ::= { gamAclConfigAceEntry 818 }
+
+gamAclConfigAceIpv6TcpFlagPsh OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'Push Function' field (PSH) is to be
+         compared. The value 0 means any PSH value is allowed (don't-care
+         field), value 1 means PSH is not equal one (FIN field isn't set) and
+         value 2 means PSH is equal to one (FIN field is set). This object is
+         only available if FrameType is ipv6(6) and Ipv6NextHeader is tcp(6)."
+    ::= { gamAclConfigAceEntry 819 }
+
+gamAclConfigAceIpv6TcpFlagAck OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'Acknowledgment field significant'
+         field (ACK) is to be compared. The value 0 means any FIN value is
+         allowed (don't-care field), value 1 means ACK is not equal one (FIN
+         field isn't set) and value 2 means ACK is equal to one (FIN field is
+         set). This object is only available if FrameType is ipv6(6) and
+         Ipv6NextHeader is tcp(6)."
+    ::= { gamAclConfigAceEntry 820 }
+
+gamAclConfigAceIpv6TcpFlagUrg OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'Urgent Pointer field significant'
+         field (URG) is to be compared. The value 0 means any URG value is
+         allowed (don't-care field), value 1 means URG is not equal one (FIN
+         field isn't set) and value 2 means URG is equal to one (FIN field is
+         set). This object is only available if FrameType is ipv6(6) and
+         Ipv6NextHeader is tcp(6)."
+    ::= { gamAclConfigAceEntry 821 }
+
+gamAclConfigAceAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamAclConfigAceEntry 10000 }
+
+gamAclConfigAceRowEditor OBJECT IDENTIFIER
+    ::= { gamAclConfigAce 2 }
+
+gamAclConfigAceRowEditorAceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ACE ID."
+    ::= { gamAclConfigAceRowEditor 1 }
+
+gamAclConfigAceRowEditorNextAceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ID of ACE next to this ACE."
+    ::= { gamAclConfigAceRowEditor 2 }
+
+gamAclConfigAceRowEditorHitAction OBJECT-TYPE
+    SYNTAX      GAMAclHitAction
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The hit action operation for this ACE."
+    ::= { gamAclConfigAceRowEditor 101 }
+
+gamAclConfigAceRowEditorRedirectPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The redirect port list for this ACE."
+    ::= { gamAclConfigAceRowEditor 102 }
+
+gamAclConfigAceRowEditorRedirectPortListSwitchPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The redirect switch port for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switchport. And it is used when this ACE
+         is applied on specific switch port of all switches in stackable
+         devices.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesStackableAceSupported' is True."
+    ::= { gamAclConfigAceRowEditor 103 }
+
+gamAclConfigAceRowEditorEgressPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The egress port list. The port list is to define what ports are allowed
+         to be egress ports. If the egress port of an incoming frame is in the
+         port list then the frame will be forwared to that port. Otherwise, if
+         the egress port is not in the port list then the egress port is not
+         allowed and the incoming frame will be dropped.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesEgressPortSupported' is True."
+    ::= { gamAclConfigAceRowEditor 104 }
+
+gamAclConfigAceRowEditorRateLimiterId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The rate limiter ID. 0 means to be disabled."
+    ::= { gamAclConfigAceRowEditor 105 }
+
+gamAclConfigAceRowEditorEvcPolicerId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The EVC policer ID. 0 means to be disabled.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesEvcPolicerSupported' is True."
+    ::= { gamAclConfigAceRowEditor 106 }
+
+gamAclConfigAceRowEditorMirror OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The mirror operation. Frames matching this ACE are mirrored to the
+         destination mirror port that is configured in the mirror module.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesMirrorSupported' is True."
+    ::= { gamAclConfigAceRowEditor 107 }
+
+gamAclConfigAceRowEditorLogging OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the logging operation of the ACE. Notice that the logging
+         message doesn't include the 4 bytes CRC information. The allowed values
+         are: True - Frames matching the ACE are stored in the System Log. False
+         - Frames matching the ACE are not logged. Note: The logging feature
+         only works when the packet length is less than 1518(without VLAN tags)
+         and the system log memory size and logging rate is limited."
+    ::= { gamAclConfigAceRowEditor 108 }
+
+gamAclConfigAceRowEditorShutdown OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the port shut down operation of the ACE. The allowed values
+         are: True: If a frame matches the ACE, the ingress port will be shuted
+         down. False: Port shut down is disabled for the ACE. Note: The shutdown
+         feature only works when the packet length is less than 1518(without
+         VLAN tags)."
+    ::= { gamAclConfigAceRowEditor 109 }
+
+gamAclConfigAceRowEditorIngressPortListMode OBJECT-TYPE
+    SYNTAX      GAMAclAceIngressPortListMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ingress port list mode for this ACE. The possible mode are: 'any':
+         Indicates this ACE is applied on all switches and all ports.
+         'specific': Indicates this ACE is applied on specific switch and
+         specific ports. 'switch': Indicates this ACE is applied on all ports of
+         specific switch in stackable devices. 'switchport': Indicates this ACE
+         is applied on specific switch port of all switches in stackable
+         devices."
+    ::= { gamAclConfigAceRowEditor 201 }
+
+gamAclConfigAceRowEditorIngressPortList OBJECT-TYPE
+    SYNTAX      GAMPortList
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ingress port list for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is specific. And it is used when this ACE is
+         applied on specific switch and specific ports."
+    ::= { gamAclConfigAceRowEditor 202 }
+
+gamAclConfigAceRowEditorIngressPortListSwitch OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ingress switch ID for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switch. And it is used when this ACE is
+         applied on specific switch port of all switches in stackable devices.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesStackableAceSupported' is True."
+    ::= { gamAclConfigAceRowEditor 203 }
+
+gamAclConfigAceRowEditorIngressPortListSwitchPort OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ingress switch port for this ACE. The object is only abaliable if
+         AclAceIngressPortListMode is switchport. And it is used when this ACE
+         is applied on specific switch port of all switches in stackable
+         devices.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesStackableAceSupported' is True."
+    ::= { gamAclConfigAceRowEditor 204 }
+
+gamAclConfigAceRowEditorPolicyValue OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The policy number for this ACE."
+    ::= { gamAclConfigAceRowEditor 205 }
+
+gamAclConfigAceRowEditorPolicyMask OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The policy mask for this ACE. The allowed range is 0x0 to 0xff. If the
+         binary bit value is '0', it means this bit is don't-care. The real
+         matched pattern is [policy_value & policy_bitmask]. For example, if the
+         policy value is 3 and the policy bitmask is 0x10(bit 0 is don't-care
+         bit), then policy 2 and 3 are applied to this rule."
+    ::= { gamAclConfigAceRowEditor 206 }
+
+gamAclConfigAceRowEditorSecondLookup OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The second lookup operation for this ACE.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesSecondLookupSupported' is True."
+    ::= { gamAclConfigAceRowEditor 207 }
+
+gamAclConfigAceRowEditorVlanId OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VLAN ID for this ACE. Possible values are: 0(disabled), 1-4095."
+    ::= { gamAclConfigAceRowEditor 301 }
+
+gamAclConfigAceRowEditorVlanTagPriority OBJECT-TYPE
+    SYNTAX      GAMVlanTagPriority
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The VLAN tag priority for this ACE."
+    ::= { gamAclConfigAceRowEditor 302 }
+
+gamAclConfigAceRowEditorVlanTagged OBJECT-TYPE
+    SYNTAX      GAMAclAceVlanTagged
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The 802.1Q VLAN tagged for this ACE.
+         
+         This object is only available if the capability object
+         'gamAclCapabilitiesVlanTaggedSupported' is True."
+    ::= { gamAclConfigAceRowEditor 303 }
+
+gamAclConfigAceRowEditorFrameType OBJECT-TYPE
+    SYNTAX      GAMAclAceFrameType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The frame type for this ACE."
+    ::= { gamAclConfigAceRowEditor 401 }
+
+gamAclConfigAceRowEditorDestMacOp OBJECT-TYPE
+    SYNTAX      GAMAdvDestMacType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a packet's destination MAC address to be matched."
+    ::= { gamAclConfigAceRowEditor 402 }
+
+gamAclConfigAceRowEditorEtherSrcMacOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a Ethernet type packet's source MAC address to be
+         matched. This object is only available if FrameType is ether(1)."
+    ::= { gamAclConfigAceRowEditor 501 }
+
+gamAclConfigAceRowEditorEtherSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the 48 bits source MAC address. This object is only available
+         if FrameType is ether(1) and EtherSrcMacOp is specific(1)."
+    ::= { gamAclConfigAceRowEditor 502 }
+
+gamAclConfigAceRowEditorEtherDestMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the 48 bits destination MAC address. This object is only
+         available if FrameType is ether(1) and EtherDestMacOp is specific(1)."
+    ::= { gamAclConfigAceRowEditor 503 }
+
+gamAclConfigAceRowEditorEtherType OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the packet's 16 bit Ethernet type field. Possible values are:
+         0(disabled), 0x600-0xFFFF but excluding 0x800(IPv4), 0x806(ARP) and
+         0x86DD(IPv6). This object is only available if FrameType is ether(1)
+         and EtherDestMacOp is specific(1)."
+    ::= { gamAclConfigAceRowEditor 504 }
+
+gamAclConfigAceRowEditorArpSrcMacOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's source MAC address to be matched. This
+         object is only available if FrameType is arp(4)."
+    ::= { gamAclConfigAceRowEditor 601 }
+
+gamAclConfigAceRowEditorArpSrcMac OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the 48 bits source MAC address. This object is only available
+         if FrameType is arp(4) and ArpSrcMacOp is specific(1)."
+    ::= { gamAclConfigAceRowEditor 602 }
+
+gamAclConfigAceRowEditorArpSenderIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified ARP sender IP address. The packet's sender address is
+         AND-ed with the value of ArpSenderIpMask and then compared with the
+         value of this object. If ArpSenderIp and ArpSrcIpMask are 0.0.0.0, this
+         entry matches any sender IP address. This object is only available if
+         FrameType is arp(4)."
+    ::= { gamAclConfigAceRowEditor 603 }
+
+gamAclConfigAceRowEditorArpSenderIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified ARP sender IP address mask. This object is only available
+         if FrameType is arp(4)."
+    ::= { gamAclConfigAceRowEditor 604 }
+
+gamAclConfigAceRowEditorArpTargetIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified ARP target IP address. The packet's target address is
+         AND-ed with the value of ArpTragetIpMask and then compared with the
+         value of this object. If ArpTragetIp and ArpSrcIpMask are 0.0.0.0, this
+         entry matches any target IP address. This object is only available if
+         FrameType is arp(4)."
+    ::= { gamAclConfigAceRowEditor 605 }
+
+gamAclConfigAceRowEditorArpTargetIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified ARP target IP address mask. This object is only available
+         if FrameType is arp(4)."
+    ::= { gamAclConfigAceRowEditor 606 }
+
+gamAclConfigAceRowEditorArpOpcode OBJECT-TYPE
+    SYNTAX      GAMAclAceArpOp
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's opcode to be matched. This object is only
+         available if FrameType is arp(4)."
+    ::= { gamAclConfigAceRowEditor 607 }
+
+gamAclConfigAceRowEditorArpFlagReq OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's request/reply opcode is to be compared.
+         This object is only available if FrameType is arp(4)."
+    ::= { gamAclConfigAceRowEditor 608 }
+
+gamAclConfigAceRowEditorArpFlagSha OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's sender hardware address field (SHA) to be
+         compared. This object is only available if FrameType is arp(4)."
+    ::= { gamAclConfigAceRowEditor 609 }
+
+gamAclConfigAceRowEditorArpFlagTha OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's target hardware address field (THA) is to
+         be compared. This object is only available if FrameType is arp(4)."
+    ::= { gamAclConfigAceRowEditor 610 }
+
+gamAclConfigAceRowEditorArpFlagHln OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's s hardware address length field (HLN) is
+         to be compared. The value 0 means any HLN value is allowed (don't-care
+         field), value 1 means HLN is not equal to Ethernet (0x06) or the (PLN)
+         is not equal to IPv4 (0x04) and value 2 means HLN is equal to Ethernet
+         (0x06) or the (PLN) is not equal to IPv4 (0x04). This object is only
+         available if FrameType is arp(4)."
+    ::= { gamAclConfigAceRowEditor 611 }
+
+gamAclConfigAceRowEditorArpFlagHrd OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's hardware address space field (HRD) is to
+         be compared. The value 0 means any HRD value is allowed (don't-care
+         field), value 1 means HRD is not equal to Ethernet (1) and value 2
+         means HRD is equal to Ethernet (1). This object is only available if
+         FrameType is arp(4)."
+    ::= { gamAclConfigAceRowEditor 612 }
+
+gamAclConfigAceRowEditorArpFlagPro OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a ARP packet's protocol address space field (PRO) is to
+         be compared. The value 0 means any PRO value is allowed (don't-care
+         field), value 1 means PRO is not equal to IP (0x800) and value 2 means
+         PRO is equal to IP (0x800). This object is only available if FrameType
+         is arp(4)."
+    ::= { gamAclConfigAceRowEditor 613 }
+
+gamAclConfigAceRowEditorIpv4ProtocolOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's protocol field is to be compared. This
+         object is only available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceRowEditor 701 }
+
+gamAclConfigAceRowEditorIpv4Protocol OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The protocol number field in the IPv4 header used to indicate a higher
+         layer protocol. Possible values are 0-255. This object is only
+         available if FrameType is ipv4(5) and Ipv4ProtocolOp is specific(1)."
+    ::= { gamAclConfigAceRowEditor 702 }
+
+gamAclConfigAceRowEditorIpv4SrcIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified source IPv4 address. The packet's sender address is
+         AND-ed with the value of Ipv4SrcIpMask and then compared with the value
+         of this object. If Ipv4SrcIp and Ipv4SrcIpMask are 0.0.0.0, this entry
+         matches any source IP address. This object is only available if
+         FrameType is ipv4(5)."
+    ::= { gamAclConfigAceRowEditor 703 }
+
+gamAclConfigAceRowEditorIpv4SrcIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified source IPv4 address mask. This object is only available
+         if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceRowEditor 704 }
+
+gamAclConfigAceRowEditorIpv4DestIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified destination IPv4 address. The packet's sender address is
+         AND-ed with the value of Ipv4DestIpMask and then compared with the
+         value of this object. If Ipv4DestIp and Ipv4DestIpMask are 0.0.0.0,
+         this entry matches any destination IP address. This object is only
+         available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceRowEditor 705 }
+
+gamAclConfigAceRowEditorIpv4DestIpMask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified destination IPv4 address mask. This object is only
+         available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceRowEditor 706 }
+
+gamAclConfigAceRowEditorIpv4IcmpTypeOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's ICMP type field is to be compared. This
+         object is only available if FrameType is ipv4(5) and Ipv4Protocol is
+         icmp(1)."
+    ::= { gamAclConfigAceRowEditor 707 }
+
+gamAclConfigAceRowEditorIpv4IcmpType OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ICMP type field in the IPv4 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv4(5), Ipv4Protocol is
+         icmp(1) and Ipv4IcmpTypeOp is specific(1)."
+    ::= { gamAclConfigAceRowEditor 708 }
+
+gamAclConfigAceRowEditorIpv4IcmpCodeOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's ICMP code field is to be compared. This
+         object is only available if FrameType is ipv4(5) and Ipv4Protocol is
+         icmp(1)."
+    ::= { gamAclConfigAceRowEditor 709 }
+
+gamAclConfigAceRowEditorIpv4IcmpCode OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ICMP code field in the IPv4 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv4(5), Ipv4Protocol is
+         icmp(1) and Ipv4IcmpCodeOp is specific(1)."
+    ::= { gamAclConfigAceRowEditor 710 }
+
+gamAclConfigAceRowEditorIpv4SrcPortOp OBJECT-TYPE
+    SYNTAX      GAMASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         This object is only available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceRowEditor 711 }
+
+gamAclConfigAceRowEditorIpv4SrcPort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The source port number of the TCP or UDP protocol. If the Ipv4SrcPortOp
+         object is range(2), this object will be the starting port number of the
+         port range. Valid range is 0-65535. This object is only available if
+         FrameType is ipv4(5) and Ipv4SrcPortOp is not any(0)."
+    ::= { gamAclConfigAceRowEditor 712 }
+
+gamAclConfigAceRowEditorIpv4SrcPortRange OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The source port number of the TCP or UDP protocol. If the Ipv4SrcPortOp
+         object is range(2), this object will be the ending port number of the
+         port range. Valid range is 0-65535. This object is only available if
+         FrameType is ipv4(5) and Ipv4SrcPortOp is range(2)."
+    ::= { gamAclConfigAceRowEditor 713 }
+
+gamAclConfigAceRowEditorIpv4DestPortOp OBJECT-TYPE
+    SYNTAX      GAMASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared. This object is only available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceRowEditor 714 }
+
+gamAclConfigAceRowEditorIpv4DestPort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv4DestPortOp object in the same row is range(2), this object will be
+         the starting port number of the port range. Valid range is 0-65535.
+         This object is only available if FrameType is ipv4(5) and
+         Ipv4DestPortOp is not any(0)."
+    ::= { gamAclConfigAceRowEditor 715 }
+
+gamAclConfigAceRowEditorIpv4DestPortRange OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv4DestPortOp object in the same row is range(2), this object will be
+         the ending port number of the port range. Valid range is 0-65535. This
+         object is only available if FrameType is ipv4(5) and Ipv4DestPortOp is
+         range(2)."
+    ::= { gamAclConfigAceRowEditor 716 }
+
+gamAclConfigAceRowEditorIpv4FlagTtl OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's Time-to-Live field (TTL) is to be
+         compared. The value 0 means any TTL value is allowed (don't-care
+         field), value 1 means TTL is not equal zero and value 2 means TTL is
+         equal to zero. This object is only available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceRowEditor 717 }
+
+gamAclConfigAceRowEditorIpv4FlagFragment OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's More-Fragments field (MF) is to be
+         compared. The value 0 means any MF value is allowed (don't-care field),
+         value 1 means MF is not equal one (MF field isn't set) and value 2
+         means MF is equal to one (MF field is set). This object is only
+         available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceRowEditor 718 }
+
+gamAclConfigAceRowEditorIpv4FlagIpOption OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv4 packet's options field is to be compared. This
+         object is only available if FrameType is ipv4(5)."
+    ::= { gamAclConfigAceRowEditor 719 }
+
+gamAclConfigAceRowEditorIpv4TcpFlagFin OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP FIN flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceRowEditor 720 }
+
+gamAclConfigAceRowEditorIpv4TcpFlagSyn OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP SYN flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceRowEditor 721 }
+
+gamAclConfigAceRowEditorIpv4TcpFlagRst OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP RST flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceRowEditor 722 }
+
+gamAclConfigAceRowEditorIpv4TcpFlagPsh OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP PSH flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceRowEditor 723 }
+
+gamAclConfigAceRowEditorIpv4TcpFlagAck OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP ACK flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceRowEditor 724 }
+
+gamAclConfigAceRowEditorIpv4TcpFlagUrg OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how the IPv4 TCP URG flag is matched. This object is only
+         available if FrameType is ipv4(5) and Ipv4Protocol is tcp(6)."
+    ::= { gamAclConfigAceRowEditor 725 }
+
+gamAclConfigAceRowEditorIpv6NextHeaderOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the IPv6 next header filter for this ACE. This object is only
+         available if FrameType is ipv6(6)."
+    ::= { gamAclConfigAceRowEditor 801 }
+
+gamAclConfigAceRowEditorIpv6NextHeader OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "When 'Specific' is selected for the IPv6 next header value, you can
+         enter a specific value. The allowed range is 0 to 255. A frame that
+         hits this ACE matches this IPv6 protocol value. This object is only
+         available if FrameType is ipv6(6) and Ipv6NextHeaderOp is specific(1)."
+    ::= { gamAclConfigAceRowEditor 802 }
+
+gamAclConfigAceRowEditorIpv6Icmpv6TypeOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 packet's ICMPv6 type field is to be compared. This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         icmpv6(58)."
+    ::= { gamAclConfigAceRowEditor 803 }
+
+gamAclConfigAceRowEditorIpv6Icmpv6Type OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ICMPv6 type field in the IPv6 header. Possible values are 0-255.
+         This object is only available if FrameType is ipv6(6), Ipv6NextHeader
+         is icmpv6(58) and Ipv6Icmpv6TypeOp is specific(1)."
+    ::= { gamAclConfigAceRowEditor 804 }
+
+gamAclConfigAceRowEditorIpv6Icmpv6CodeOp OBJECT-TYPE
+    SYNTAX      GAMASType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 packet's ICMPv6 code field is to be compared. This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         icmpv6(58)."
+    ::= { gamAclConfigAceRowEditor 805 }
+
+gamAclConfigAceRowEditorIpv6Icmpv6Code OBJECT-TYPE
+    SYNTAX      GAMUnsigned8
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ICMP code field in the IPv6 header. Possible values are 0-255. This
+         object is only available if FrameType is ipv6(6), Ipv6NextHeader is
+         icmpv6(58) and Ipv6Icmpv6CodeOp is specific(1)."
+    ::= { gamAclConfigAceRowEditor 806 }
+
+gamAclConfigAceRowEditorIpv6SrcIp OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified source IPv6 address. The packet's sender address is
+         AND-ed with the value of Ipv6SrcIpMask and then compared with the value
+         of this object. If Ipv6SrcIp and Ipv4SrcIpMask are 0::, this entry
+         matches any source IP address. This object is only available if
+         FrameType is ipv6(6)."
+    ::= { gamAclConfigAceRowEditor 807 }
+
+gamAclConfigAceRowEditorIpv6SrcIpMask OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The specified source IPv6 address mask. This object is only available
+         if FrameType is ipv6(6)."
+    ::= { gamAclConfigAceRowEditor 808 }
+
+gamAclConfigAceRowEditorIpv6SrcPortOp OBJECT-TYPE
+    SYNTAX      GAMASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a packet's source TCP/UDP port number is to be compared.
+         This object is only available if FrameType is ipv6(6)."
+    ::= { gamAclConfigAceRowEditor 809 }
+
+gamAclConfigAceRowEditorIpv6SrcPort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The source port number of the TCP or UDP protocol. If the Ipv6SrcPortOp
+         object in the same row is range(2), this object will be the starting
+         port number of the port range. Valid range is 0-65535. This object is
+         only available if FrameType is ipv6(6) and Ipv6SrcPortOp is not any(0)."
+    ::= { gamAclConfigAceRowEditor 810 }
+
+gamAclConfigAceRowEditorIpv6SrcPortRange OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The source port number of the TCP or UDP protocol. If the Ipv6SrcPortOp
+         object in the same row is range(2), this object will be the ending port
+         number of the port range. Valid range is 0-65535. This object is only
+         available if FrameType is ipv6(6) and Ipv6SrcPortOp is range(2)."
+    ::= { gamAclConfigAceRowEditor 811 }
+
+gamAclConfigAceRowEditorIpv6DestPortOp OBJECT-TYPE
+    SYNTAX      GAMASRType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a packet's destination TCP/UDP port number is to be
+         compared. This object is only available if FrameType is ipv6(6)."
+    ::= { gamAclConfigAceRowEditor 812 }
+
+gamAclConfigAceRowEditorIpv6DestPort OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv6DestPortOp object in the same row is range(2), this object will be
+         the starting port number of the port range. Valid range is 0-65535.
+         This object is only available if FrameType is ipv6(6) and
+         Ipv6DestPortOp is not any(0)."
+    ::= { gamAclConfigAceRowEditor 813 }
+
+gamAclConfigAceRowEditorIpv6DestPortRange OBJECT-TYPE
+    SYNTAX      GAMUnsigned16
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The destination port number of the TCP or UDP protocol. If the
+         Ipv6DestPortOp object in the same row is range(2), this object will be
+         the ending port number of the port range. Valid range is 0-65535. This
+         object is only available if FrameType is ipv6(6) and Ipv6DestPortOp is
+         range(2)."
+    ::= { gamAclConfigAceRowEditor 814 }
+
+gamAclConfigAceRowEditorIpv6FlagTtl OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 packet's Time-to-Live field (TTL) is to be
+         compared. The value 0 means any TTL value is allowed (don't-care
+         field), value 1 means TTL is not equal zero and value 2 means TTL is
+         equal to zero. This object is only available if FrameType is ipv6(6)."
+    ::= { gamAclConfigAceRowEditor 815 }
+
+gamAclConfigAceRowEditorIpv6TcpFlagFin OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'No more data from sender' field
+         (FIN) is to be compared. The value 0 means any FIN value is allowed
+         (don't-care field), value 1 means FIN is not equal one (FIN field isn't
+         set) and value 2 means FIN is equal to one (FIN field is set). This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         tcp(6)."
+    ::= { gamAclConfigAceRowEditor 816 }
+
+gamAclConfigAceRowEditorIpv6TcpFlagSyn OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'Synchronize sequence numbers' field
+         (SYN) is to be compared. The value 0 means any SYN value is allowed
+         (don't-care field), value 1 means SYN is not equal one (FIN field isn't
+         set) and value 2 means SYN is equal to one (FIN field is set). This
+         object is only available if FrameType is ipv6(6) and Ipv6NextHeader is
+         tcp(6)."
+    ::= { gamAclConfigAceRowEditor 817 }
+
+gamAclConfigAceRowEditorIpv6TcpFlagRst OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'Reset the connection' field (RST) is
+         to be compared. The value 0 means any RST value is allowed (don't-care
+         field), value 1 means RST is not equal one (FIN field isn't set) and
+         value 2 means RST is equal to one (FIN field is set). This object is
+         only available if FrameType is ipv6(6) and Ipv6NextHeader is tcp(6)."
+    ::= { gamAclConfigAceRowEditor 818 }
+
+gamAclConfigAceRowEditorIpv6TcpFlagPsh OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'Push Function' field (PSH) is to be
+         compared. The value 0 means any PSH value is allowed (don't-care
+         field), value 1 means PSH is not equal one (FIN field isn't set) and
+         value 2 means PSH is equal to one (FIN field is set). This object is
+         only available if FrameType is ipv6(6) and Ipv6NextHeader is tcp(6)."
+    ::= { gamAclConfigAceRowEditor 819 }
+
+gamAclConfigAceRowEditorIpv6TcpFlagAck OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'Acknowledgment field significant'
+         field (ACK) is to be compared. The value 0 means any FIN value is
+         allowed (don't-care field), value 1 means ACK is not equal one (FIN
+         field isn't set) and value 2 means ACK is equal to one (FIN field is
+         set). This object is only available if FrameType is ipv6(6) and
+         Ipv6NextHeader is tcp(6)."
+    ::= { gamAclConfigAceRowEditor 820 }
+
+gamAclConfigAceRowEditorIpv6TcpFlagUrg OBJECT-TYPE
+    SYNTAX      GAMBitType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates how a IPv6 TCP packet's 'Urgent Pointer field significant'
+         field (URG) is to be compared. The value 0 means any URG value is
+         allowed (don't-care field), value 1 means URG is not equal one (FIN
+         field isn't set) and value 2 means URG is equal to one (FIN field is
+         set). This object is only available if FrameType is ipv6(6) and
+         Ipv6NextHeader is tcp(6)."
+    ::= { gamAclConfigAceRowEditor 821 }
+
+gamAclConfigAceRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamAclConfigAceRowEditor 10000 }
+
+gamAclConfigAcePrecedenceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAclConfigAcePrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "It displays the sequence of ACEs to be hit."
+    ::= { gamAclConfigAce 3 }
+
+gamAclConfigAcePrecedenceEntry OBJECT-TYPE
+    SYNTAX      GAMAclConfigAcePrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the corresponding ACE ID."
+    INDEX       { gamAclConfigAcePrecedencePrecedence }
+    ::= { gamAclConfigAcePrecedenceTable 1 }
+
+GAMAclConfigAcePrecedenceEntry ::= SEQUENCE {
+    gamAclConfigAcePrecedencePrecedence  Integer32,
+    gamAclConfigAcePrecedenceAceId       Unsigned32
+}
+
+gamAclConfigAcePrecedencePrecedence OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The ACL ACE hit precedence."
+    ::= { gamAclConfigAcePrecedenceEntry 1 }
+
+gamAclConfigAcePrecedenceAceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Identifier of ACE"
+    ::= { gamAclConfigAcePrecedenceEntry 2 }
+
+gamAclStatus OBJECT IDENTIFIER
+    ::= { gamAclMibObjects 3 }
+
+gamAclStatusInterface OBJECT IDENTIFIER
+    ::= { gamAclStatus 2 }
+
+gamAclStatusInterfaceHitCountTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAclStatusInterfaceHitCountEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of interface hit count status."
+    ::= { gamAclStatusInterface 1 }
+
+gamAclStatusInterfaceHitCountEntry OBJECT-TYPE
+    SYNTAX      GAMAclStatusInterfaceHitCountEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the hit count status per interface."
+    INDEX       { gamAclStatusInterfaceHitCountIfIndex }
+    ::= { gamAclStatusInterfaceHitCountTable 1 }
+
+GAMAclStatusInterfaceHitCountEntry ::= SEQUENCE {
+    gamAclStatusInterfaceHitCountIfIndex  GAMInterfaceIndex,
+    gamAclStatusInterfaceHitCountCounter  Unsigned32
+}
+
+gamAclStatusInterfaceHitCountIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The index of logical interface."
+    ::= { gamAclStatusInterfaceHitCountEntry 1 }
+
+gamAclStatusInterfaceHitCountCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hit count of this interface."
+    ::= { gamAclStatusInterfaceHitCountEntry 2 }
+
+gamAclStatusAce OBJECT IDENTIFIER
+    ::= { gamAclStatus 3 }
+
+gamAclStatusAceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAclStatusAceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of ACE status."
+    ::= { gamAclStatusAce 1 }
+
+gamAclStatusAceEntry OBJECT-TYPE
+    SYNTAX      GAMAclStatusAceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the status per switch per precedence."
+    INDEX       { gamAclStatusAceSwitchId, gamAclStatusAcePrecedence }
+    ::= { gamAclStatusAceTable 1 }
+
+GAMAclStatusAceEntry ::= SEQUENCE {
+    gamAclStatusAceSwitchId    Integer32,
+    gamAclStatusAcePrecedence  Integer32,
+    gamAclStatusAceAclUser     GAMDisplayString,
+    gamAclStatusAceAceId       Unsigned32,
+    gamAclStatusAceConflict    TruthValue
+}
+
+gamAclStatusAceSwitchId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The switch ID."
+    ::= { gamAclStatusAceEntry 1 }
+
+gamAclStatusAcePrecedence OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The ACL ACE hit precedence."
+    ::= { gamAclStatusAceEntry 2 }
+
+gamAclStatusAceAclUser OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..31))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "User of ACE"
+    ::= { gamAclStatusAceEntry 3 }
+
+gamAclStatusAceAceId OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Identifier of ACE"
+    ::= { gamAclStatusAceEntry 4 }
+
+gamAclStatusAceConflict OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The conflict status of this ACE. When the status value is true, it
+         means the specific ACE is not applied to the hardware due to hardware
+         limitations."
+    ::= { gamAclStatusAceEntry 5 }
+
+gamAclStatusAceHitCountTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAclStatusAceHitCountEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of ACE hit count status."
+    ::= { gamAclStatusAce 2 }
+
+gamAclStatusAceHitCountEntry OBJECT-TYPE
+    SYNTAX      GAMAclStatusAceHitCountEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each row contains the hit count status per ACE."
+    INDEX       { gamAclStatusAceHitCountAceId }
+    ::= { gamAclStatusAceHitCountTable 1 }
+
+GAMAclStatusAceHitCountEntry ::= SEQUENCE {
+    gamAclStatusAceHitCountAceId    Integer32,
+    gamAclStatusAceHitCountCounter  Unsigned32
+}
+
+gamAclStatusAceHitCountAceId OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The ACE ID."
+    ::= { gamAclStatusAceHitCountEntry 1 }
+
+gamAclStatusAceHitCountCounter OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The hit count of this ACE."
+    ::= { gamAclStatusAceHitCountEntry 2 }
+
+gamAclControl OBJECT IDENTIFIER
+    ::= { gamAclMibObjects 4 }
+
+gamAclControlGlobals OBJECT IDENTIFIER
+    ::= { gamAclControl 1 }
+
+gamAclControlGlobalsClearAllHitCount OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Set true to clear hit counts of all ACEs and interfaces."
+    ::= { gamAclControlGlobals 1 }
+
+gamAclControlInterface OBJECT IDENTIFIER
+    ::= { gamAclControl 2 }
+
+gamAclControlInterfaceControlTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMAclControlInterfaceControlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of interface control"
+    ::= { gamAclControlInterface 1 }
+
+gamAclControlInterfaceControlEntry OBJECT-TYPE
+    SYNTAX      GAMAclControlInterfaceControlEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each interface has a set of parameters"
+    INDEX       { gamAclControlInterfaceControlIfIndex }
+    ::= { gamAclControlInterfaceControlTable 1 }
+
+GAMAclControlInterfaceControlEntry ::= SEQUENCE {
+    gamAclControlInterfaceControlIfIndex  GAMInterfaceIndex,
+    gamAclControlInterfaceControlState    TruthValue
+}
+
+gamAclControlInterfaceControlIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The index of logical interface."
+    ::= { gamAclControlInterfaceControlEntry 1 }
+
+gamAclControlInterfaceControlState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Specify the port status. True is to enable the port and false is to
+         shutdown the port"
+    ::= { gamAclControlInterfaceControlEntry 2 }
+
+gamAclMibConformance OBJECT IDENTIFIER
+    ::= { gamAclMib 2 }
+
+gamAclMibCompliances OBJECT IDENTIFIER
+    ::= { gamAclMibConformance 1 }
+
+gamAclMibGroups OBJECT IDENTIFIER
+    ::= { gamAclMibConformance 2 }
+
+gamAclCapabilitiesInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAclCapabilitiesAceIdMax,
+                  gamAclCapabilitiesPolicyIdMax,
+                  gamAclCapabilitiesRateLimiterIdMax,
+                  gamAclCapabilitiesEvcPolicerIdMax,
+                  gamAclCapabilitiesRateLimiterBitRateSupported,
+                  gamAclCapabilitiesEvcPolicerSupported,
+                  gamAclCapabilitiesMirrorSupported,
+                  gamAclCapabilitiesMultipleRedirectPortsSupported,
+                  gamAclCapabilitiesSecondLookupSupported,
+                  gamAclCapabilitiesMultipleIngressPortsSupported,
+                  gamAclCapabilitiesEgressPortSupported,
+                  gamAclCapabilitiesVlanTaggedSupported,
+                  gamAclCapabilitiesStackableAceSupported }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAclMibGroups 1 }
+
+gamAclConfigInterfaceConfigInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAclConfigInterfaceConfigIfIndex,
+                  gamAclConfigInterfaceConfigPolicyId,
+                  gamAclConfigInterfaceConfigHitAction,
+                  gamAclConfigInterfaceConfigRedirectPortList,
+                  gamAclConfigInterfaceConfigRateLimiterId,
+                  gamAclConfigInterfaceConfigEvcPolicerId,
+                  gamAclConfigInterfaceConfigMirror,
+                  gamAclConfigInterfaceConfigLogging,
+                  gamAclConfigInterfaceConfigShutdown }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAclMibGroups 2 }
+
+gamAclConfigRateLimiterInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAclConfigRateLimiterRateLimiterId,
+                  gamAclConfigRateLimiterBitRateEnable,
+                  gamAclConfigRateLimiterBitRate,
+                  gamAclConfigRateLimiterPacketRate }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAclMibGroups 3 }
+
+gamAclConfigAceInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAclConfigAceAceId, gamAclConfigAceNextAceId,
+                  gamAclConfigAceHitAction,
+                  gamAclConfigAceRedirectPortList,
+                  gamAclConfigAceRedirectPortListSwitchPort,
+                  gamAclConfigAceEgressPortList,
+                  gamAclConfigAceRateLimiterId,
+                  gamAclConfigAceEvcPolicerId, gamAclConfigAceMirror,
+                  gamAclConfigAceLogging, gamAclConfigAceShutdown,
+                  gamAclConfigAceIngressPortListMode,
+                  gamAclConfigAceIngressPortList,
+                  gamAclConfigAceIngressPortListSwitch,
+                  gamAclConfigAceIngressPortListSwitchPort,
+                  gamAclConfigAcePolicyValue,
+                  gamAclConfigAcePolicyMask,
+                  gamAclConfigAceSecondLookup, gamAclConfigAceVlanId,
+                  gamAclConfigAceVlanTagPriority,
+                  gamAclConfigAceVlanTagged, gamAclConfigAceFrameType,
+                  gamAclConfigAceDestMacOp,
+                  gamAclConfigAceEtherSrcMacOp,
+                  gamAclConfigAceEtherSrcMac,
+                  gamAclConfigAceEtherDestMac,
+                  gamAclConfigAceEtherType,
+                  gamAclConfigAceArpSrcMacOp,
+                  gamAclConfigAceArpSrcMac,
+                  gamAclConfigAceArpSenderIp,
+                  gamAclConfigAceArpSenderIpMask,
+                  gamAclConfigAceArpTargetIp,
+                  gamAclConfigAceArpTargetIpMask,
+                  gamAclConfigAceArpOpcode, gamAclConfigAceArpFlagReq,
+                  gamAclConfigAceArpFlagSha,
+                  gamAclConfigAceArpFlagTha,
+                  gamAclConfigAceArpFlagHln,
+                  gamAclConfigAceArpFlagHrd,
+                  gamAclConfigAceArpFlagPro,
+                  gamAclConfigAceIpv4ProtocolOp,
+                  gamAclConfigAceIpv4Protocol,
+                  gamAclConfigAceIpv4SrcIp,
+                  gamAclConfigAceIpv4SrcIpMask,
+                  gamAclConfigAceIpv4DestIp,
+                  gamAclConfigAceIpv4DestIpMask,
+                  gamAclConfigAceIpv4IcmpTypeOp,
+                  gamAclConfigAceIpv4IcmpType,
+                  gamAclConfigAceIpv4IcmpCodeOp,
+                  gamAclConfigAceIpv4IcmpCode,
+                  gamAclConfigAceIpv4SrcPortOp,
+                  gamAclConfigAceIpv4SrcPort,
+                  gamAclConfigAceIpv4SrcPortRange,
+                  gamAclConfigAceIpv4DestPortOp,
+                  gamAclConfigAceIpv4DestPort,
+                  gamAclConfigAceIpv4DestPortRange,
+                  gamAclConfigAceIpv4FlagTtl,
+                  gamAclConfigAceIpv4FlagFragment,
+                  gamAclConfigAceIpv4FlagIpOption,
+                  gamAclConfigAceIpv4TcpFlagFin,
+                  gamAclConfigAceIpv4TcpFlagSyn,
+                  gamAclConfigAceIpv4TcpFlagRst,
+                  gamAclConfigAceIpv4TcpFlagPsh,
+                  gamAclConfigAceIpv4TcpFlagAck,
+                  gamAclConfigAceIpv4TcpFlagUrg,
+                  gamAclConfigAceIpv6NextHeaderOp,
+                  gamAclConfigAceIpv6NextHeader,
+                  gamAclConfigAceIpv6Icmpv6TypeOp,
+                  gamAclConfigAceIpv6Icmpv6Type,
+                  gamAclConfigAceIpv6Icmpv6CodeOp,
+                  gamAclConfigAceIpv6Icmpv6Code,
+                  gamAclConfigAceIpv6SrcIp,
+                  gamAclConfigAceIpv6SrcIpMask,
+                  gamAclConfigAceIpv6SrcPortOp,
+                  gamAclConfigAceIpv6SrcPort,
+                  gamAclConfigAceIpv6SrcPortRange,
+                  gamAclConfigAceIpv6DestPortOp,
+                  gamAclConfigAceIpv6DestPort,
+                  gamAclConfigAceIpv6DestPortRange,
+                  gamAclConfigAceIpv6FlagTtl,
+                  gamAclConfigAceIpv6TcpFlagFin,
+                  gamAclConfigAceIpv6TcpFlagSyn,
+                  gamAclConfigAceIpv6TcpFlagRst,
+                  gamAclConfigAceIpv6TcpFlagPsh,
+                  gamAclConfigAceIpv6TcpFlagAck,
+                  gamAclConfigAceIpv6TcpFlagUrg,
+                  gamAclConfigAceAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAclMibGroups 4 }
+
+gamAclConfigAceRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAclConfigAceRowEditorAceId,
+                  gamAclConfigAceRowEditorNextAceId,
+                  gamAclConfigAceRowEditorHitAction,
+                  gamAclConfigAceRowEditorRedirectPortList,
+                  gamAclConfigAceRowEditorRedirectPortListSwitchPort,
+                  gamAclConfigAceRowEditorEgressPortList,
+                  gamAclConfigAceRowEditorRateLimiterId,
+                  gamAclConfigAceRowEditorEvcPolicerId,
+                  gamAclConfigAceRowEditorMirror,
+                  gamAclConfigAceRowEditorLogging,
+                  gamAclConfigAceRowEditorShutdown,
+                  gamAclConfigAceRowEditorIngressPortListMode,
+                  gamAclConfigAceRowEditorIngressPortList,
+                  gamAclConfigAceRowEditorIngressPortListSwitch,
+                  gamAclConfigAceRowEditorIngressPortListSwitchPort,
+                  gamAclConfigAceRowEditorPolicyValue,
+                  gamAclConfigAceRowEditorPolicyMask,
+                  gamAclConfigAceRowEditorSecondLookup,
+                  gamAclConfigAceRowEditorVlanId,
+                  gamAclConfigAceRowEditorVlanTagPriority,
+                  gamAclConfigAceRowEditorVlanTagged,
+                  gamAclConfigAceRowEditorFrameType,
+                  gamAclConfigAceRowEditorDestMacOp,
+                  gamAclConfigAceRowEditorEtherSrcMacOp,
+                  gamAclConfigAceRowEditorEtherSrcMac,
+                  gamAclConfigAceRowEditorEtherDestMac,
+                  gamAclConfigAceRowEditorEtherType,
+                  gamAclConfigAceRowEditorArpSrcMacOp,
+                  gamAclConfigAceRowEditorArpSrcMac,
+                  gamAclConfigAceRowEditorArpSenderIp,
+                  gamAclConfigAceRowEditorArpSenderIpMask,
+                  gamAclConfigAceRowEditorArpTargetIp,
+                  gamAclConfigAceRowEditorArpTargetIpMask,
+                  gamAclConfigAceRowEditorArpOpcode,
+                  gamAclConfigAceRowEditorArpFlagReq,
+                  gamAclConfigAceRowEditorArpFlagSha,
+                  gamAclConfigAceRowEditorArpFlagTha,
+                  gamAclConfigAceRowEditorArpFlagHln,
+                  gamAclConfigAceRowEditorArpFlagHrd,
+                  gamAclConfigAceRowEditorArpFlagPro,
+                  gamAclConfigAceRowEditorIpv4ProtocolOp,
+                  gamAclConfigAceRowEditorIpv4Protocol,
+                  gamAclConfigAceRowEditorIpv4SrcIp,
+                  gamAclConfigAceRowEditorIpv4SrcIpMask,
+                  gamAclConfigAceRowEditorIpv4DestIp,
+                  gamAclConfigAceRowEditorIpv4DestIpMask,
+                  gamAclConfigAceRowEditorIpv4IcmpTypeOp,
+                  gamAclConfigAceRowEditorIpv4IcmpType,
+                  gamAclConfigAceRowEditorIpv4IcmpCodeOp,
+                  gamAclConfigAceRowEditorIpv4IcmpCode,
+                  gamAclConfigAceRowEditorIpv4SrcPortOp,
+                  gamAclConfigAceRowEditorIpv4SrcPort,
+                  gamAclConfigAceRowEditorIpv4SrcPortRange,
+                  gamAclConfigAceRowEditorIpv4DestPortOp,
+                  gamAclConfigAceRowEditorIpv4DestPort,
+                  gamAclConfigAceRowEditorIpv4DestPortRange,
+                  gamAclConfigAceRowEditorIpv4FlagTtl,
+                  gamAclConfigAceRowEditorIpv4FlagFragment,
+                  gamAclConfigAceRowEditorIpv4FlagIpOption,
+                  gamAclConfigAceRowEditorIpv4TcpFlagFin,
+                  gamAclConfigAceRowEditorIpv4TcpFlagSyn,
+                  gamAclConfigAceRowEditorIpv4TcpFlagRst,
+                  gamAclConfigAceRowEditorIpv4TcpFlagPsh,
+                  gamAclConfigAceRowEditorIpv4TcpFlagAck,
+                  gamAclConfigAceRowEditorIpv4TcpFlagUrg,
+                  gamAclConfigAceRowEditorIpv6NextHeaderOp,
+                  gamAclConfigAceRowEditorIpv6NextHeader,
+                  gamAclConfigAceRowEditorIpv6Icmpv6TypeOp,
+                  gamAclConfigAceRowEditorIpv6Icmpv6Type,
+                  gamAclConfigAceRowEditorIpv6Icmpv6CodeOp,
+                  gamAclConfigAceRowEditorIpv6Icmpv6Code,
+                  gamAclConfigAceRowEditorIpv6SrcIp,
+                  gamAclConfigAceRowEditorIpv6SrcIpMask,
+                  gamAclConfigAceRowEditorIpv6SrcPortOp,
+                  gamAclConfigAceRowEditorIpv6SrcPort,
+                  gamAclConfigAceRowEditorIpv6SrcPortRange,
+                  gamAclConfigAceRowEditorIpv6DestPortOp,
+                  gamAclConfigAceRowEditorIpv6DestPort,
+                  gamAclConfigAceRowEditorIpv6DestPortRange,
+                  gamAclConfigAceRowEditorIpv6FlagTtl,
+                  gamAclConfigAceRowEditorIpv6TcpFlagFin,
+                  gamAclConfigAceRowEditorIpv6TcpFlagSyn,
+                  gamAclConfigAceRowEditorIpv6TcpFlagRst,
+                  gamAclConfigAceRowEditorIpv6TcpFlagPsh,
+                  gamAclConfigAceRowEditorIpv6TcpFlagAck,
+                  gamAclConfigAceRowEditorIpv6TcpFlagUrg,
+                  gamAclConfigAceRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAclMibGroups 5 }
+
+gamAclConfigAcePrecedenceInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAclConfigAcePrecedencePrecedence,
+                  gamAclConfigAcePrecedenceAceId }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAclMibGroups 6 }
+
+gamAclStatusInterfaceHitCountInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAclStatusInterfaceHitCountIfIndex,
+                  gamAclStatusInterfaceHitCountCounter }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAclMibGroups 7 }
+
+gamAclStatusAceInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAclStatusAceSwitchId, gamAclStatusAcePrecedence,
+                  gamAclStatusAceAclUser, gamAclStatusAceAceId,
+                  gamAclStatusAceConflict }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAclMibGroups 8 }
+
+gamAclStatusAceHitCountInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAclStatusAceHitCountAceId,
+                  gamAclStatusAceHitCountCounter }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAclMibGroups 9 }
+
+gamAclControlGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAclControlGlobalsClearAllHitCount }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAclMibGroups 10 }
+
+gamAclControlInterfaceControlInfoGroup OBJECT-GROUP
+    OBJECTS     { gamAclControlInterfaceControlIfIndex,
+                  gamAclControlInterfaceControlState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamAclMibGroups 11 }
+
+gamAclMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamAclCapabilitiesInfoGroup,
+                       gamAclConfigInterfaceConfigInfoGroup,
+                       gamAclConfigRateLimiterInfoGroup,
+                       gamAclConfigAceInfoGroup,
+                       gamAclConfigAceRowEditorInfoGroup,
+                       gamAclConfigAcePrecedenceInfoGroup,
+                       gamAclStatusInterfaceHitCountInfoGroup,
+                       gamAclStatusAceInfoGroup,
+                       gamAclStatusAceHitCountInfoGroup,
+                       gamAclControlGlobalsInfoGroup,
+                       gamAclControlInterfaceControlInfoGroup }
+
+    ::= { gamAclMibCompliances 1 }
+
+END

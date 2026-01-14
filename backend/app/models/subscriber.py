@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, ForeignKey, Enum
+from sqlalchemy import Column, String, Integer, DateTime, Boolean, ForeignKey, Enum, Float
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -27,6 +27,14 @@ class Subscriber(Base):
     # GAM Assignment
     gam_device_id = Column(UUID(as_uuid=True), ForeignKey("gam_devices.id"), nullable=False)
     gam_port_id = Column(UUID(as_uuid=True), ForeignKey("gam_ports.id"), nullable=False)
+
+    # ODB/Splitter assignment (optional for fiber distribution tracking)
+    odb_splitter_id = Column(UUID(as_uuid=True), ForeignKey("odb_splitters.id"), nullable=True)
+    odb_port_number = Column(Integer, nullable=True)  # Which port on the splitter
+
+    # Geographic coordinates for endpoint location
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
     
     # Endpoint Configuration
     endpoint_mac = Column(String(17), nullable=False)  # G1000/G1001 MAC address
@@ -71,6 +79,7 @@ class Subscriber(Base):
     gam_device = relationship("GAMDevice", back_populates="subscribers")
     gam_port = relationship("GAMPort", back_populates="subscribers")
     bandwidth_plan = relationship("BandwidthPlan", back_populates="subscribers")
+    odb_splitter = relationship("ODBSplitter", back_populates="subscribers")
 
     def __repr__(self):
         return f"<Subscriber(name='{self.name}', status='{self.status}', vlan={self.vlan_id})>"

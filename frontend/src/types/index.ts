@@ -9,6 +9,8 @@ export interface GAMDevice {
   uptime?: number
   cpu_usage?: number
   memory_usage?: number
+  ssh_username?: string
+  ssh_port?: number
 }
 
 export interface GAMPort {

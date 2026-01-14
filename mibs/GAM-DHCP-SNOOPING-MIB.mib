@@ -1,0 +1,682 @@
+-- *****************************************************************
+-- DHCP-SNOOPING-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-DHCP-SNOOPING-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMInterfaceIndex FROM GAM-TC
+    GAMVlan FROM GAM-TC
+    GAMVlanOrZero FROM GAM-TC
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    Unsigned32 FROM SNMPv2-SMI
+    MacAddress FROM SNMPv2-TC
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamDhcpSnoopingMib MODULE-IDENTITY
+    LAST-UPDATED "201410100000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the DHCP Snooping MIB"
+    REVISION    "201410100000Z"
+    DESCRIPTION
+        "Editorial changes"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 56 }
+
+
+gamDhcpSnoopingMibObjects OBJECT IDENTIFIER
+    ::= { gamDhcpSnoopingMib 1 }
+
+gamDhcpSnoopingConfig OBJECT IDENTIFIER
+    ::= { gamDhcpSnoopingMibObjects 2 }
+
+gamDhcpSnoopingConfigGlobals OBJECT IDENTIFIER
+    ::= { gamDhcpSnoopingConfig 1 }
+
+gamDhcpSnoopingConfigGlobalsMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the DHCP snooping mode operation. Possible modes are - true:
+         Enable DHCP snooping mode operation. When DHCP snooping mode operation
+         is enabled, the DHCP request messages will be forwarded to trusted
+         ports and only allow reply packets from trusted ports. false: Disable
+         DHCP snooping mode operation."
+    ::= { gamDhcpSnoopingConfigGlobals 1 }
+
+gamDhcpSnoopingConfigInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcpSnoopingConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of DHCP Snooping port configuration parameters"
+    ::= { gamDhcpSnoopingConfig 2 }
+
+gamDhcpSnoopingConfigInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMDhcpSnoopingConfigInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port has a set of parameters"
+    INDEX       { gamDhcpSnoopingConfigInterfaceIfIndex }
+    ::= { gamDhcpSnoopingConfigInterfaceTable 1 }
+
+GAMDhcpSnoopingConfigInterfaceEntry ::= SEQUENCE {
+    gamDhcpSnoopingConfigInterfaceIfIndex    GAMInterfaceIndex,
+    gamDhcpSnoopingConfigInterfaceTrustMode  TruthValue
+}
+
+gamDhcpSnoopingConfigInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamDhcpSnoopingConfigInterfaceEntry 1 }
+
+gamDhcpSnoopingConfigInterfaceTrustMode OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Indicates the DHCP snooping port mode. Possible port modes are - true:
+         Configures the port as trusted source of the DHCP messages. false:
+         Configures the port as untrusted source of the DHCP messages."
+    ::= { gamDhcpSnoopingConfigInterfaceEntry 2 }
+
+gamDhcpSnoopingStatus OBJECT IDENTIFIER
+    ::= { gamDhcpSnoopingMibObjects 3 }
+
+gamDhcpSnoopingStatusAssignedIpTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcpSnoopingStatusAssignedIpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of assigned IP information in DHCP Snooping that are on
+         single-tagged VLAN. This table is kept for compatibility."
+    ::= { gamDhcpSnoopingStatus 1 }
+
+gamDhcpSnoopingStatusAssignedIpEntry OBJECT-TYPE
+    SYNTAX      GAMDhcpSnoopingStatusAssignedIpEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamDhcpSnoopingStatusAssignedIpMacAddress,
+                  gamDhcpSnoopingStatusAssignedIpVlanId }
+    ::= { gamDhcpSnoopingStatusAssignedIpTable 1 }
+
+GAMDhcpSnoopingStatusAssignedIpEntry ::= SEQUENCE {
+    gamDhcpSnoopingStatusAssignedIpMacAddress    MacAddress,
+    gamDhcpSnoopingStatusAssignedIpVlanId        Integer32,
+    gamDhcpSnoopingStatusAssignedIpIfIndex       GAMInterfaceIndex,
+    gamDhcpSnoopingStatusAssignedIpIpAddress     IpAddress,
+    gamDhcpSnoopingStatusAssignedIpNetmask       IpAddress,
+    gamDhcpSnoopingStatusAssignedIpDhcpServerIp  IpAddress
+}
+
+gamDhcpSnoopingStatusAssignedIpMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "MAC address."
+    ::= { gamDhcpSnoopingStatusAssignedIpEntry 1 }
+
+gamDhcpSnoopingStatusAssignedIpVlanId OBJECT-TYPE
+    SYNTAX      Integer32 (1..4095)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The VLAN id of the VLAN."
+    ::= { gamDhcpSnoopingStatusAssignedIpEntry 2 }
+
+gamDhcpSnoopingStatusAssignedIpIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port of the DHCP client."
+    ::= { gamDhcpSnoopingStatusAssignedIpEntry 3 }
+
+gamDhcpSnoopingStatusAssignedIpIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "IP address assigned to DHCP client by DHCP server."
+    ::= { gamDhcpSnoopingStatusAssignedIpEntry 4 }
+
+gamDhcpSnoopingStatusAssignedIpNetmask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Netmask assigned to DHCP client by DHCP server."
+    ::= { gamDhcpSnoopingStatusAssignedIpEntry 5 }
+
+gamDhcpSnoopingStatusAssignedIpDhcpServerIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "IP address of the DHCP server that assigns the IP address and netmask."
+    ::= { gamDhcpSnoopingStatusAssignedIpEntry 6 }
+
+gamDhcpSnoopingStatusAssignedIp2TagsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcpSnoopingStatusAssignedIp2TagsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of assigned IP information in DHCP Snooping, on either
+         single-tagged or double-tagged VLANs."
+    ::= { gamDhcpSnoopingStatus 2 }
+
+gamDhcpSnoopingStatusAssignedIp2TagsEntry OBJECT-TYPE
+    SYNTAX      GAMDhcpSnoopingStatusAssignedIp2TagsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamDhcpSnoopingStatusAssignedIp2TagsMacAddress,
+                  gamDhcpSnoopingStatusAssignedIp2TagsOuterVlanId,
+                  gamDhcpSnoopingStatusAssignedIp2TagsInnerVlanId }
+    ::= { gamDhcpSnoopingStatusAssignedIp2TagsTable 1 }
+
+GAMDhcpSnoopingStatusAssignedIp2TagsEntry ::= SEQUENCE {
+    gamDhcpSnoopingStatusAssignedIp2TagsMacAddress    MacAddress,
+    gamDhcpSnoopingStatusAssignedIp2TagsOuterVlanId   GAMVlan,
+    gamDhcpSnoopingStatusAssignedIp2TagsInnerVlanId   GAMVlanOrZero,
+    gamDhcpSnoopingStatusAssignedIp2TagsIfIndex       GAMInterfaceIndex,
+    gamDhcpSnoopingStatusAssignedIp2TagsIpAddress     IpAddress,
+    gamDhcpSnoopingStatusAssignedIp2TagsNetmask       IpAddress,
+    gamDhcpSnoopingStatusAssignedIp2TagsDhcpServerIp  IpAddress
+}
+
+gamDhcpSnoopingStatusAssignedIp2TagsMacAddress OBJECT-TYPE
+    SYNTAX      MacAddress
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "MAC address."
+    ::= { gamDhcpSnoopingStatusAssignedIp2TagsEntry 1 }
+
+gamDhcpSnoopingStatusAssignedIp2TagsOuterVlanId OBJECT-TYPE
+    SYNTAX      GAMVlan
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The outer VLAN id of the VLAN."
+    ::= { gamDhcpSnoopingStatusAssignedIp2TagsEntry 2 }
+
+gamDhcpSnoopingStatusAssignedIp2TagsInnerVlanId OBJECT-TYPE
+    SYNTAX      GAMVlanOrZero
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The inner VLAN id of the VLAN. 0 means no inner VLAN ID (single tag)."
+    ::= { gamDhcpSnoopingStatusAssignedIp2TagsEntry 3 }
+
+gamDhcpSnoopingStatusAssignedIp2TagsIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port of the DHCP client."
+    ::= { gamDhcpSnoopingStatusAssignedIp2TagsEntry 4 }
+
+gamDhcpSnoopingStatusAssignedIp2TagsIpAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "IP address assigned to DHCP client by DHCP server."
+    ::= { gamDhcpSnoopingStatusAssignedIp2TagsEntry 5 }
+
+gamDhcpSnoopingStatusAssignedIp2TagsNetmask OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Netmask assigned to DHCP client by DHCP server."
+    ::= { gamDhcpSnoopingStatusAssignedIp2TagsEntry 6 }
+
+gamDhcpSnoopingStatusAssignedIp2TagsDhcpServerIp OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "IP address of the DHCP server that assigns the IP address and netmask."
+    ::= { gamDhcpSnoopingStatusAssignedIp2TagsEntry 7 }
+
+gamDhcpSnoopingControl OBJECT IDENTIFIER
+    ::= { gamDhcpSnoopingMibObjects 4 }
+
+gamDhcpSnoopingControlInterfaceClearStatisticsTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcpSnoopingControlInterfaceClearStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table to clear port statistics in DHCP Snooping"
+    ::= { gamDhcpSnoopingControl 1 }
+
+gamDhcpSnoopingControlInterfaceClearStatisticsEntry OBJECT-TYPE
+    SYNTAX      GAMDhcpSnoopingControlInterfaceClearStatisticsEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each port has a set of parameters"
+    INDEX       {                   gamDhcpSnoopingControlInterfaceClearStatisticsIfIndex }
+    ::= { gamDhcpSnoopingControlInterfaceClearStatisticsTable 1 }
+
+GAMDhcpSnoopingControlInterfaceClearStatisticsEntry ::= SEQUENCE {
+    gamDhcpSnoopingControlInterfaceClearStatisticsIfIndex  GAMInterfaceIndex,
+    gamDhcpSnoopingControlInterfaceClearStatisticsClear    TruthValue
+}
+
+gamDhcpSnoopingControlInterfaceClearStatisticsIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamDhcpSnoopingControlInterfaceClearStatisticsEntry 1 }
+
+gamDhcpSnoopingControlInterfaceClearStatisticsClear OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "clear statistics per physical port."
+    ::= { gamDhcpSnoopingControlInterfaceClearStatisticsEntry 2 }
+
+gamDhcpSnoopingStatistics OBJECT IDENTIFIER
+    ::= { gamDhcpSnoopingMibObjects 5 }
+
+gamDhcpSnoopingStatisticsInterfaceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMDhcpSnoopingStatisticsInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table of port statistics in DHCP Snooping "
+    ::= { gamDhcpSnoopingStatistics 2 }
+
+gamDhcpSnoopingStatisticsInterfaceEntry OBJECT-TYPE
+    SYNTAX      GAMDhcpSnoopingStatisticsInterfaceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamDhcpSnoopingStatisticsInterfaceIfIndex }
+    ::= { gamDhcpSnoopingStatisticsInterfaceTable 1 }
+
+GAMDhcpSnoopingStatisticsInterfaceEntry ::= SEQUENCE {
+    gamDhcpSnoopingStatisticsInterfaceIfIndex             GAMInterfaceIndex,
+    gamDhcpSnoopingStatisticsInterfaceRxDiscover          Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxOffer             Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxRequest           Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxDecline           Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxAck               Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxNak               Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxRelease           Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxInform            Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxLeaseQuery        Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxLeaseUnassigned   Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxLeaseUnknown      Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxLeaseActive       Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxDiscardChksumErr  Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceRxDiscardUntrust    Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxDiscover          Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxOffer             Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxRequest           Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxDecline           Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxAck               Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxNak               Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxRelease           Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxInform            Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxLeaseQuery        Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxLeaseUnassigned   Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxLeaseUnknown      Unsigned32,
+    gamDhcpSnoopingStatisticsInterfaceTxLeaseActive       Unsigned32
+}
+
+gamDhcpSnoopingStatisticsInterfaceIfIndex OBJECT-TYPE
+    SYNTAX      GAMInterfaceIndex
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Logical interface number of the physical port."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 1 }
+
+gamDhcpSnoopingStatisticsInterfaceRxDiscover OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of discover (option 53 with value 1) packets received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 2 }
+
+gamDhcpSnoopingStatisticsInterfaceRxOffer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of offer (option 53 with value 2) packets received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 3 }
+
+gamDhcpSnoopingStatisticsInterfaceRxRequest OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of request (option 53 with value 3) packets received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 4 }
+
+gamDhcpSnoopingStatisticsInterfaceRxDecline OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of decline (option 53 with value 4) packets received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 5 }
+
+gamDhcpSnoopingStatisticsInterfaceRxAck OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of ACK (option 53 with value 5) packets received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 6 }
+
+gamDhcpSnoopingStatisticsInterfaceRxNak OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of NAK (option 53 with value 6) packets received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 7 }
+
+gamDhcpSnoopingStatisticsInterfaceRxRelease OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of release (option 53 with value 7) packets received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 8 }
+
+gamDhcpSnoopingStatisticsInterfaceRxInform OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of inform (option 53 with value 8) packets received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 9 }
+
+gamDhcpSnoopingStatisticsInterfaceRxLeaseQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of lease query (option 53 with value 10) packets received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 10 }
+
+gamDhcpSnoopingStatisticsInterfaceRxLeaseUnassigned OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of lease unassigned (option 53 with value 11) packets
+         received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 11 }
+
+gamDhcpSnoopingStatisticsInterfaceRxLeaseUnknown OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of lease unknown (option 53 with value 12) packets received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 12 }
+
+gamDhcpSnoopingStatisticsInterfaceRxLeaseActive OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of lease active (option 53 with value 13) packets received."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 13 }
+
+gamDhcpSnoopingStatisticsInterfaceRxDiscardChksumErr OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of discard packet that IP/UDP checksum is error."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 14 }
+
+gamDhcpSnoopingStatisticsInterfaceRxDiscardUntrust OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of discard packet that are coming from untrusted port."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 15 }
+
+gamDhcpSnoopingStatisticsInterfaceTxDiscover OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of discover (option 53 with value 1) packets transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 16 }
+
+gamDhcpSnoopingStatisticsInterfaceTxOffer OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of offer (option 53 with value 2) packets transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 17 }
+
+gamDhcpSnoopingStatisticsInterfaceTxRequest OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of request (option 53 with value 3) packets transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 18 }
+
+gamDhcpSnoopingStatisticsInterfaceTxDecline OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of decline (option 53 with value 4) packets transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 19 }
+
+gamDhcpSnoopingStatisticsInterfaceTxAck OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of ACK (option 53 with value 5) packets transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 20 }
+
+gamDhcpSnoopingStatisticsInterfaceTxNak OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of NAK (option 53 with value 6) packets transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 21 }
+
+gamDhcpSnoopingStatisticsInterfaceTxRelease OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of release (option 53 with value 7) packets transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 22 }
+
+gamDhcpSnoopingStatisticsInterfaceTxInform OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of inform (option 53 with value 8) packets transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 23 }
+
+gamDhcpSnoopingStatisticsInterfaceTxLeaseQuery OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of lease query (option 53 with value 10) packets transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 24 }
+
+gamDhcpSnoopingStatisticsInterfaceTxLeaseUnassigned OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of lease unassigned (option 53 with value 11) packets
+         transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 25 }
+
+gamDhcpSnoopingStatisticsInterfaceTxLeaseUnknown OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of lease unknown (option 53 with value 12) packets
+         transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 26 }
+
+gamDhcpSnoopingStatisticsInterfaceTxLeaseActive OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The number of lease active (option 53 with value 13) packets
+         transmited."
+    ::= { gamDhcpSnoopingStatisticsInterfaceEntry 27 }
+
+gamDhcpSnoopingMibConformance OBJECT IDENTIFIER
+    ::= { gamDhcpSnoopingMib 2 }
+
+gamDhcpSnoopingMibCompliances OBJECT IDENTIFIER
+    ::= { gamDhcpSnoopingMibConformance 1 }
+
+gamDhcpSnoopingMibGroups OBJECT IDENTIFIER
+    ::= { gamDhcpSnoopingMibConformance 2 }
+
+gamDhcpSnoopingConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpSnoopingConfigGlobalsMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpSnoopingMibGroups 1 }
+
+gamDhcpSnoopingConfigInterfaceInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpSnoopingConfigInterfaceIfIndex,
+                  gamDhcpSnoopingConfigInterfaceTrustMode }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpSnoopingMibGroups 2 }
+
+gamDhcpSnoopingStatusAssignedIpTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpSnoopingStatusAssignedIpMacAddress,
+                  gamDhcpSnoopingStatusAssignedIpVlanId,
+                  gamDhcpSnoopingStatusAssignedIpIfIndex,
+                  gamDhcpSnoopingStatusAssignedIpIpAddress,
+                  gamDhcpSnoopingStatusAssignedIpNetmask,
+                  gamDhcpSnoopingStatusAssignedIpDhcpServerIp }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpSnoopingMibGroups 3 }
+
+gamDhcpSnoopingStatusAssignedIp2TagsTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpSnoopingStatusAssignedIp2TagsMacAddress,
+                  gamDhcpSnoopingStatusAssignedIp2TagsOuterVlanId,
+                  gamDhcpSnoopingStatusAssignedIp2TagsInnerVlanId,
+                  gamDhcpSnoopingStatusAssignedIp2TagsIfIndex,
+                  gamDhcpSnoopingStatusAssignedIp2TagsIpAddress,
+                  gamDhcpSnoopingStatusAssignedIp2TagsNetmask,
+                  gamDhcpSnoopingStatusAssignedIp2TagsDhcpServerIp }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpSnoopingMibGroups 4 }
+
+gamDhcpSnoopingControlInterfaceClearStatisticsTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamDhcpSnoopingControlInterfaceClearStatisticsIfIndex,
+                  gamDhcpSnoopingControlInterfaceClearStatisticsClear }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpSnoopingMibGroups 5 }
+
+gamDhcpSnoopingStatisticsInterfaceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDhcpSnoopingStatisticsInterfaceIfIndex,
+                  gamDhcpSnoopingStatisticsInterfaceRxDiscover,
+                  gamDhcpSnoopingStatisticsInterfaceRxOffer,
+                  gamDhcpSnoopingStatisticsInterfaceRxRequest,
+                  gamDhcpSnoopingStatisticsInterfaceRxDecline,
+                  gamDhcpSnoopingStatisticsInterfaceRxAck,
+                  gamDhcpSnoopingStatisticsInterfaceRxNak,
+                  gamDhcpSnoopingStatisticsInterfaceRxRelease,
+                  gamDhcpSnoopingStatisticsInterfaceRxInform,
+                  gamDhcpSnoopingStatisticsInterfaceRxLeaseQuery,
+                  gamDhcpSnoopingStatisticsInterfaceRxLeaseUnassigned,
+                  gamDhcpSnoopingStatisticsInterfaceRxLeaseUnknown,
+                  gamDhcpSnoopingStatisticsInterfaceRxLeaseActive,
+                  gamDhcpSnoopingStatisticsInterfaceRxDiscardChksumErr,
+                  gamDhcpSnoopingStatisticsInterfaceRxDiscardUntrust,
+                  gamDhcpSnoopingStatisticsInterfaceTxDiscover,
+                  gamDhcpSnoopingStatisticsInterfaceTxOffer,
+                  gamDhcpSnoopingStatisticsInterfaceTxRequest,
+                  gamDhcpSnoopingStatisticsInterfaceTxDecline,
+                  gamDhcpSnoopingStatisticsInterfaceTxAck,
+                  gamDhcpSnoopingStatisticsInterfaceTxNak,
+                  gamDhcpSnoopingStatisticsInterfaceTxRelease,
+                  gamDhcpSnoopingStatisticsInterfaceTxInform,
+                  gamDhcpSnoopingStatisticsInterfaceTxLeaseQuery,
+                  gamDhcpSnoopingStatisticsInterfaceTxLeaseUnassigned,
+                  gamDhcpSnoopingStatisticsInterfaceTxLeaseUnknown,
+                  gamDhcpSnoopingStatisticsInterfaceTxLeaseActive }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDhcpSnoopingMibGroups 6 }
+
+gamDhcpSnoopingMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamDhcpSnoopingConfigGlobalsInfoGroup,
+                       gamDhcpSnoopingConfigInterfaceInfoGroup,
+                       gamDhcpSnoopingStatusAssignedIpTableInfoGroup,
+                       gamDhcpSnoopingStatusAssignedIp2TagsTableInfoGroup,
+                       gamDhcpSnoopingControlInterfaceClearStatisticsTableInfoGroup,
+                       gamDhcpSnoopingStatisticsInterfaceTableInfoGroup }
+
+    ::= { gamDhcpSnoopingMibCompliances 1 }
+
+END

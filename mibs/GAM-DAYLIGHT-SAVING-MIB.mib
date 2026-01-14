@@ -1,0 +1,312 @@
+-- *****************************************************************
+-- DAYLIGHT-SAVING-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-DAYLIGHT-SAVING-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMInteger16 FROM GAM-TC
+    GAMUnsigned16 FROM GAM-TC
+    GAMUnsigned8 FROM GAM-TC
+    ;
+
+gamDaylightSavingMib MODULE-IDENTITY
+    LAST-UPDATED "201701060000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of daylight saving. Used to configure system
+         Summer time(Daylight Saving) and Time Zone."
+    REVISION    "201701060000Z"
+    DESCRIPTION
+        "Update time zone offset valid range"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 97 }
+
+
+GAMDaylightSavingMode ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration defines the available summer time(Daylight Saving)
+         mode."
+    SYNTAX      INTEGER { disable(0), recurring(1), nonRecurring(2) }
+
+gamDaylightSavingMibObjects OBJECT IDENTIFIER
+    ::= { gamDaylightSavingMib 1 }
+
+gamDaylightSavingConfig OBJECT IDENTIFIER
+    ::= { gamDaylightSavingMibObjects 2 }
+
+gamDaylightSavingConfigGlobals OBJECT IDENTIFIER
+    ::= { gamDaylightSavingConfig 1 }
+
+gamDaylightSavingConfigGlobalsTimeZoneAcronym OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a acronym to identify the time zone."
+    ::= { gamDaylightSavingConfigGlobals 1 }
+
+gamDaylightSavingConfigGlobalsTimeZoneOffset OBJECT-TYPE
+    SYNTAX      GAMInteger16 (-1439..1439)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "To set the system time zone with respect to UTC in minutes."
+    ::= { gamDaylightSavingConfigGlobals 2 }
+
+gamDaylightSavingConfigGlobalsSummerTimeMode OBJECT-TYPE
+    SYNTAX      GAMDaylightSavingMode
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time mode.
+         
+         Disabled: The daylight feature is disabled,
+         
+         and no input validation is performed on remaining configurations
+         parameters.
+         
+         Recurring mode: Summer time configuration will repeat every year.
+         
+         To enable this mode requires that the parameters Month, Week and Day
+         are configured with valid
+         
+         values (non zero). The parameters Year and Date must be set to 0,
+         
+         signaling that they are not used.
+         
+         Non recurring mode: Summer time configuration is done once.
+         
+         To enable this feature requires that the following values are
+         configured with valid values
+         
+         (non zero): Year, Month and Date. The parameters Week and Day must be
+         set to 0
+         
+         signaling that they are not used."
+    ::= { gamDaylightSavingConfigGlobals 3 }
+
+gamDaylightSavingConfigGlobalsSummerTimeWeekStart OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..5)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time starting week.
+         
+         This object needs to be set when summer time mode is recurring.
+         
+         Object value 0 means unused object."
+    ::= { gamDaylightSavingConfigGlobals 4 }
+
+gamDaylightSavingConfigGlobalsSummerTimeDayStart OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time starting day.
+         
+         where monday = 1, sunday = 7.
+         
+         This object needs to be set when summer time mode is recurring.
+         
+         Object value 0 means unused object."
+    ::= { gamDaylightSavingConfigGlobals 5 }
+
+gamDaylightSavingConfigGlobalsSummerTimeMonthStart OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (1..12)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time starting month.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { gamDaylightSavingConfigGlobals 6 }
+
+gamDaylightSavingConfigGlobalsSummerTimeDateStart OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..31)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time starting date.
+         
+         This object needs to be set when summer time mode is non recurring."
+    ::= { gamDaylightSavingConfigGlobals 7 }
+
+gamDaylightSavingConfigGlobalsSummerTimeYearStart OBJECT-TYPE
+    SYNTAX      GAMUnsigned16 (0..2097)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time starting year.
+         
+         This object needs to be set when summer time mode is non recurring.
+         
+         Object value 0 means unused object."
+    ::= { gamDaylightSavingConfigGlobals 8 }
+
+gamDaylightSavingConfigGlobalsSummerTimeHourStart OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..23)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time starting hour.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { gamDaylightSavingConfigGlobals 9 }
+
+gamDaylightSavingConfigGlobalsSummerTimeMinuteStart OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..59)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time starting minute.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { gamDaylightSavingConfigGlobals 10 }
+
+gamDaylightSavingConfigGlobalsSummerTimeWeekEnd OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..5)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time ending week.
+         
+         This object needs to be set when summer time mode is recurring.
+         
+         Object value 0 means unused object."
+    ::= { gamDaylightSavingConfigGlobals 11 }
+
+gamDaylightSavingConfigGlobalsSummerTimeDayEnd OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..7)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time ending day.
+         
+         This object needs to be set when summer time mode is recurring.
+         
+         Object value 0 means unused object."
+    ::= { gamDaylightSavingConfigGlobals 12 }
+
+gamDaylightSavingConfigGlobalsSummerTimeMonthEnd OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (1..12)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time ending month.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { gamDaylightSavingConfigGlobals 13 }
+
+gamDaylightSavingConfigGlobalsSummerTimeDateEnd OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..31)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time ending date.
+         
+         This object needs to be set when summer time mode is non recurring.
+         
+         Object value 0 means unused object."
+    ::= { gamDaylightSavingConfigGlobals 14 }
+
+gamDaylightSavingConfigGlobalsSummerTimeYearEnd OBJECT-TYPE
+    SYNTAX      GAMUnsigned16 (0..2097)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time ending year.
+         
+         This object needs to be set when summer time mode is non recurring.
+         
+         Object value 0 means unused object."
+    ::= { gamDaylightSavingConfigGlobals 15 }
+
+gamDaylightSavingConfigGlobalsSummerTimeHourEnd OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..23)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time ending hour.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { gamDaylightSavingConfigGlobals 16 }
+
+gamDaylightSavingConfigGlobalsSummerTimeMinuteEnd OBJECT-TYPE
+    SYNTAX      GAMUnsigned8 (0..59)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "This is a summer time ending minute.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { gamDaylightSavingConfigGlobals 17 }
+
+gamDaylightSavingConfigGlobalsSummerTimeOffset OBJECT-TYPE
+    SYNTAX      GAMInteger16 (1..1439)
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The value of this object indicates
+         
+         the number of minutes to add or to subtract during summertime.
+         
+         This object needs to be set when summer time mode is not disabled."
+    ::= { gamDaylightSavingConfigGlobals 18 }
+
+gamDaylightSavingMibConformance OBJECT IDENTIFIER
+    ::= { gamDaylightSavingMib 2 }
+
+gamDaylightSavingMibCompliances OBJECT IDENTIFIER
+    ::= { gamDaylightSavingMibConformance 1 }
+
+gamDaylightSavingMibGroups OBJECT IDENTIFIER
+    ::= { gamDaylightSavingMibConformance 2 }
+
+gamDaylightSavingConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamDaylightSavingConfigGlobalsTimeZoneAcronym,
+                  gamDaylightSavingConfigGlobalsTimeZoneOffset,
+                  gamDaylightSavingConfigGlobalsSummerTimeMode,
+                  gamDaylightSavingConfigGlobalsSummerTimeWeekStart,
+                  gamDaylightSavingConfigGlobalsSummerTimeDayStart,
+                  gamDaylightSavingConfigGlobalsSummerTimeMonthStart,
+                  gamDaylightSavingConfigGlobalsSummerTimeDateStart,
+                  gamDaylightSavingConfigGlobalsSummerTimeYearStart,
+                  gamDaylightSavingConfigGlobalsSummerTimeHourStart,
+                  gamDaylightSavingConfigGlobalsSummerTimeMinuteStart,
+                  gamDaylightSavingConfigGlobalsSummerTimeWeekEnd,
+                  gamDaylightSavingConfigGlobalsSummerTimeDayEnd,
+                  gamDaylightSavingConfigGlobalsSummerTimeMonthEnd,
+                  gamDaylightSavingConfigGlobalsSummerTimeDateEnd,
+                  gamDaylightSavingConfigGlobalsSummerTimeYearEnd,
+                  gamDaylightSavingConfigGlobalsSummerTimeHourEnd,
+                  gamDaylightSavingConfigGlobalsSummerTimeMinuteEnd,
+                  gamDaylightSavingConfigGlobalsSummerTimeOffset }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamDaylightSavingMibGroups 1 }
+
+gamDaylightSavingMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamDaylightSavingConfigGlobalsInfoGroup }
+
+    ::= { gamDaylightSavingMibCompliances 1 }
+
+END

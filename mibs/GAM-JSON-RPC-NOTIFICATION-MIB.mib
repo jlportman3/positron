@@ -1,0 +1,310 @@
+-- *****************************************************************
+-- JSON-RPC-NOTIFICATION-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-JSON-RPC-NOTIFICATION-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    ;
+
+gamJsonRpcNotificationMib MODULE-IDENTITY
+    LAST-UPDATED "201410030000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "Private JSON-RPC Notification MIB."
+    REVISION    "201410030000Z"
+    DESCRIPTION
+        "Initial version."
+    ::= { gamMgmt 129 }
+
+
+GAMJsonRpcNotificationDestAuthType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "Type of authentication (if any)."
+    SYNTAX      INTEGER { none(0), basic(1) }
+
+gamJsonRpcNotificationMibObjects OBJECT IDENTIFIER
+    ::= { gamJsonRpcNotificationMib 1 }
+
+gamJsonRpcNotificationConfig OBJECT IDENTIFIER
+    ::= { gamJsonRpcNotificationMibObjects 2 }
+
+gamJsonRpcNotificationConfigDestinationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMJsonRpcNotificationConfigDestinationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of JSON-RPC Notification destinations."
+    ::= { gamJsonRpcNotificationConfig 1 }
+
+gamJsonRpcNotificationConfigDestinationEntry OBJECT-TYPE
+    SYNTAX      GAMJsonRpcNotificationConfigDestinationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Entries in this table represent a JSON-RPC Notification destination
+         which can be referred to in the notification subscription table."
+    INDEX       { gamJsonRpcNotificationConfigDestinationName }
+    ::= { gamJsonRpcNotificationConfigDestinationTable 1 }
+
+GAMJsonRpcNotificationConfigDestinationEntry ::= SEQUENCE {
+    gamJsonRpcNotificationConfigDestinationName      GAMDisplayString,
+    gamJsonRpcNotificationConfigDestinationUrl       GAMDisplayString,
+    gamJsonRpcNotificationConfigDestinationAuthType  GAMJsonRpcNotificationDestAuthType,
+    gamJsonRpcNotificationConfigDestinationUsername  GAMDisplayString,
+    gamJsonRpcNotificationConfigDestinationPassword  GAMDisplayString,
+    gamJsonRpcNotificationConfigDestinationAction    GAMRowEditorState
+}
+
+gamJsonRpcNotificationConfigDestinationName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of destination"
+    ::= { gamJsonRpcNotificationConfigDestinationEntry 1 }
+
+gamJsonRpcNotificationConfigDestinationUrl OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "URL of the destination where the events are delivered to."
+    ::= { gamJsonRpcNotificationConfigDestinationEntry 2 }
+
+gamJsonRpcNotificationConfigDestinationAuthType OBJECT-TYPE
+    SYNTAX      GAMJsonRpcNotificationDestAuthType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of authentication to use (if any)"
+    ::= { gamJsonRpcNotificationConfigDestinationEntry 3 }
+
+gamJsonRpcNotificationConfigDestinationUsername OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User name for the authentication process"
+    ::= { gamJsonRpcNotificationConfigDestinationEntry 4 }
+
+gamJsonRpcNotificationConfigDestinationPassword OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Password for the authentication process"
+    ::= { gamJsonRpcNotificationConfigDestinationEntry 5 }
+
+gamJsonRpcNotificationConfigDestinationAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamJsonRpcNotificationConfigDestinationEntry 100 }
+
+gamJsonRpcNotificationConfigDestinationRowEditor OBJECT IDENTIFIER
+    ::= { gamJsonRpcNotificationConfig 2 }
+
+gamJsonRpcNotificationConfigDestinationRowEditorName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Name of destination"
+    ::= { gamJsonRpcNotificationConfigDestinationRowEditor 1 }
+
+gamJsonRpcNotificationConfigDestinationRowEditorUrl OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..254))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "URL of the destination where the events are delivered to."
+    ::= { gamJsonRpcNotificationConfigDestinationRowEditor 2 }
+
+gamJsonRpcNotificationConfigDestinationRowEditorAuthType OBJECT-TYPE
+    SYNTAX      GAMJsonRpcNotificationDestAuthType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Type of authentication to use (if any)"
+    ::= { gamJsonRpcNotificationConfigDestinationRowEditor 3 }
+
+gamJsonRpcNotificationConfigDestinationRowEditorUsername OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "User name for the authentication process"
+    ::= { gamJsonRpcNotificationConfigDestinationRowEditor 4 }
+
+gamJsonRpcNotificationConfigDestinationRowEditorPassword OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..32))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Password for the authentication process"
+    ::= { gamJsonRpcNotificationConfigDestinationRowEditor 5 }
+
+gamJsonRpcNotificationConfigDestinationRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamJsonRpcNotificationConfigDestinationRowEditor 100 }
+
+gamJsonRpcNotificationConfigNotificationTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMJsonRpcNotificationConfigNotificationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Table of JSON-RPC Notifications subscriptions."
+    ::= { gamJsonRpcNotificationConfig 3 }
+
+gamJsonRpcNotificationConfigNotificationEntry OBJECT-TYPE
+    SYNTAX      GAMJsonRpcNotificationConfigNotificationEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry represents a subscription of a given notification to a given
+         destination. If the corresponding destination is deleted, then
+         subscription is deleted as well."
+    INDEX       {                   gamJsonRpcNotificationConfigNotificationDestination,
+                  gamJsonRpcNotificationConfigNotificationNotification }
+    ::= { gamJsonRpcNotificationConfigNotificationTable 1 }
+
+GAMJsonRpcNotificationConfigNotificationEntry ::= SEQUENCE {
+    gamJsonRpcNotificationConfigNotificationDestination   GAMDisplayString,
+    gamJsonRpcNotificationConfigNotificationNotification  GAMDisplayString,
+    gamJsonRpcNotificationConfigNotificationAction        GAMRowEditorState
+}
+
+gamJsonRpcNotificationConfigNotificationDestination OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of destination"
+    ::= { gamJsonRpcNotificationConfigNotificationEntry 1 }
+
+gamJsonRpcNotificationConfigNotificationNotification OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..96))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "Name of notification"
+    ::= { gamJsonRpcNotificationConfigNotificationEntry 2 }
+
+gamJsonRpcNotificationConfigNotificationAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamJsonRpcNotificationConfigNotificationEntry 100 }
+
+gamJsonRpcNotificationConfigNotificationRowEditor OBJECT IDENTIFIER
+    ::= { gamJsonRpcNotificationConfig 4 }
+
+gamJsonRpcNotificationConfigNotificationRowEditorDestination OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Name of destination"
+    ::= { gamJsonRpcNotificationConfigNotificationRowEditor 1 }
+
+gamJsonRpcNotificationConfigNotificationRowEditorNotification OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..96))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Name of notification"
+    ::= { gamJsonRpcNotificationConfigNotificationRowEditor 2 }
+
+gamJsonRpcNotificationConfigNotificationRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamJsonRpcNotificationConfigNotificationRowEditor 100 }
+
+gamJsonRpcNotificationMibConformance OBJECT IDENTIFIER
+    ::= { gamJsonRpcNotificationMib 2 }
+
+gamJsonRpcNotificationMibCompliances OBJECT IDENTIFIER
+    ::= { gamJsonRpcNotificationMibConformance 1 }
+
+gamJsonRpcNotificationMibGroups OBJECT IDENTIFIER
+    ::= { gamJsonRpcNotificationMibConformance 2 }
+
+gamJsonRpcNotificationConfigDestinationTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamJsonRpcNotificationConfigDestinationName,
+                  gamJsonRpcNotificationConfigDestinationUrl,
+                  gamJsonRpcNotificationConfigDestinationAuthType,
+                  gamJsonRpcNotificationConfigDestinationUsername,
+                  gamJsonRpcNotificationConfigDestinationPassword,
+                  gamJsonRpcNotificationConfigDestinationAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamJsonRpcNotificationMibGroups 1 }
+
+gamJsonRpcNotificationConfigDestinationRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamJsonRpcNotificationConfigDestinationRowEditorName,
+                  gamJsonRpcNotificationConfigDestinationRowEditorUrl,
+                  gamJsonRpcNotificationConfigDestinationRowEditorAuthType,
+                  gamJsonRpcNotificationConfigDestinationRowEditorUsername,
+                  gamJsonRpcNotificationConfigDestinationRowEditorPassword,
+                  gamJsonRpcNotificationConfigDestinationRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamJsonRpcNotificationMibGroups 2 }
+
+gamJsonRpcNotificationConfigNotificationTableInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamJsonRpcNotificationConfigNotificationDestination,
+                  gamJsonRpcNotificationConfigNotificationNotification,
+                  gamJsonRpcNotificationConfigNotificationAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamJsonRpcNotificationMibGroups 3 }
+
+gamJsonRpcNotificationConfigNotificationRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamJsonRpcNotificationConfigNotificationRowEditorDestination,
+                  gamJsonRpcNotificationConfigNotificationRowEditorNotification,
+                  gamJsonRpcNotificationConfigNotificationRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamJsonRpcNotificationMibGroups 4 }
+
+gamJsonRpcNotificationMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS {                        gamJsonRpcNotificationConfigDestinationTableInfoGroup,
+                       gamJsonRpcNotificationConfigDestinationRowEditorInfoGroup,
+                       gamJsonRpcNotificationConfigNotificationTableInfoGroup,
+                       gamJsonRpcNotificationConfigNotificationRowEditorInfoGroup }
+
+    ::= { gamJsonRpcNotificationMibCompliances 1 }
+
+END

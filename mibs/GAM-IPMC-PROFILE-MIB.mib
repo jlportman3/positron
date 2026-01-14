@@ -1,0 +1,678 @@
+-- *****************************************************************
+-- IPMC-PROFILE-MIB:  Positron's GAM private MIB
+-- *****************************************************************
+
+GAM-IPMC-PROFILE-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    NOTIFICATION-GROUP, MODULE-COMPLIANCE, OBJECT-GROUP FROM SNMPv2-CONF
+    NOTIFICATION-TYPE, MODULE-IDENTITY, OBJECT-TYPE FROM SNMPv2-SMI
+    TEXTUAL-CONVENTION FROM SNMPv2-TC
+    gamMgmt FROM POSITRON-SMI
+    GAMDisplayString FROM GAM-TC
+    GAMRowEditorState FROM GAM-TC
+    InetAddressIPv6 FROM INET-ADDRESS-MIB
+    Integer32 FROM SNMPv2-SMI
+    IpAddress FROM SNMPv2-SMI
+    TruthValue FROM SNMPv2-TC
+    ;
+
+gamIpmcProfileMib MODULE-IDENTITY
+    LAST-UPDATED "201407010000Z"
+    ORGANIZATION
+        "Positron Access Solutions Corp."
+    CONTACT-INFO
+        "Customer Service <info@positronaccess.com>"
+    DESCRIPTION
+        "This is a private version of the IPMC Profile MIB"
+    REVISION    "201407010000Z"
+    DESCRIPTION
+        "Initial version"
+    ::= { gamMgmt 38 }
+
+
+GAMIpmcProfileRuleActionType ::= TEXTUAL-CONVENTION
+    STATUS      current
+    DESCRIPTION
+        "This enumeration indicates the configured action type for IPMC profile
+         rule."
+    SYNTAX      INTEGER { deny(0), permit(1) }
+
+gamIpmcProfileMibObjects OBJECT IDENTIFIER
+    ::= { gamIpmcProfileMib 1 }
+
+gamIpmcProfileConfig OBJECT IDENTIFIER
+    ::= { gamIpmcProfileMibObjects 2 }
+
+gamIpmcProfileConfigGlobals OBJECT IDENTIFIER
+    ::= { gamIpmcProfileConfig 1 }
+
+gamIpmcProfileConfigGlobalsAdminState OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable/Disable the IPMC Profile global functionality."
+    ::= { gamIpmcProfileConfigGlobals 1 }
+
+gamIpmcProfileConfigManagementTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcProfileConfigManagementEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing IPMC profile entries."
+    ::= { gamIpmcProfileConfig 2 }
+
+gamIpmcProfileConfigManagementEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcProfileConfigManagementEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamIpmcProfileConfigManagementProfileName }
+    ::= { gamIpmcProfileConfigManagementTable 1 }
+
+GAMIpmcProfileConfigManagementEntry ::= SEQUENCE {
+    gamIpmcProfileConfigManagementProfileName         GAMDisplayString,
+    gamIpmcProfileConfigManagementProfileDescription  GAMDisplayString,
+    gamIpmcProfileConfigManagementAction              GAMRowEditorState
+}
+
+gamIpmcProfileConfigManagementProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile management entry."
+    ::= { gamIpmcProfileConfigManagementEntry 1 }
+
+gamIpmcProfileConfigManagementProfileDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The description of the IPMC Profile management entry."
+    ::= { gamIpmcProfileConfigManagementEntry 2 }
+
+gamIpmcProfileConfigManagementAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamIpmcProfileConfigManagementEntry 100 }
+
+gamIpmcProfileConfigManagementTableRowEditor OBJECT IDENTIFIER
+    ::= { gamIpmcProfileConfig 3 }
+
+gamIpmcProfileConfigManagementTableRowEditorProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile management entry."
+    ::= { gamIpmcProfileConfigManagementTableRowEditor 1 }
+
+gamIpmcProfileConfigManagementTableRowEditorProfileDescription OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..64))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The description of the IPMC Profile management entry."
+    ::= { gamIpmcProfileConfigManagementTableRowEditor 2 }
+
+gamIpmcProfileConfigManagementTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamIpmcProfileConfigManagementTableRowEditor 100 }
+
+gamIpmcProfileConfigIpv4AddressRangeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcProfileConfigIpv4AddressRangeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing the IPv4 address range entries that will
+         be applied for IPMC profile(s)."
+    ::= { gamIpmcProfileConfig 4 }
+
+gamIpmcProfileConfigIpv4AddressRangeEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcProfileConfigIpv4AddressRangeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamIpmcProfileConfigIpv4AddressRangeRangeName }
+    ::= { gamIpmcProfileConfigIpv4AddressRangeTable 1 }
+
+GAMIpmcProfileConfigIpv4AddressRangeEntry ::= SEQUENCE {
+    gamIpmcProfileConfigIpv4AddressRangeRangeName     GAMDisplayString,
+    gamIpmcProfileConfigIpv4AddressRangeStartAddress  IpAddress,
+    gamIpmcProfileConfigIpv4AddressRangeEndAddress    IpAddress,
+    gamIpmcProfileConfigIpv4AddressRangeAction        GAMRowEditorState
+}
+
+gamIpmcProfileConfigIpv4AddressRangeRangeName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile address range entry."
+    ::= { gamIpmcProfileConfigIpv4AddressRangeEntry 1 }
+
+gamIpmcProfileConfigIpv4AddressRangeStartAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The starting IPv4 address of the range that IPMC Profile performs
+         checking."
+    ::= { gamIpmcProfileConfigIpv4AddressRangeEntry 2 }
+
+gamIpmcProfileConfigIpv4AddressRangeEndAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ending IPv4 address of the range that IPMC Profile performs
+         checking."
+    ::= { gamIpmcProfileConfigIpv4AddressRangeEntry 3 }
+
+gamIpmcProfileConfigIpv4AddressRangeAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamIpmcProfileConfigIpv4AddressRangeEntry 100 }
+
+gamIpmcProfileConfigIpv4AddressRangeTableRowEditor OBJECT IDENTIFIER
+    ::= { gamIpmcProfileConfig 5 }
+
+gamIpmcProfileConfigIpv4AddressRangeTableRowEditorRangeName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile address range entry."
+    ::= { gamIpmcProfileConfigIpv4AddressRangeTableRowEditor 1 }
+
+gamIpmcProfileConfigIpv4AddressRangeTableRowEditorStartAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The starting IPv4 address of the range that IPMC Profile performs
+         checking."
+    ::= { gamIpmcProfileConfigIpv4AddressRangeTableRowEditor 2 }
+
+gamIpmcProfileConfigIpv4AddressRangeTableRowEditorEndAddress OBJECT-TYPE
+    SYNTAX      IpAddress
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ending IPv4 address of the range that IPMC Profile performs
+         checking."
+    ::= { gamIpmcProfileConfigIpv4AddressRangeTableRowEditor 3 }
+
+gamIpmcProfileConfigIpv4AddressRangeTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamIpmcProfileConfigIpv4AddressRangeTableRowEditor 100 }
+
+gamIpmcProfileConfigIpv6AddressRangeTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcProfileConfigIpv6AddressRangeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing the IPv6 address range entries that will
+         be applied for IPMC profile(s)."
+    ::= { gamIpmcProfileConfig 6 }
+
+gamIpmcProfileConfigIpv6AddressRangeEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcProfileConfigIpv6AddressRangeEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamIpmcProfileConfigIpv6AddressRangeRangeName }
+    ::= { gamIpmcProfileConfigIpv6AddressRangeTable 1 }
+
+GAMIpmcProfileConfigIpv6AddressRangeEntry ::= SEQUENCE {
+    gamIpmcProfileConfigIpv6AddressRangeRangeName     GAMDisplayString,
+    gamIpmcProfileConfigIpv6AddressRangeStartAddress  InetAddressIPv6,
+    gamIpmcProfileConfigIpv6AddressRangeEndAddress    InetAddressIPv6,
+    gamIpmcProfileConfigIpv6AddressRangeAction        GAMRowEditorState
+}
+
+gamIpmcProfileConfigIpv6AddressRangeRangeName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile address range entry."
+    ::= { gamIpmcProfileConfigIpv6AddressRangeEntry 1 }
+
+gamIpmcProfileConfigIpv6AddressRangeStartAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The starting IPv6 address of the range that IPMC Profile performs
+         checking."
+    ::= { gamIpmcProfileConfigIpv6AddressRangeEntry 2 }
+
+gamIpmcProfileConfigIpv6AddressRangeEndAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ending IPv6 address of the range that IPMC Profile performs
+         checking."
+    ::= { gamIpmcProfileConfigIpv6AddressRangeEntry 3 }
+
+gamIpmcProfileConfigIpv6AddressRangeAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamIpmcProfileConfigIpv6AddressRangeEntry 100 }
+
+gamIpmcProfileConfigIpv6AddressRangeTableRowEditor OBJECT IDENTIFIER
+    ::= { gamIpmcProfileConfig 7 }
+
+gamIpmcProfileConfigIpv6AddressRangeTableRowEditorRangeName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile address range entry."
+    ::= { gamIpmcProfileConfigIpv6AddressRangeTableRowEditor 1 }
+
+gamIpmcProfileConfigIpv6AddressRangeTableRowEditorStartAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The starting IPv6 address of the range that IPMC Profile performs
+         checking."
+    ::= { gamIpmcProfileConfigIpv6AddressRangeTableRowEditor 2 }
+
+gamIpmcProfileConfigIpv6AddressRangeTableRowEditorEndAddress OBJECT-TYPE
+    SYNTAX      InetAddressIPv6
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The ending IPv6 address of the range that IPMC Profile performs
+         checking."
+    ::= { gamIpmcProfileConfigIpv6AddressRangeTableRowEditor 3 }
+
+gamIpmcProfileConfigIpv6AddressRangeTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamIpmcProfileConfigIpv6AddressRangeTableRowEditor 100 }
+
+gamIpmcProfileConfigRuleTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcProfileConfigRuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for managing the filtering rules with respect to a set
+         of address range used in a specific IPMC profile management entry."
+    ::= { gamIpmcProfileConfig 8 }
+
+gamIpmcProfileConfigRuleEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcProfileConfigRuleEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters"
+    INDEX       { gamIpmcProfileConfigRuleProfileName,
+                  gamIpmcProfileConfigRuleRuleRange }
+    ::= { gamIpmcProfileConfigRuleTable 1 }
+
+GAMIpmcProfileConfigRuleEntry ::= SEQUENCE {
+    gamIpmcProfileConfigRuleProfileName    GAMDisplayString,
+    gamIpmcProfileConfigRuleRuleRange      GAMDisplayString,
+    gamIpmcProfileConfigRuleNextRuleRange  GAMDisplayString,
+    gamIpmcProfileConfigRuleRuleAction     GAMIpmcProfileRuleActionType,
+    gamIpmcProfileConfigRuleRuleLog        TruthValue,
+    gamIpmcProfileConfigRuleAction         GAMRowEditorState
+}
+
+gamIpmcProfileConfigRuleProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile management entry."
+    ::= { gamIpmcProfileConfigRuleEntry 1 }
+
+gamIpmcProfileConfigRuleRuleRange OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile address range used as a rule."
+    ::= { gamIpmcProfileConfigRuleEntry 2 }
+
+gamIpmcProfileConfigRuleNextRuleRange OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The next rule's address range name that this IPMC Profile management
+         entry performs checking."
+    ::= { gamIpmcProfileConfigRuleEntry 3 }
+
+gamIpmcProfileConfigRuleRuleAction OBJECT-TYPE
+    SYNTAX      GAMIpmcProfileRuleActionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The filtering action while this IPMC Profile management entry performs
+         checking. deny(0) will prohibit the IPMC control frames destined to
+         protocol stack. permit(1) will pass the IPMC control frames destined to
+         protocol stack."
+    ::= { gamIpmcProfileConfigRuleEntry 4 }
+
+gamIpmcProfileConfigRuleRuleLog OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable the IPMC Profile will log matched group address that is filtered
+         by this rule with the corresponding action (deny or permit). Disable
+         the IPMC Profile will not log any action for any group address whether
+         or not to be filtered by this rule."
+    ::= { gamIpmcProfileConfigRuleEntry 5 }
+
+gamIpmcProfileConfigRuleAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamIpmcProfileConfigRuleEntry 100 }
+
+gamIpmcProfileConfigRuleTableRowEditor OBJECT IDENTIFIER
+    ::= { gamIpmcProfileConfig 9 }
+
+gamIpmcProfileConfigRuleTableRowEditorProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile management entry."
+    ::= { gamIpmcProfileConfigRuleTableRowEditor 1 }
+
+gamIpmcProfileConfigRuleTableRowEditorRuleRange OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile address range used as a rule."
+    ::= { gamIpmcProfileConfigRuleTableRowEditor 2 }
+
+gamIpmcProfileConfigRuleTableRowEditorNextRuleRange OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The next rule's address range name that this IPMC Profile management
+         entry performs checking."
+    ::= { gamIpmcProfileConfigRuleTableRowEditor 3 }
+
+gamIpmcProfileConfigRuleTableRowEditorRuleAction OBJECT-TYPE
+    SYNTAX      GAMIpmcProfileRuleActionType
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "The filtering action while this IPMC Profile management entry performs
+         checking. deny(0) will prohibit the IPMC control frames destined to
+         protocol stack. permit(1) will pass the IPMC control frames destined to
+         protocol stack."
+    ::= { gamIpmcProfileConfigRuleTableRowEditor 4 }
+
+gamIpmcProfileConfigRuleTableRowEditorRuleLog OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Enable the IPMC Profile will log matched group address that is filtered
+         by this rule with the corresponding action (deny or permit). Disable
+         the IPMC Profile will not log any action for any group address whether
+         or not to be filtered by this rule."
+    ::= { gamIpmcProfileConfigRuleTableRowEditor 5 }
+
+gamIpmcProfileConfigRuleTableRowEditorAction OBJECT-TYPE
+    SYNTAX      GAMRowEditorState
+    MAX-ACCESS  read-write
+    STATUS      current
+    DESCRIPTION
+        "Action"
+    ::= { gamIpmcProfileConfigRuleTableRowEditor 100 }
+
+gamIpmcProfileConfigPrecedenceTable OBJECT-TYPE
+    SYNTAX      SEQUENCE OF GAMIpmcProfileConfigPrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "This is a table for displaying the rule entries of a specific IPMC
+         profile in precedence order."
+    ::= { gamIpmcProfileConfig 10 }
+
+gamIpmcProfileConfigPrecedenceEntry OBJECT-TYPE
+    SYNTAX      GAMIpmcProfileConfigPrecedenceEntry
+    MAX-ACCESS  not-accessible
+    STATUS      current
+    DESCRIPTION
+        "Each entry has a set of parameters."
+    INDEX       { gamIpmcProfileConfigPrecedenceProfileName,
+                  gamIpmcProfileConfigPrecedenceRulePrecedence }
+    ::= { gamIpmcProfileConfigPrecedenceTable 1 }
+
+GAMIpmcProfileConfigPrecedenceEntry ::= SEQUENCE {
+    gamIpmcProfileConfigPrecedenceProfileName     GAMDisplayString,
+    gamIpmcProfileConfigPrecedenceRulePrecedence  Integer32,
+    gamIpmcProfileConfigPrecedenceRuleRange       GAMDisplayString,
+    gamIpmcProfileConfigPrecedenceNextRuleRange   GAMDisplayString,
+    gamIpmcProfileConfigPrecedenceRuleAction      GAMIpmcProfileRuleActionType,
+    gamIpmcProfileConfigPrecedenceRuleLog         TruthValue
+}
+
+gamIpmcProfileConfigPrecedenceProfileName OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile management entry."
+    ::= { gamIpmcProfileConfigPrecedenceEntry 1 }
+
+gamIpmcProfileConfigPrecedenceRulePrecedence OBJECT-TYPE
+    SYNTAX      Integer32 (0..2147483647)
+    MAX-ACCESS  accessible-for-notify
+    STATUS      current
+    DESCRIPTION
+        "The precedence of the IPMC profile rule entry."
+    ::= { gamIpmcProfileConfigPrecedenceEntry 2 }
+
+gamIpmcProfileConfigPrecedenceRuleRange OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The name of the IPMC profile address range used as a rule."
+    ::= { gamIpmcProfileConfigPrecedenceEntry 3 }
+
+gamIpmcProfileConfigPrecedenceNextRuleRange OBJECT-TYPE
+    SYNTAX      GAMDisplayString (SIZE(0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The next rule's address range name that this IPMC Profile management
+         entry performs checking."
+    ::= { gamIpmcProfileConfigPrecedenceEntry 4 }
+
+gamIpmcProfileConfigPrecedenceRuleAction OBJECT-TYPE
+    SYNTAX      GAMIpmcProfileRuleActionType
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "The filtering action while this IPMC Profile management entry performs
+         checking. deny(0) will prohibit the IPMC control frames destined to
+         protocol stack. permit(1) will pass the IPMC control frames destined to
+         protocol stack."
+    ::= { gamIpmcProfileConfigPrecedenceEntry 5 }
+
+gamIpmcProfileConfigPrecedenceRuleLog OBJECT-TYPE
+    SYNTAX      TruthValue
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION
+        "Enable the IPMC Profile will log matched group address that is filtered
+         by this rule with the corresponding action (deny or permit). Disable
+         the IPMC Profile will not log any action for any group address whether
+         or not to be filtered by this rule."
+    ::= { gamIpmcProfileConfigPrecedenceEntry 6 }
+
+gamIpmcProfileMibConformance OBJECT IDENTIFIER
+    ::= { gamIpmcProfileMib 2 }
+
+gamIpmcProfileMibCompliances OBJECT IDENTIFIER
+    ::= { gamIpmcProfileMibConformance 1 }
+
+gamIpmcProfileMibGroups OBJECT IDENTIFIER
+    ::= { gamIpmcProfileMibConformance 2 }
+
+gamIpmcProfileConfigGlobalsInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcProfileConfigGlobalsAdminState }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcProfileMibGroups 1 }
+
+gamIpmcProfileConfigManagementTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcProfileConfigManagementProfileName,
+                  gamIpmcProfileConfigManagementProfileDescription,
+                  gamIpmcProfileConfigManagementAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcProfileMibGroups 2 }
+
+gamIpmcProfileConfigManagementTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamIpmcProfileConfigManagementTableRowEditorProfileName,
+                  gamIpmcProfileConfigManagementTableRowEditorProfileDescription,
+                  gamIpmcProfileConfigManagementTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcProfileMibGroups 3 }
+
+gamIpmcProfileConfigIpv4AddressRangeTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcProfileConfigIpv4AddressRangeRangeName,
+                  gamIpmcProfileConfigIpv4AddressRangeStartAddress,
+                  gamIpmcProfileConfigIpv4AddressRangeEndAddress,
+                  gamIpmcProfileConfigIpv4AddressRangeAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcProfileMibGroups 4 }
+
+gamIpmcProfileConfigIpv4AddressRangeTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamIpmcProfileConfigIpv4AddressRangeTableRowEditorRangeName,
+                  gamIpmcProfileConfigIpv4AddressRangeTableRowEditorStartAddress,
+                  gamIpmcProfileConfigIpv4AddressRangeTableRowEditorEndAddress,
+                  gamIpmcProfileConfigIpv4AddressRangeTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcProfileMibGroups 5 }
+
+gamIpmcProfileConfigIpv6AddressRangeTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcProfileConfigIpv6AddressRangeRangeName,
+                  gamIpmcProfileConfigIpv6AddressRangeStartAddress,
+                  gamIpmcProfileConfigIpv6AddressRangeEndAddress,
+                  gamIpmcProfileConfigIpv6AddressRangeAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcProfileMibGroups 6 }
+
+gamIpmcProfileConfigIpv6AddressRangeTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     {                   gamIpmcProfileConfigIpv6AddressRangeTableRowEditorRangeName,
+                  gamIpmcProfileConfigIpv6AddressRangeTableRowEditorStartAddress,
+                  gamIpmcProfileConfigIpv6AddressRangeTableRowEditorEndAddress,
+                  gamIpmcProfileConfigIpv6AddressRangeTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcProfileMibGroups 7 }
+
+gamIpmcProfileConfigRuleTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcProfileConfigRuleProfileName,
+                  gamIpmcProfileConfigRuleRuleRange,
+                  gamIpmcProfileConfigRuleNextRuleRange,
+                  gamIpmcProfileConfigRuleRuleAction,
+                  gamIpmcProfileConfigRuleRuleLog,
+                  gamIpmcProfileConfigRuleAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcProfileMibGroups 8 }
+
+gamIpmcProfileConfigRuleTableRowEditorInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcProfileConfigRuleTableRowEditorProfileName,
+                  gamIpmcProfileConfigRuleTableRowEditorRuleRange,
+                  gamIpmcProfileConfigRuleTableRowEditorNextRuleRange,
+                  gamIpmcProfileConfigRuleTableRowEditorRuleAction,
+                  gamIpmcProfileConfigRuleTableRowEditorRuleLog,
+                  gamIpmcProfileConfigRuleTableRowEditorAction }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcProfileMibGroups 9 }
+
+gamIpmcProfileConfigPrecedenceTableInfoGroup OBJECT-GROUP
+    OBJECTS     { gamIpmcProfileConfigPrecedenceProfileName,
+                  gamIpmcProfileConfigPrecedenceRulePrecedence,
+                  gamIpmcProfileConfigPrecedenceRuleRange,
+                  gamIpmcProfileConfigPrecedenceNextRuleRange,
+                  gamIpmcProfileConfigPrecedenceRuleAction,
+                  gamIpmcProfileConfigPrecedenceRuleLog }
+    STATUS      current
+    DESCRIPTION
+        "A collection of objects."
+    ::= { gamIpmcProfileMibGroups 10 }
+
+gamIpmcProfileMibCompliance MODULE-COMPLIANCE
+    STATUS      current
+    DESCRIPTION
+        "The compliance statement for the implementation."
+
+    MODULE      -- this module
+
+    MANDATORY-GROUPS { gamIpmcProfileConfigGlobalsInfoGroup,
+                       gamIpmcProfileConfigManagementTableInfoGroup,
+                       gamIpmcProfileConfigManagementTableRowEditorInfoGroup,
+                       gamIpmcProfileConfigIpv4AddressRangeTableInfoGroup,
+                       gamIpmcProfileConfigIpv4AddressRangeTableRowEditorInfoGroup,
+                       gamIpmcProfileConfigIpv6AddressRangeTableInfoGroup,
+                       gamIpmcProfileConfigIpv6AddressRangeTableRowEditorInfoGroup,
+                       gamIpmcProfileConfigRuleTableInfoGroup,
+                       gamIpmcProfileConfigRuleTableRowEditorInfoGroup,
+                       gamIpmcProfileConfigPrecedenceTableInfoGroup }
+
+    ::= { gamIpmcProfileMibCompliances 1 }
+
+END
