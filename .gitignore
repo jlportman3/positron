@@ -1,0 +1,86 @@
+# ======================
+# Python
+# ======================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+*.whl
+.venv/
+venv/
+env/
+.Python
+
+# ======================
+# Node / Frontend
+# ======================
+node_modules/
+.next/
+.nuxt/
+.cache/
+*.tsbuildinfo
+
+# ======================
+# Environment & Secrets
+# ======================
+.env
+.env.*
+!.env.example
+!backend/.env.example
+
+# ======================
+# IDE / Editor
+# ======================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# ======================
+# Docker volumes
+# ======================
+postgres_data/
+redis_data/
+
+# ======================
+# OS
+# ======================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ======================
+# Logs
+# ======================
+*.log
+logs/
+
+# ======================
+# Build artifacts
+# ======================
+frontend/dist/
+
+# ======================
+# Internal docs / reference
+# ======================
+docs/
+virtuoso-docs/
+memory-bank/
+VIRTUOSO_CLONE_PLAN.md
+context.md
+
+# ======================
+# Test / Coverage
+# ======================
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/

@@ -1,0 +1,87 @@
+# Alamo GAM Docker Compose Configuration
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: alamogam_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: alamogam
+      POSTGRES_PASSWORD: alamogam
+      POSTGRES_DB: alamogam
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5437:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alamogam"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: alamogam_redis
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build: ./backend
+    container_name: alamogam_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://alamogam:alamogam@postgres:5432/alamogam
+      REDIS_URL: redis://redis:6379/0
+      DEBUG: "true"
+      SECRET_KEY: change-me-in-production
+      DEVICE_USERNAME: device
+      DEVICE_PASSWORD: device
+      SSH_ENABLED: "true"
+      SSH_PORT: 2222
+      BRAND_NAME: Alamo GAM
+      FIRMWARE_DIR: /app/firmware
+      BASE_URL: http://localhost:8005
+    ports:
+      - "8005:8000"
+      - "2223:2222"
+    volumes:
+      - backend_data:/app/data
+      - firmware_data:/app/firmware
+
+  # Frontend (React)
+  frontend:
+    build: ./frontend
+    container_name: alamogam_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: /api
+      VITE_PROXY_TARGET: http://backend:8000
+    ports:
+      - "3005:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_data:
+  firmware_data:
