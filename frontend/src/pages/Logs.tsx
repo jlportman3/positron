@@ -14,9 +14,6 @@ import {
   Button,
   CircularProgress,
   Chip,
-  IconButton,
-  Tooltip,
-  Menu,
   MenuItem,
   FormControl,
   InputLabel,
@@ -26,7 +23,6 @@ import {
 import {
   Refresh as RefreshIcon,
   Download as DownloadIcon,
-  FilterList as FilterIcon,
   Search as SearchIcon,
 } from '@mui/icons-material'
 import { auditLogsApi } from '../services/api'
@@ -76,7 +72,6 @@ export default function Logs() {
   const [actionFilter, setActionFilter] = useState<string>('')
   const [entityFilter, setEntityFilter] = useState<string>('')
   const [columns, setColumns] = useState(allColumns)
-  const [actionsAnchor, setActionsAnchor] = useState<null | HTMLElement>(null)
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['audit-logs', page, rowsPerPage, search, actionFilter, entityFilter],
@@ -129,7 +124,6 @@ export default function Logs() {
     a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`
     a.click()
     window.URL.revokeObjectURL(url)
-    setActionsAnchor(null)
   }
 
   const isColumnVisible = (columnId: string) =>

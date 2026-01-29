@@ -124,13 +124,6 @@ export default function DeviceDetail() {
     },
   })
 
-  const deleteBackupMutation = useMutation({
-    mutationFn: (backupId: string) => configBackupApi.delete(backupId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['config-backups', id] })
-    },
-  })
-
   const viewConfigContent = async (backupId: string) => {
     try {
       const res = await configBackupApi.getContent(backupId)

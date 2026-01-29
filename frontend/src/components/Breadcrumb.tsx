@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom'
 
 interface BreadcrumbProps {
   current: string
+  items?: { label: string; path: string }[]
 }
 
-export default function Breadcrumb({ current }: BreadcrumbProps) {
+export default function Breadcrumb({ current, items }: BreadcrumbProps) {
   const navigate = useNavigate()
 
   return (
@@ -20,6 +21,22 @@ export default function Breadcrumb({ current }: BreadcrumbProps) {
         }}
         onClick={() => navigate('/')}
       />
+      {items?.map((item) => (
+        <Box key={item.path} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography sx={{ color: '#999', fontSize: '0.875rem' }}>/</Typography>
+          <Typography
+            sx={{
+              color: '#51bcda',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              '&:hover': { color: '#3a9fc0' },
+            }}
+            onClick={() => navigate(item.path)}
+          >
+            {item.label}
+          </Typography>
+        </Box>
+      ))}
       <Typography sx={{ color: '#999', fontSize: '0.875rem' }}>/</Typography>
       <Typography sx={{ color: '#2c2c2c', fontSize: '0.875rem', fontWeight: 500 }}>
         {current}

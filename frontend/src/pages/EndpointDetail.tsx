@@ -13,7 +13,6 @@ import {
   Alert,
   Snackbar,
   IconButton,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -126,7 +125,6 @@ export default function EndpointDetail() {
   const [autoLooked, setAutoLooked] = useState(false)
   const [splynxData, setSplynxData] = useState<any>(null)
   const [splynxLoading, setSplynxLoading] = useState(false)
-  const [splynxError, setSplynxError] = useState<string | null>(null)
 
   useEffect(() => {
     if (endpoint && !autoLooked && !isLoading) {

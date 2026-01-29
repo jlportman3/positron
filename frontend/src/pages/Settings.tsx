@@ -361,7 +361,7 @@ export default function Settings() {
   const handleTestEmail = async () => {
     setTestEmailStatus({ loading: true, result: null, error: false })
     try {
-      const response = await settingsApi.testEmail(formData._test_email_to || '')
+      await settingsApi.testEmail(formData._test_email_to || '')
       setTestEmailStatus({ loading: false, result: 'Test email sent successfully!', error: false })
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail || err.message || 'Failed to send test email'

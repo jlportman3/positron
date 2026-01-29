@@ -13,7 +13,6 @@ import {
   Alert,
   Snackbar,
   IconButton,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -24,10 +23,8 @@ import {
   ArrowBack as BackIcon,
   ContentCopy as CopyIcon,
   Router as DeviceIcon,
-  Edit as EditIcon,
   Delete as DeleteIcon,
   CloudUpload as PushIcon,
-  CloudDownload as PullIcon,
   Person as PersonIcon,
   Lan as EndpointIcon,
 } from '@mui/icons-material'
@@ -80,17 +77,6 @@ export default function SubscriberDetail() {
     },
     onError: (error: any) => {
       setSnackbar({ open: true, message: getErrorMessage(error, 'Push to device failed'), severity: 'error' })
-    },
-  })
-
-  const deleteFromDeviceMutation = useMutation({
-    mutationFn: () => subscribersApi.deleteFromDevice(id!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscriber', id] })
-      setSnackbar({ open: true, message: 'Subscriber removed from device', severity: 'success' })
-    },
-    onError: (error: any) => {
-      setSnackbar({ open: true, message: getErrorMessage(error, 'Remove from device failed'), severity: 'error' })
     },
   })
 

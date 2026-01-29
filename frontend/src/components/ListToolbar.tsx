@@ -51,6 +51,7 @@ interface ListToolbarProps {
     label: string
     onClick: () => void
     disabled?: boolean
+    icon?: React.ReactNode
   }[]
   columns?: ColumnOption[]
   onColumnsChange?: (columns: ColumnOption[]) => void
