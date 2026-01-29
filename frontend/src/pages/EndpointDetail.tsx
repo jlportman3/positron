@@ -29,6 +29,8 @@ import {
   Router as DeviceIcon,
   Search as SearchIcon,
   Refresh as RefreshIcon,
+  PersonAdd as ProvisionIcon,
+  PersonRemove as UnprovisionIcon,
 } from '@mui/icons-material'
 import { endpointsApi, devicesApi, splynxApi, subscribersApi } from '../services/api'
 import Breadcrumb from '../components/Breadcrumb'
@@ -154,31 +156,48 @@ export default function EndpointDetail() {
     }
   }
 
-  const provisionMutation = useMutation({
-    mutationFn: (data: any) => subscribersApi.createOnDevice(data),
-    onSuccess: () => {
+  const [provisioning, setProvisioning] = useState(false)
+  const [provisionStatus, setProvisionStatus] = useState('')
+
+  const handleProvision = async () => {
+    if (!splynxData?.found || !endpoint) return
+    setProvisioning(true)
+    try {
+      // Step 1: Configure endpoint if not already configured
+      if (!endpoint.conf_endpoint_id) {
+        setProvisionStatus('Configuring endpoint...')
+        if (endpoint.detected_port_if_index) {
+          try {
+            await endpointsApi.autoConfigure(id!)
+          } catch (e: any) {
+            // 400 "already configured" is OK - continue to step 2
+            if (e.response?.status !== 400) throw e
+          }
+        } else {
+          throw new Error('Endpoint has no detected port. Configure it manually first.')
+        }
+      }
+
+      // Step 2: Create subscriber on device
+      setProvisionStatus('Creating subscriber...')
+      await subscribersApi.createOnDevice({
+        device_id: endpoint.device_id,
+        endpoint_mac_address: endpoint.mac_address,
+        name: splynxData.customer?.name || '',
+        description: splynxData.customer?.address || '',
+      })
+
       queryClient.invalidateQueries({ queryKey: ['endpoint', id] })
       setSplynxDialog({ ...splynxDialog, open: false })
-      setSnackbar({ open: true, message: 'Subscriber provisioned successfully', severity: 'success' })
-    },
-    onError: (error: any) => {
-      setSnackbar({ open: true, message: error.response?.data?.detail || 'Provision failed', severity: 'error' })
-    },
-  })
-
-  const handleProvision = () => {
-    if (!splynxData?.found || !endpoint) return
-    const svc = splynxData.services?.[0]
-    provisionMutation.mutate({
-      device_id: endpoint.device_id,
-      endpoint_mac: endpoint.mac_address,
-      name: splynxData.customer?.name || '',
-      description: splynxData.customer?.address || '',
-      splynx_customer_id: splynxData.customer?.id,
-      bandwidth_profile: svc?.tariff_name || '',
-      download_speed: svc?.download_speed || 0,
-      upload_speed: svc?.upload_speed || 0,
-    })
+      setSnackbar({ open: true, message: 'Endpoint configured and subscriber provisioned', severity: 'success' })
+    } catch (error: any) {
+      const detail = error.response?.data?.detail
+      const message = typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.map((e: any) => e.msg).join('; ') : (error.message || 'Provision failed')
+      setSnackbar({ open: true, message, severity: 'error' })
+    } finally {
+      setProvisioning(false)
+      setProvisionStatus('')
+    }
   }
 
   const copyMac = () => {
@@ -295,10 +314,35 @@ export default function EndpointDetail() {
           >
             Reboot
           </Button>
+          {isProvisioned && (
+            <Button
+              variant="outlined"
+              size="small"
+              color="error"
+              startIcon={<UnprovisionIcon />}
+              onClick={() => setConfirmDialog({
+                open: true,
+                title: 'Unprovision Endpoint',
+                message: `Remove subscriber from ${endpoint.mac_address}? This will delete the subscriber from the GAM device.`,
+                action: () => {
+                  endpointsApi.unprovision(id!).then(() => {
+                    queryClient.invalidateQueries({ queryKey: ['endpoint', id] })
+                    setSnackbar({ open: true, message: 'Endpoint unprovisioned', severity: 'success' })
+                  }).catch((error: any) => {
+                    const detail = error.response?.data?.detail
+                    const message = typeof detail === 'string' ? detail : 'Unprovision failed'
+                    setSnackbar({ open: true, message, severity: 'error' })
+                  })
+                },
+              })}
+            >
+              Unprovision
+            </Button>
+          )}
         </Box>
       </Box>
 
-      {/* Provision Card - shown for unprovisioned endpoints with Splynx data */}
+      {/* Provision Card - one click does both configure + create subscriber */}
       {!isProvisioned && splynxData?.found && (
         <Card sx={{ mb: 2, border: '2px solid', borderColor: 'success.main' }}>
           <CardContent>
@@ -313,20 +357,27 @@ export default function EndpointDetail() {
                     <> | Plan: <strong>{splynxData.services[0].tariff_name}</strong> ({splynxData.services[0].download_speed}/{splynxData.services[0].upload_speed} Mbps)</>
                   )}
                 </Typography>
+                {provisionStatus && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                    <CircularProgress size={14} />
+                    <Typography variant="body2" color="text.secondary">{provisionStatus}</Typography>
+                  </Box>
+                )}
               </Box>
               <Button
                 variant="contained"
                 color="success"
+                startIcon={<ProvisionIcon />}
                 onClick={handleProvision}
-                disabled={provisionMutation.isPending}
+                disabled={provisioning}
               >
-                {provisionMutation.isPending ? 'Provisioning...' : 'Provision Subscriber'}
+                {provisioning ? 'Provisioning...' : 'Provision Subscriber'}
               </Button>
             </Box>
           </CardContent>
         </Card>
       )}
-      {!isProvisioned && splynxLoading && (
+      {!isProvisioned && !splynxData && splynxLoading && (
         <Card sx={{ mb: 2 }}>
           <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <CircularProgress size={20} />
@@ -499,9 +550,9 @@ export default function EndpointDetail() {
               variant="contained"
               color="success"
               onClick={handleProvision}
-              disabled={provisionMutation.isPending}
+              disabled={provisioning}
             >
-              {provisionMutation.isPending ? 'Provisioning...' : 'Provision Subscriber'}
+              {provisioning ? 'Provisioning...' : 'Provision Subscriber'}
             </Button>
           )}
         </DialogActions>

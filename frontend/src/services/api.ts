@@ -78,7 +78,10 @@ export const endpointsApi = {
   quarantine: (id: string, reason?: string) =>
     api.post(`/endpoints/${id}/quarantine`, reason ? { reason } : undefined),
   unquarantine: (id: string) => api.post(`/endpoints/${id}/unquarantine`),
+  configure: (id: string, data: { port_if_index: string; name?: string; description?: string }) =>
+    api.post(`/endpoints/${id}/configure`, data),
   autoConfigure: (id: string) => api.post(`/endpoints/${id}/auto-configure`),
+  unprovision: (id: string) => api.post(`/endpoints/${id}/unprovision`),
 }
 
 // Subscribers API

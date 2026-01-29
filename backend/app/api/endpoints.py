@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.api.deps import get_db, get_current_user, require_privilege
-from app.models import User, Endpoint, Device
+from app.models import User, Endpoint, Device, Subscriber
 from app.schemas.endpoint import EndpointResponse, EndpointBrief, EndpointList
 from app.rpc.client import GamRpcClient, GamRpcError, create_client_for_device
 
@@ -816,3 +816,80 @@ async def auto_configure_endpoint(
         raise HTTPException(status_code=500, detail=f"RPC error: {e.message}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{endpoint_id}/unprovision")
+async def unprovision_endpoint(
+    endpoint_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_privilege(3)),  # Operator level
+):
+    """Unprovision an endpoint: remove subscriber and endpoint config from GAM.
+
+    Steps:
+    1. Find subscriber associated with this endpoint
+    2. Delete subscriber from device via RPC
+    3. Delete endpoint configuration from device via RPC
+    4. Save device config
+    5. Remove subscriber from database
+    6. Clear endpoint provisioning fields (returns to quarantine/virgin state)
+    """
+    result = await db.execute(
+        select(Endpoint).where(Endpoint.id == endpoint_id)
+    )
+    endpoint = result.scalar_one_or_none()
+    if not endpoint:
+        raise HTTPException(status_code=404, detail="Endpoint not found")
+
+    # Find subscriber by endpoint MAC
+    sub_result = await db.execute(
+        select(Subscriber).where(
+            (Subscriber.device_id == endpoint.device_id) &
+            (Subscriber.endpoint_mac_address.ilike(endpoint.mac_address))
+        )
+    )
+    subscriber = sub_result.scalar_one_or_none()
+
+    # Get device
+    dev_result = await db.execute(
+        select(Device).where(Device.id == endpoint.device_id)
+    )
+    device = dev_result.scalar_one_or_none()
+    if not device or not device.ip_address:
+        raise HTTPException(status_code=400, detail="Device not found or has no IP address")
+
+    try:
+        client = await create_client_for_device(device)
+
+        # Step 1: Delete subscriber from device
+        if subscriber and subscriber.json_id:
+            await client.delete_subscriber(subscriber.json_id)
+        elif endpoint.conf_user_id:
+            await client.delete_subscriber(endpoint.conf_user_id)
+
+        # Step 2: Delete endpoint configuration from device
+        if endpoint.conf_endpoint_id:
+            await client.delete_endpoint(endpoint.conf_endpoint_id)
+
+        await client.save_config()
+        await client.close()
+    except GamRpcError as e:
+        raise HTTPException(status_code=500, detail=f"RPC error: {e.message}")
+
+    # Clean up database
+    if subscriber:
+        await db.delete(subscriber)
+
+    # Clear all provisioning fields - return to virgin/quarantine state
+    endpoint.conf_user_name = None
+    endpoint.conf_user_id = None
+    endpoint.conf_bw_profile_id = None
+    endpoint.conf_bw_profile_name = None
+    endpoint.conf_endpoint_id = None
+    endpoint.conf_endpoint_name = None
+    endpoint.conf_port_if_index = None
+    endpoint.conf_auto_port = False
+    endpoint.state = "quarantine"
+    await db.commit()
+
+    return {"status": "success", "message": f"Endpoint {endpoint.mac_address} unprovisioned"}

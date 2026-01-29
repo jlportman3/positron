@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
 from app.api.deps import get_db, get_current_user, require_privilege
-from app.models import User, Subscriber, Device, Endpoint, Bandwidth
+from app.models import User, Subscriber, Device, Endpoint, Bandwidth, Setting
 from app.schemas.subscriber import (
     SubscriberCreate,
     SubscriberUpdate,
@@ -384,6 +384,36 @@ async def create_subscriber_on_device(
             detail="Endpoint has no configured ID",
         )
 
+    # Load default VLAN from settings if not provided
+    vlan_id = data.vlan_id
+    port2_vlan_id = data.port2_vlan_id
+    trunk_mode = data.trunk_mode
+    if vlan_id == 0:
+        vlan_setting = await db.execute(
+            select(Setting).where(Setting.key == "splynx_default_vlan")
+        )
+        s = vlan_setting.scalar_one_or_none()
+        if s and s.value:
+            try:
+                vlan_id = int(s.value)
+                # Apply same VLAN to port 2 if not explicitly set
+                if port2_vlan_id == 0:
+                    port2_vlan_id = vlan_id
+            except ValueError:
+                pass
+        # Default trunk mode to True when using default VLAN
+        trunk_mode = True
+
+    # Load default PoE mode from settings if not provided
+    poe_mode = data.poe_mode_ctrl
+    if not poe_mode:
+        poe_setting = await db.execute(
+            select(Setting).where(Setting.key == "splynx_default_poe_mode")
+        )
+        s = poe_setting.scalar_one_or_none()
+        if s and s.value in ("enable", "disable"):
+            poe_mode = s.value
+
     # Get bandwidth profile UID
     bw_profile_uid = 0
     if data.bw_profile_id:
@@ -403,26 +433,61 @@ async def create_subscriber_on_device(
             description=data.description,
             endpoint_id=endpoint.conf_endpoint_id,
             bw_profile_uid=bw_profile_uid,
-            vlan_id=data.vlan_id,
+            vlan_id=vlan_id,
             vlan_is_tagged=data.vlan_is_tagged,
             remapped_vlan_id=data.remapped_vlan_id,
-            port2_vlan_id=data.port2_vlan_id,
-            trunk_mode=data.trunk_mode,
+            port2_vlan_id=port2_vlan_id,
+            trunk_mode=trunk_mode,
             port_if_index=data.port_if_index,
             double_tags=data.double_tags,
             nni_if_index=data.nni_if_index,
             outer_tag_vlan_id=data.outer_tag_vlan_id,
-            poe_mode_ctrl=data.poe_mode_ctrl,
+            poe_mode_ctrl=poe_mode,
         )
 
         # Save config
         await client.save_config()
+
+        # Query device to get the new subscriber's json_id
+        json_id = None
+        try:
+            subs = await client.get_subscribers()
+            for s in subs:
+                val = s.get("val", {}) if isinstance(s, dict) else {}
+                if val.get("Name") == data.name and val.get("EndpointId") == endpoint.conf_endpoint_id:
+                    json_id = s.get("key") or val.get("Id")
+                    break
+        except Exception:
+            pass  # Non-critical - subscriber was created, just can't get ID
+
         await client.close()
+
+        # Save subscriber record to database
+        subscriber = Subscriber(
+            device_id=device.id,
+            name=data.name,
+            description=data.description,
+            json_id=json_id,
+            endpoint_json_id=endpoint.conf_endpoint_id,
+            endpoint_name=endpoint.conf_endpoint_name or endpoint.mac_address,
+            endpoint_mac_address=endpoint.mac_address,
+            bw_profile_name="",
+            port1_vlan_id=str(vlan_id),
+            vlan_is_tagged=data.vlan_is_tagged,
+            trunk_mode=trunk_mode,
+        )
+        db.add(subscriber)
+
+        # Update endpoint provisioning fields
+        endpoint.conf_user_name = data.name
+        endpoint.conf_user_id = json_id
+        endpoint.state = "ok"
+        await db.commit()
 
         return {
             "status": "success",
             "message": f"Subscriber '{data.name}' created on device {device.serial_number}",
-            "result": result,
+            "json_id": json_id,
         }
     except GamRpcError as e:
         logger.error(f"RPC error creating subscriber: {e}")
@@ -625,21 +690,50 @@ async def delete_subscriber_from_device(
     try:
         client = await create_client_for_device(device)
 
-        # Delete subscriber
+        # Delete subscriber from device
         result = await client.delete_subscriber(subscriber.json_id)
+
+        # Also delete the endpoint config to fully release it
+        endpoint = None
+        if subscriber.endpoint_mac_address:
+            ep_result = await db.execute(
+                select(Endpoint).where(
+                    (Endpoint.device_id == subscriber.device_id) &
+                    (Endpoint.mac_address.ilike(subscriber.endpoint_mac_address))
+                )
+            )
+            endpoint = ep_result.scalar_one_or_none()
+
+        if endpoint and endpoint.conf_endpoint_id:
+            try:
+                await client.delete_endpoint(endpoint.conf_endpoint_id)
+            except GamRpcError:
+                pass  # Non-critical — subscriber already deleted
 
         # Save config
         await client.save_config()
         await client.close()
 
-        # Delete from database
+        # Delete subscriber from database
         await db.delete(subscriber)
+
+        # Release endpoint — clear provisioning fields, return to quarantine
+        if endpoint:
+            endpoint.conf_user_name = None
+            endpoint.conf_user_id = None
+            endpoint.conf_bw_profile_id = None
+            endpoint.conf_bw_profile_name = None
+            endpoint.conf_endpoint_id = None
+            endpoint.conf_endpoint_name = None
+            endpoint.conf_port_if_index = None
+            endpoint.conf_auto_port = False
+            endpoint.state = "quarantine"
+
         await db.commit()
 
         return {
             "status": "success",
-            "message": f"Subscriber '{subscriber.name}' deleted from device {device.serial_number}",
-            "result": result,
+            "message": f"Subscriber '{subscriber.name}' deleted and endpoint released",
         }
     except GamRpcError as e:
         logger.error(f"RPC error deleting subscriber: {e}")

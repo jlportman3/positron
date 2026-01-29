@@ -132,6 +132,7 @@ DEFAULT_SETTINGS = {
     "splynx_auto_provision": ("splynx", "false"),
     "splynx_default_bandwidth_profile": ("splynx", "Unthrottled"),
     "splynx_default_vlan": ("splynx", "100"),
+    "splynx_default_poe_mode": ("splynx", "disable"),
     "splynx_qc_ticket_assignee_id": ("splynx", ""),
     "splynx_reconciliation_time": ("splynx", "02:00"),
     "splynx_retry_duration_hours": ("splynx", "24"),

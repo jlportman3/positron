@@ -7,9 +7,9 @@ services:
     container_name: alamogam_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: alamogam
-      POSTGRES_PASSWORD: alamogam
-      POSTGRES_DB: alamogam
+      POSTGRES_USER: ${POSTGRES_USER:-alamogam}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-alamogam}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -46,12 +46,12 @@ services:
       redis:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql+asyncpg://alamogam:alamogam@postgres:5432/alamogam
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-alamogam}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-alamogam}
       REDIS_URL: redis://redis:6379/0
-      DEBUG: "true"
-      SECRET_KEY: change-me-in-production
-      DEVICE_USERNAME: device
-      DEVICE_PASSWORD: device
+      DEBUG: "${DEBUG:-false}"
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DEVICE_USERNAME: ${DEVICE_USERNAME:-device}
+      DEVICE_PASSWORD: ${DEVICE_PASSWORD:-device}
       SSH_ENABLED: "true"
       SSH_PORT: 2222
       BRAND_NAME: Alamo GAM

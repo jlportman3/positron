@@ -22,6 +22,11 @@ import {
   Tab,
   IconButton,
   Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material'
 import {
   ArrowBack as BackIcon,
@@ -35,6 +40,8 @@ import {
   SwapHoriz as SwapIcon,
   PowerSettingsNew as RebootIcon,
   FlashOn as PoeIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material'
 import { devicesApi, endpointsApi, subscribersApi, portsApi, bandwidthsApi, configBackupApi } from '../services/api'
 
@@ -62,6 +69,36 @@ export default function DeviceDetail() {
     open: false,
     message: '',
     severity: 'success',
+  })
+
+  const [editDialog, setEditDialog] = useState(false)
+  const [editForm, setEditForm] = useState({ name: '', ip_address: '', location: '' })
+  const [deleteDialog, setDeleteDialog] = useState(false)
+
+  const updateMutation = useMutation({
+    mutationFn: (data: any) => devicesApi.update(id!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['device', id] })
+      setEditDialog(false)
+      setSnackbar({ open: true, message: 'Device updated', severity: 'success' })
+    },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail
+      const message = typeof detail === 'string' ? detail : 'Update failed'
+      setSnackbar({ open: true, message, severity: 'error' })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: () => devicesApi.delete(id!),
+    onSuccess: () => {
+      navigate('/devices')
+    },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail
+      const message = typeof detail === 'string' ? detail : 'Delete failed'
+      setSnackbar({ open: true, message, severity: 'error' })
+    },
   })
 
   const { data: device, isLoading } = useQuery({
@@ -312,6 +349,28 @@ export default function DeviceDetail() {
           Back to Devices
         </Button>
         <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant="outlined"
+            startIcon={<EditIcon />}
+            onClick={() => {
+              setEditForm({
+                name: device.name || '',
+                ip_address: device.ip_address || '',
+                location: device.location || '',
+              })
+              setEditDialog(true)
+            }}
+          >
+            Edit
+          </Button>
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteIcon />}
+            onClick={() => setDeleteDialog(true)}
+          >
+            Delete
+          </Button>
           <Button
             variant="outlined"
             startIcon={downloadConfigMutation.isPending ? <CircularProgress size={20} /> : <DownloadIcon />}
@@ -835,6 +894,50 @@ export default function DeviceDetail() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Edit Device Dialog */}
+      <Dialog open={editDialog} onClose={() => setEditDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Device</DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth size="small" label="Name" value={editForm.name}
+            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+            sx={{ mt: 1, mb: 2 }}
+          />
+          <TextField
+            fullWidth size="small" label="IP Address" value={editForm.ip_address}
+            onChange={(e) => setEditForm({ ...editForm, ip_address: e.target.value })}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth size="small" label="Location" value={editForm.location}
+            onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditDialog(false)}>Cancel</Button>
+          <Button variant="contained" onClick={() => updateMutation.mutate(editForm)} disabled={updateMutation.isPending}>
+            {updateMutation.isPending ? 'Saving...' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Device Dialog */}
+      <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
+        <DialogTitle>Delete Device</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete <strong>{device.name || device.serial_number}</strong>?
+            This will remove all associated endpoints and subscribers from the database.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
+          <Button variant="contained" color="error" onClick={() => deleteMutation.mutate()} disabled={deleteMutation.isPending}>
+            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar
         open={snackbar.open}
