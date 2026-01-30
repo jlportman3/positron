@@ -16,6 +16,9 @@ from app.services.splynx_provisioning import start_background_task, stop_backgro
 from app.services.splynx_reconciliation import start_reconciliation_task, stop_reconciliation_task
 from app.services.offline_detection import start_offline_detection, stop_offline_detection
 from app.services.purge_service import start_purge_task, stop_purge_task
+from app.services.polling_service import start_polling, stop_polling
+from app.api.settings import ensure_default_settings
+from app.core.database import async_session_maker
 
 # Configure logging
 logging.basicConfig(
@@ -36,11 +39,17 @@ async def lifespan(app: FastAPI):
     await init_db()
     logger.info("Database initialized")
 
+    # Seed any new default settings (existing values are preserved)
+    async with async_session_maker() as db:
+        await ensure_default_settings(db)
+    logger.info("Default settings ensured")
+
     # Start background tasks
     start_background_task()
     start_reconciliation_task()
     start_offline_detection()
     start_purge_task()
+    start_polling()
     logger.info("Background tasks started")
 
     yield
@@ -51,6 +60,7 @@ async def lifespan(app: FastAPI):
     stop_reconciliation_task()
     stop_offline_detection()
     stop_purge_task()
+    stop_polling()
     await close_db()
 
 

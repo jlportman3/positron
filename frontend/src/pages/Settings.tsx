@@ -30,7 +30,7 @@ import {
   VisibilityOff,
   Casino as GenerateIcon,
 } from '@mui/icons-material'
-import { settingsApi, splynxApi } from '../services/api'
+import { settingsApi, splynxApi, bandwidthsApi } from '../services/api'
 import Breadcrumb from '../components/Breadcrumb'
 
 interface TabPanelProps {
@@ -289,6 +289,11 @@ export default function Settings() {
   const { data: settingsData, isLoading } = useQuery({
     queryKey: ['settings-by-type'],
     queryFn: () => settingsApi.getByType().then((res) => res.data),
+  })
+
+  const { data: bandwidthPlans } = useQuery({
+    queryKey: ['bandwidths-all'],
+    queryFn: () => bandwidthsApi.list({ page_size: 200 }).then((res) => res.data.items || res.data),
   })
 
   // Initialize form data when settings are loaded
@@ -1035,14 +1040,19 @@ export default function Settings() {
                 </Alert>
               </Grid>
               <Grid item xs={12} md={6}>
-                <SettingField
-                  label="Default Bandwidth Profile"
-                  settingKey="splynx_default_bandwidth_profile"
-                  value={formData.splynx_default_bandwidth_profile || 'Unthrottled'}
-                  type="text"
-                  helperText="Bandwidth profile to assign when auto-provisioning"
-                  onChange={handleChange}
-                />
+                <FormControl fullWidth size="small">
+                  <InputLabel>Default Bandwidth Profile</InputLabel>
+                  <Select
+                    label="Default Bandwidth Profile"
+                    value={formData.splynx_default_bandwidth_profile || ''}
+                    onChange={(e) => handleChange('splynx_default_bandwidth_profile', e.target.value)}
+                  >
+                    <MenuItem value="">Unthrottled</MenuItem>
+                    {bandwidthPlans?.filter((bw: any) => !bw.deleted).map((bw: any) => (
+                      <MenuItem key={bw.id} value={bw.id}>{bw.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} md={6}>
                 <SettingField

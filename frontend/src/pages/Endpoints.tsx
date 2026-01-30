@@ -639,6 +639,12 @@ export default function Endpoints() {
                             color="primary"
                             variant="outlined"
                           />
+                        ) : endpoint.conf_user_name ? (
+                          <Chip
+                            label="Unthrottled"
+                            size="small"
+                            variant="outlined"
+                          />
                         ) : (
                           '-'
                         )}

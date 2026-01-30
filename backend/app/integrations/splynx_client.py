@@ -505,11 +505,10 @@ class SplynxClient:
         try:
             await self._request(
                 "POST",
-                f"/api/2.0/admin/customers/customer/{customer_id}/messages",
+                "/api/2.0/admin/customers/customer-notes",
                 json={
-                    "message": note,
-                    "type": "note",
-                    "author": author,
+                    "customer_id": customer_id,
+                    "comment": note,
                     "date_time": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
                 }
             )
@@ -527,7 +526,7 @@ class SplynxClient:
     async def create_ticket(
         self,
         subject: str,
-        message: str,
+        message: str = "",
         customer_id: Optional[int] = None,
         assigned_to: Optional[int] = None,
         priority: str = "medium",
@@ -537,9 +536,12 @@ class SplynxClient:
         """
         Create a ticket/task in Splynx.
 
+        Splynx requires two steps: create ticket, then add message body
+        via the ticket-messages endpoint.
+
         Args:
             subject: Ticket subject
-            message: Ticket body/message
+            message: Ticket body/message (added as first message)
             customer_id: Customer ID to link ticket to
             assigned_to: Admin ID to assign ticket to
             priority: low, medium, high
@@ -553,9 +555,7 @@ class SplynxClient:
 
         payload = {
             "subject": subject,
-            "message": message,
             "priority": priority,
-            "type": ticket_type,
         }
 
         if customer_id:
@@ -574,9 +574,27 @@ class SplynxClient:
                 json=payload
             )
 
-            logger.info(f"Created ticket ID: {result.get('id')}")
+            ticket_id = result.get("id")
+            logger.info(f"Created ticket ID: {ticket_id}")
+
+            # Add message body as a ticket message
+            if message and ticket_id:
+                try:
+                    await self._request(
+                        "POST",
+                        "/api/2.0/admin/support/ticket-messages",
+                        json={
+                            "ticket_id": ticket_id,
+                            "message": message,
+                            "type": "admin",
+                        }
+                    )
+                    logger.info(f"Added message to ticket {ticket_id}")
+                except SplynxApiError as e:
+                    logger.warning(f"Ticket {ticket_id} created but message failed: {e.message}")
+
             return SplynxTicket(
-                id=result.get("id"),
+                id=ticket_id,
                 subject=subject,
                 customer_id=customer_id,
                 status=result.get("status"),

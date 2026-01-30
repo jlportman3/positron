@@ -673,7 +673,7 @@ export default function DeviceDetail() {
                             <TableCell>{endpoint.model_string || endpoint.model_type || '-'}</TableCell>
                             <TableCell>{endpoint.detected_port_if_index || endpoint.conf_port_if_index || '-'}</TableCell>
                             <TableCell>{endpoint.conf_user_name || '-'}</TableCell>
-                            <TableCell>{endpoint.conf_bw_profile_name || (endpoint.conf_bw_profile_id === 0 ? 'Default BW Profile' : '-')}</TableCell>
+                            <TableCell>{endpoint.conf_bw_profile_name || (endpoint.conf_bw_profile_id === 0 ? 'Unthrottled' : '-')}</TableCell>
                             <TableCell>
                               {endpoint.rx_phy_rate && endpoint.tx_phy_rate
                                 ? `${endpoint.rx_phy_rate}/${endpoint.tx_phy_rate} Mbps`
@@ -756,7 +756,7 @@ export default function DeviceDetail() {
                               <Chip label="Yes" color="info" size="small" />
                             ) : '-'}
                           </TableCell>
-                          <TableCell>{sub.bw_profile_name || (sub.bw_profile_id === 0 ? 'Default BW Profile' : '-')}</TableCell>
+                          <TableCell>{sub.bw_profile_name || (sub.bw_profile_id === 0 ? 'Unthrottled' : '-')}</TableCell>
                           <TableCell>{sub.poe_mode_ctrl || '-'}</TableCell>
                         </TableRow>
                       ))}

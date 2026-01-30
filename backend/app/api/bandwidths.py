@@ -150,15 +150,93 @@ async def create_bandwidth(
             detail="Bandwidth profile with this name already exists on this device",
         )
 
+    # Create on the specified device
     bandwidth = Bandwidth(
         device_id=bandwidth_data.device_id,
         name=bandwidth_data.name,
         description=bandwidth_data.description,
         ds_bw=bandwidth_data.ds_bw,
         us_bw=bandwidth_data.us_bw,
-        sync=False,  # Not yet synced to device
+        sync=False,
     )
     db.add(bandwidth)
+    await db.commit()
+    await db.refresh(bandwidth)
+
+    # Push to ALL online devices (not just the specified one)
+    all_devices_result = await db.execute(
+        select(Device).where(Device.is_online == True)
+    )
+    all_devices = list(all_devices_result.scalars().all())
+
+    for dev in all_devices:
+        if not dev.ip_address:
+            continue
+
+        # Create DB record for other devices (the specified device already has one)
+        if dev.id != bandwidth_data.device_id:
+            existing_check = await db.execute(
+                select(Bandwidth).where(
+                    and_(
+                        Bandwidth.device_id == dev.id,
+                        Bandwidth.name == bandwidth_data.name,
+                        Bandwidth.deleted == False,
+                    )
+                )
+            )
+            if not existing_check.scalar_one_or_none():
+                other_bw = Bandwidth(
+                    device_id=dev.id,
+                    name=bandwidth_data.name,
+                    description=bandwidth_data.description,
+                    ds_bw=bandwidth_data.ds_bw,
+                    us_bw=bandwidth_data.us_bw,
+                    sync=False,
+                )
+                db.add(other_bw)
+
+        # Push to device via RPC
+        try:
+            client = await create_client_for_device(dev)
+            await client.add_bandwidth_profile(
+                name=bandwidth_data.name,
+                description=bandwidth_data.description or "",
+                ds_bw=bandwidth_data.ds_bw or 0,
+                us_bw=bandwidth_data.us_bw or 0,
+            )
+            await client.save_config()
+            await client.close()
+
+            # Mark synced
+            bw_result = await db.execute(
+                select(Bandwidth).where(
+                    and_(
+                        Bandwidth.device_id == dev.id,
+                        Bandwidth.name == bandwidth_data.name,
+                        Bandwidth.deleted == False,
+                    )
+                )
+            )
+            bw_record = bw_result.scalar_one_or_none()
+            if bw_record:
+                bw_record.sync = True
+                bw_record.sync_error = None
+        except Exception as e:
+            logger.error(f"Failed to push bandwidth '{bandwidth_data.name}' to {dev.serial_number}: {e}")
+            bw_result = await db.execute(
+                select(Bandwidth).where(
+                    and_(
+                        Bandwidth.device_id == dev.id,
+                        Bandwidth.name == bandwidth_data.name,
+                        Bandwidth.deleted == False,
+                    )
+                )
+            )
+            bw_record = bw_result.scalar_one_or_none()
+            if bw_record:
+                bw_record.sync = False
+                bw_record.sync_error = str(e)
+
     await db.commit()
     await db.refresh(bandwidth)
 

@@ -21,6 +21,7 @@ import {
   CircularProgress,
   Tooltip,
   Alert,
+  Snackbar,
   Checkbox,
   ButtonGroup,
   TextField,
@@ -59,6 +60,7 @@ export default function Firmware() {
   const [uploadRevision, setUploadRevision] = useState('')
   const [uploadTechnology, setUploadTechnology] = useState('')
   const [uploadIsDefault, setUploadIsDefault] = useState(false)
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' })
 
   // Device selection for bulk actions
   const [selectedDevices, setSelectedDevices] = useState<string[]>([])
@@ -97,9 +99,11 @@ export default function Firmware() {
       queryClient.invalidateQueries({ queryKey: ['firmware-mimo'] })
       queryClient.invalidateQueries({ queryKey: ['firmware-coax'] })
       handleCloseUpload()
+      setSnackbar({ open: true, message: 'Firmware uploaded successfully', severity: 'success' })
     },
     onError: (error: any) => {
       setUploadError(getErrorMessage(error, 'Upload failed'))
+      setSnackbar({ open: true, message: getErrorMessage(error, 'Upload failed'), severity: 'error' })
     },
   })
 
@@ -503,6 +507,17 @@ export default function Firmware() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} variant="filled">
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

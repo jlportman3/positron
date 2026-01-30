@@ -438,7 +438,7 @@ export default function EndpointDetail() {
               <Typography variant="subtitle2" gutterBottom>Subscriber</Typography>
               <InfoRow label="Subscriber Name" value={endpoint.conf_user_name} />
               <InfoRow label="Subscriber ID" value={endpoint.conf_user_id} />
-              <InfoRow label="Bandwidth Profile" value={endpoint.conf_bw_profile_name || (endpoint.conf_bw_profile_id === 0 ? 'Default BW Profile' : null)} />
+              <InfoRow label="Bandwidth Profile" value={endpoint.conf_bw_profile_name || (endpoint.conf_bw_profile_id === 0 ? 'Unthrottled' : null)} />
             </CardContent>
           </Card>
         </Grid>

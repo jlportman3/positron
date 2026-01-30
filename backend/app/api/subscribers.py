@@ -294,29 +294,14 @@ async def update_subscriber(
     )
 
 
-@router.delete("/{subscriber_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{subscriber_id}")
 async def delete_subscriber(
     subscriber_id: UUID,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(require_privilege(5)),  # Manager level
 ):
-    """Delete a subscriber from the database.
-
-    Note: This does NOT delete from the device.
-    """
-    result = await db.execute(
-        select(Subscriber).where(Subscriber.id == subscriber_id)
-    )
-    subscriber = result.scalar_one_or_none()
-
-    if not subscriber:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Subscriber not found",
-        )
-
-    await db.delete(subscriber)
-    await db.commit()
+    """Delete a subscriber — removes from both GAM device and database."""
+    return await delete_subscriber_from_device(subscriber_id, db, user)
 
 
 # Device push endpoints - these push changes to the actual device
@@ -413,6 +398,8 @@ async def create_subscriber_on_device(
         s = poe_setting.scalar_one_or_none()
         if s and s.value in ("enable", "disable"):
             poe_mode = s.value
+        else:
+            poe_mode = "disable"
 
     # Get bandwidth profile UID
     bw_profile_uid = 0
@@ -704,11 +691,23 @@ async def delete_subscriber_from_device(
             )
             endpoint = ep_result.scalar_one_or_none()
 
+        # Determine endpoint config ID to delete
+        ep_conf_id = None
         if endpoint and endpoint.conf_endpoint_id:
+            ep_conf_id = endpoint.conf_endpoint_id
+        elif subscriber.endpoint_json_id:
+            ep_conf_id = subscriber.endpoint_json_id
+
+        if ep_conf_id:
             try:
-                await client.delete_endpoint(endpoint.conf_endpoint_id)
-            except GamRpcError:
-                pass  # Non-critical — subscriber already deleted
+                await client.delete_endpoint(ep_conf_id)
+            except GamRpcError as rpc_err:
+                logger.warning(f"Failed to delete endpoint config {ep_conf_id}: {rpc_err}")
+        else:
+            logger.warning(
+                f"No endpoint config ID found for subscriber '{subscriber.name}' "
+                f"(mac={subscriber.endpoint_mac_address}) — endpoint config not removed from device"
+            )
 
         # Save config
         await client.save_config()

@@ -247,6 +247,13 @@ export default function Subscribers() {
       setDeleteDialogOpen(false)
       setDeletingSubscriber(null)
     },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail
+      const message = typeof detail === 'string' ? detail
+        : Array.isArray(detail) ? detail.map((e: any) => e.msg).join('; ')
+        : (error.message || 'Delete failed')
+      alert(`Delete failed: ${message}`)
+    },
   })
 
   const resetForm = () => {
@@ -483,7 +490,7 @@ export default function Subscribers() {
                     )}
                     {isColumnVisible('bandwidth') && (
                       <TableCell>
-                        {sub.bw_profile_name || (sub.bw_profile_id === 0 ? 'Default BW Profile' : '-')}
+                        {sub.bw_profile_name || (sub.bw_profile_id === 0 ? 'Unthrottled' : '-')}
                       </TableCell>
                     )}
                     {isColumnVisible('vlanPort1') && (

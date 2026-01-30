@@ -12,10 +12,6 @@ import {
   TableRow,
   Chip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Button,
   IconButton,
   Tooltip,
@@ -182,15 +178,15 @@ export default function Bandwidths() {
       setFormError('Name is required')
       return
     }
-    if (dialogMode === 'create' && !formData.device_id) {
-      setFormError('Device is required')
-      return
-    }
-
     setFormError('')
 
     if (dialogMode === 'create') {
-      createMutation.mutate(formData)
+      const deviceId = formData.device_id || devicesData?.items?.[0]?.id
+      if (!deviceId) {
+        setFormError('No devices available')
+        return
+      }
+      createMutation.mutate({ ...formData, device_id: deviceId })
     } else if (editingBandwidth) {
       updateMutation.mutate({
         id: editingBandwidth.id,
@@ -436,22 +432,9 @@ export default function Bandwidths() {
           <Grid container spacing={2} sx={{ pt: 1 }}>
             {dialogMode === 'create' && (
               <Grid item xs={12}>
-                <FormControl fullWidth size="small">
-                  <InputLabel>Device *</InputLabel>
-                  <Select
-                    value={formData.device_id}
-                    label="Device *"
-                    onChange={(e) =>
-                      setFormData({ ...formData, device_id: e.target.value })
-                    }
-                  >
-                    {devicesData?.items?.map((device: any) => (
-                      <MenuItem key={device.id} value={device.id}>
-                        {device.name || device.serial_number}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Alert severity="info" sx={{ py: 0 }}>
+                  New bandwidth profiles are automatically pushed to all GAM devices.
+                </Alert>
               </Grid>
             )}
             <Grid item xs={12}>

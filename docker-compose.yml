@@ -56,7 +56,7 @@ services:
       SSH_PORT: 2222
       BRAND_NAME: Alamo GAM
       FIRMWARE_DIR: /app/firmware
-      BASE_URL: http://localhost:8005
+      BASE_URL: http://10.0.60.38:8005
     ports:
       - "8005:8000"
       - "2223:2222"
@@ -64,21 +64,15 @@ services:
       - backend_data:/app/data
       - firmware_data:/app/firmware
 
-  # Frontend (React)
+  # Frontend (React + nginx)
   frontend:
     build: ./frontend
     container_name: alamogam_frontend
     restart: unless-stopped
     depends_on:
       - backend
-    environment:
-      VITE_API_URL: /api
-      VITE_PROXY_TARGET: http://backend:8000
     ports:
       - "3005:3000"
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
 
 volumes:
   postgres_data:

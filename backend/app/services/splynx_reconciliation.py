@@ -183,14 +183,12 @@ async def create_mismatch_ticket(
 
     body_lines.append("\nPlease review and correct as needed.")
 
-    ticket_data = {
-        "subject": subject,
-        "message": "\n".join(body_lines),
-        "priority": "normal",
-    }
-
     try:
-        await client.create_ticket(ticket_data)
+        await client.create_ticket(
+            subject=subject,
+            message="\n".join(body_lines),
+            priority="medium",
+        )
         logger.info(f"Created reconciliation ticket with {len(mismatches)} issues")
     except Exception as e:
         logger.error(f"Failed to create reconciliation ticket: {e}")

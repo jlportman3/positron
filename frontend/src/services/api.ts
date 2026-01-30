@@ -290,7 +290,9 @@ export const firmwareApi = {
     model_type?: string
   }) => api.get('/firmware', { params }),
   get: (id: string) => api.get(`/firmware/${id}`),
-  upload: (formData: FormData) => api.post('/firmware', formData),
+  upload: (formData: FormData) => api.post('/firmware', formData, {
+    headers: { 'Content-Type': undefined },
+  }),
   delete: (id: string) => api.delete(`/firmware/${id}`),
   setDefault: (id: string) => api.post(`/firmware/${id}/set-default`),
   deploy: (deviceId: string, firmwareId: string, autoSwap?: boolean) =>

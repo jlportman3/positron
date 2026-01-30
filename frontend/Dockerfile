@@ -1,20 +1,22 @@
-# Alamo GAM Frontend Dockerfile
-FROM node:20-alpine
+# Alamo GAM Frontend - Production Build
+FROM node:20-alpine AS build
 
-# Set working directory
 WORKDIR /app
-
-# Copy package files
 COPY package.json package-lock.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy source code
+RUN npm ci
 COPY . .
+ENV VITE_API_URL=/api
+RUN npm run build
 
-# Expose port
+# Production stage with nginx
+FROM nginx:alpine
+
+# Copy built assets
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copy nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
 EXPOSE 3000
 
-# Run development server
-CMD ["npm", "run", "dev"]
+CMD ["nginx", "-g", "daemon off;"]

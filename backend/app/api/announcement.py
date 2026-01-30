@@ -4,11 +4,13 @@ Device announcement endpoint.
 This is the endpoint GAM devices call to register themselves.
 PUT /device/announcement/request with Basic Auth (device:device)
 """
+import asyncio
 import logging
 from datetime import datetime
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, and_
 
 from app.api.deps import get_db, verify_device_auth
 from app.models import Device, Alarm
@@ -249,6 +251,7 @@ async def device_announcement(
         device.last_seen = now
         device.is_online = True
 
+        is_new_device = False
         logger.info(f"Updated device {serial_number}")
 
     else:
@@ -331,6 +334,7 @@ async def device_announcement(
             is_online=True,
         )
         db.add(device)
+        is_new_device = True
         logger.info(f"Created new device {serial_number}")
 
     await db.commit()
@@ -340,6 +344,10 @@ async def device_announcement(
     active_alarms_data = data.get("activeAlarms", [])
     if active_alarms_data and isinstance(active_alarms_data, list):
         await process_active_alarms(db, device, active_alarms_data)
+
+    # Push all bandwidth plans to newly joined devices
+    if is_new_device:
+        asyncio.create_task(_push_bandwidth_plans_to_device(device.id))
 
     # Return success - devices expect 200 OK
     return {"status": "ok", "serial_number": serial_number}
@@ -456,3 +464,75 @@ async def process_active_alarms(
             logger.info(f"Closed alarm {alarm.gam_id}: {alarm.cond_type} for device {device.serial_number}")
 
     await db.commit()
+
+
+async def _push_bandwidth_plans_to_device(device_id: UUID):
+    """Push all existing bandwidth plans to a newly joined device."""
+    from app.core.database import async_session_maker
+    from app.models import Bandwidth
+    from app.rpc.client import create_client_for_device
+
+    # Wait a few seconds for the device to fully initialize
+    await asyncio.sleep(5)
+
+    async with async_session_maker() as db:
+        dev_result = await db.execute(select(Device).where(Device.id == device_id))
+        device = dev_result.scalar_one_or_none()
+        if not device or not device.ip_address:
+            return
+
+        # Get unique bandwidth plan names from any device (deduplicate by name)
+        bw_result = await db.execute(
+            select(Bandwidth).where(Bandwidth.deleted == False)
+        )
+        all_bw = bw_result.scalars().all()
+
+        seen_names = set()
+        plans_to_push = []
+        for bw in all_bw:
+            if bw.name not in seen_names:
+                seen_names.add(bw.name)
+                plans_to_push.append(bw)
+
+        if not plans_to_push:
+            return
+
+        logger.info(f"Pushing {len(plans_to_push)} bandwidth plan(s) to new device {device.serial_number}")
+
+        try:
+            client = await create_client_for_device(device)
+            for bw in plans_to_push:
+                try:
+                    await client.add_bandwidth_profile(
+                        name=bw.name,
+                        description=bw.description or "",
+                        ds_bw=bw.ds_bw or 0,
+                        us_bw=bw.us_bw or 0,
+                    )
+                    existing = await db.execute(
+                        select(Bandwidth).where(
+                            and_(
+                                Bandwidth.device_id == device.id,
+                                Bandwidth.name == bw.name,
+                                Bandwidth.deleted == False,
+                            )
+                        )
+                    )
+                    if not existing.scalar_one_or_none():
+                        db.add(Bandwidth(
+                            device_id=device.id,
+                            name=bw.name,
+                            description=bw.description,
+                            ds_bw=bw.ds_bw,
+                            us_bw=bw.us_bw,
+                            sync=True,
+                        ))
+                except Exception as e:
+                    logger.error(f"Failed to push bandwidth '{bw.name}' to {device.serial_number}: {e}")
+
+            await client.save_config()
+            await client.close()
+            await db.commit()
+            logger.info(f"Pushed bandwidth plans to {device.serial_number}")
+        except Exception as e:
+            logger.error(f"Error pushing bandwidth plans to {device.serial_number}: {e}")

@@ -144,7 +144,7 @@ async def login(
         key="session_id",
         value=session_id,
         httponly=True,
-        secure=not settings.debug,
+        secure=False,  # TODO: enable when HTTPS is configured
         samesite="lax",
         max_age=settings.access_token_expire_minutes * 60,
     )
@@ -225,7 +225,7 @@ async def refresh_session(
         key="session_id",
         value=session.id,
         httponly=True,
-        secure=not settings.debug,
+        secure=False,  # TODO: enable when HTTPS is configured
         samesite="lax",
         max_age=settings.access_token_expire_minutes * 60,
     )

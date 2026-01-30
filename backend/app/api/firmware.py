@@ -47,17 +47,64 @@ def compute_sha256(filepath: Path) -> str:
 def parse_firmware_xml(xml_path: Path) -> dict:
     """Parse firmware.xml manifest to extract version metadata.
 
-    Virtuoso manifest format:
-    <firmware>
-      <version>1.8.1</version>
-      <revision>r5</revision>
-      <technology>mimo</technology>
-      <portQty>12-24</portQty>
-    </firmware>
+    Positron manifest format (namespaced XML):
+    <Envelope xmlns="urn:envelope">
+      <Data>
+        <firmware xmlns="https://..." version="1.8.2" revision="r28146"
+                  build-date="..." technology="coax">
+          <compatible>
+            <product name="GAM4CRX"/>...
+          </compatible>
+          <files>
+            <file name="..." sha256="..." encrypted="true" keyid="..."/>
+          </files>
+        </firmware>
+      </Data>
+    </Envelope>
     """
     try:
         tree = ET.parse(xml_path)
         root = tree.getroot()
+
+        # Search for <firmware> element at any depth, ignoring namespaces
+        fw_elem = None
+        for elem in root.iter():
+            tag = elem.tag.split("}")[-1] if "}" in elem.tag else elem.tag
+            if tag == "firmware":
+                fw_elem = elem
+                break
+
+        if fw_elem is not None:
+            # Metadata is in attributes
+            compatible = []
+            for child in fw_elem.iter():
+                child_tag = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+                if child_tag == "product":
+                    name = child.get("name", "")
+                    if name:
+                        compatible.append(name)
+
+            # Derive port_qty from compatible product names
+            port_qty = ""
+            ports = set()
+            for p in compatible:
+                # GAM4CRX -> 4, GAM8CX -> 8, GAM12MIMO -> 12, GAM24MIMO -> 24
+                m = re.match(r'GAM(\d+)', p)
+                if m:
+                    ports.add(m.group(1))
+            if ports:
+                port_qty = "-".join(sorted(ports, key=int))
+
+            return {
+                "version": fw_elem.get("version", ""),
+                "revision": fw_elem.get("revision", ""),
+                "technology": fw_elem.get("technology", ""),
+                "port_qty": port_qty,
+                "build_date": fw_elem.get("build-date", ""),
+                "compatible": compatible,
+            }
+
+        # Fallback: try simple child text elements
         return {
             "version": root.findtext("version", ""),
             "revision": root.findtext("revision", ""),
@@ -69,20 +116,39 @@ def parse_firmware_xml(xml_path: Path) -> dict:
 
 
 def parse_folder_name(folder_name: str) -> dict:
-    """Parse firmware folder name to extract metadata.
+    """Parse firmware filename to extract metadata.
 
-    Format: GAM_{version}_{technology}_{ports}_{revision}
-    Example: GAM_1_8_1_mimo_12-24_r5
+    Supported formats:
+      gam4-8_coax_1_8_2_r28146_positronfw
+      gam12-24_mimo_1_8_1_r27000_positronfw
+      GAM_1_8_1_mimo_12-24_r5
     """
+    # Format: gam{ports}_{technology}_{ver}_{revision}_positronfw
+    match = re.match(
+        r'gam([\d-]+)_(\w+?)_(\d+_\d+_\d+)_(r\w+)_positronfw',
+        folder_name,
+        re.IGNORECASE,
+    )
+    if match:
+        port_qty, technology, version_raw, revision = match.groups()
+        return {
+            "version": version_raw.replace("_", "."),
+            "technology": technology.lower(),
+            "port_qty": port_qty,
+            "revision": revision,
+        }
+
+    # Legacy format: GAM_{version}_{technology}_{ports}_{revision}
     match = re.match(
         r'GAM_(\d+_\d+_\d+)_(\w+)_([\d-]+)_(\w+)',
-        folder_name
+        folder_name,
+        re.IGNORECASE,
     )
     if match:
         version_raw, technology, port_qty, revision = match.groups()
         return {
             "version": version_raw.replace("_", "."),
-            "technology": technology,
+            "technology": technology.lower(),
             "port_qty": port_qty,
             "revision": revision,
         }
