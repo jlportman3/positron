@@ -24,6 +24,7 @@ import {
   BookmarkBorder as VersionsIcon,
   Business as AdminIcon,
   Logout as LogoutIcon,
+  Settings as SettingsIcon,
   ExpandLess,
   ExpandMore,
   SupervisorAccount as UsersHeaderIcon,
@@ -209,13 +210,6 @@ export default function Layout({ children }: LayoutProps) {
         </Typography>
       </Box>
 
-      {/* Logged as user */}
-      <Box sx={{ px: 2, pb: 2 }}>
-        <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-          Logged as <strong style={{ color: '#51bcda' }}>{user?.username || 'admin'}({user?.privilege_level || 15})</strong>
-        </Typography>
-      </Box>
-
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
 
       {/* Navigation Sections */}
@@ -290,29 +284,29 @@ export default function Layout({ children }: LayoutProps) {
         ))}
       </Box>
 
-      {/* Logout */}
+      {/* User info + settings + logout */}
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
-      <ListItemButton
-        onClick={handleLogout}
-        sx={{
-          py: 1.5,
-          px: 2,
-          '&:hover': { backgroundColor: 'rgba(255,255,255,0.05)' },
-        }}
-      >
-        <ListItemIcon sx={{ minWidth: 28, color: 'rgba(255,255,255,0.7)' }}>
-          <LogoutIcon fontSize="small" />
-        </ListItemIcon>
-        <ListItemText
-          primary="LOGOUT"
-          primaryTypographyProps={{
-            fontSize: '0.75rem',
-            fontWeight: 500,
-            color: 'rgba(255,255,255,0.9)',
-            letterSpacing: '0.3px',
-          }}
-        />
-      </ListItemButton>
+      <Box sx={{ px: 2, py: 1.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box
+            onClick={() => navigate('/my-settings')}
+            sx={{ display: 'flex', alignItems: 'center', gap: 1, cursor: 'pointer', '&:hover .gear-icon': { color: '#51bcda' } }}
+          >
+            <SettingsIcon className="gear-icon" sx={{ fontSize: 18, color: 'rgba(255,255,255,0.5)', transition: 'color 0.2s' }} />
+            <Box>
+              <Typography sx={{ color: '#51bcda', fontSize: '0.8rem', fontWeight: 600, lineHeight: 1.2 }}>
+                {user?.username || 'admin'}
+              </Typography>
+              <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.65rem', lineHeight: 1.2 }}>
+                {user?.privilege_name || 'Master'}
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={handleLogout} size="small" sx={{ color: 'rgba(255,255,255,0.6)', '&:hover': { color: '#eb5757' } }}>
+            <LogoutIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      </Box>
     </Box>
   )
 

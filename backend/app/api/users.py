@@ -1,9 +1,13 @@
 """
 User management API endpoints.
 """
+import logging
+import uuid as uuid_mod
+from datetime import datetime, timedelta
 from typing import Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
@@ -11,6 +15,29 @@ from app.core.security import hash_password, PRIVILEGE_LEVELS
 from app.api.deps import get_db, get_current_user, require_privilege
 from app.models import User
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserList
+from app.services.notification_service import NotificationService
+
+logger = logging.getLogger(__name__)
+
+
+def _user_response(u: User) -> UserResponse:
+    return UserResponse(
+        id=u.id,
+        username=u.username,
+        email=u.email,
+        enabled=u.enabled,
+        is_device=u.is_device,
+        is_radius=u.is_radius,
+        privilege_level=u.privilege_level,
+        privilege_name=PRIVILEGE_LEVELS.get(u.privilege_level, "Unknown"),
+        session_timeout=u.session_timeout,
+        timezone=u.timezone,
+        last_activity=u.last_activity,
+        last_login=u.last_login,
+        invitation_pending=bool(u.invitation_token),
+        created_at=u.created_at,
+        updated_at=u.updated_at,
+    )
 
 router = APIRouter()
 
@@ -49,25 +76,7 @@ async def list_users(
     result = await db.execute(query)
     users = result.scalars().all()
 
-    items = [
-        UserResponse(
-            id=u.id,
-            username=u.username,
-            email=u.email,
-            enabled=u.enabled,
-            is_device=u.is_device,
-            is_radius=u.is_radius,
-            privilege_level=u.privilege_level,
-            privilege_name=PRIVILEGE_LEVELS.get(u.privilege_level, "Unknown"),
-            session_timeout=u.session_timeout,
-            timezone=u.timezone,
-            last_activity=u.last_activity,
-            last_login=u.last_login,
-            created_at=u.created_at,
-            updated_at=u.updated_at,
-        )
-        for u in users
-    ]
+    items = [_user_response(u) for u in users]
 
     return UserList(
         items=items,
@@ -82,22 +91,7 @@ async def get_current_user_info(
     user: User = Depends(get_current_user),
 ):
     """Get current user's information."""
-    return UserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        enabled=user.enabled,
-        is_device=user.is_device,
-        is_radius=user.is_radius,
-        privilege_level=user.privilege_level,
-        privilege_name=PRIVILEGE_LEVELS.get(user.privilege_level, "Unknown"),
-        session_timeout=user.session_timeout,
-        timezone=user.timezone,
-        last_activity=user.last_activity,
-        last_login=user.last_login,
-        created_at=user.created_at,
-        updated_at=user.updated_at,
-    )
+    return _user_response(user)
 
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -118,22 +112,7 @@ async def get_user(
             detail="User not found",
         )
 
-    return UserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        enabled=user.enabled,
-        is_device=user.is_device,
-        is_radius=user.is_radius,
-        privilege_level=user.privilege_level,
-        privilege_name=PRIVILEGE_LEVELS.get(user.privilege_level, "Unknown"),
-        session_timeout=user.session_timeout,
-        timezone=user.timezone,
-        last_activity=user.last_activity,
-        last_login=user.last_login,
-        created_at=user.created_at,
-        updated_at=user.updated_at,
-    )
+    return _user_response(user)
 
 
 @router.post("", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -185,22 +164,7 @@ async def create_user(
     await db.commit()
     await db.refresh(user)
 
-    return UserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        enabled=user.enabled,
-        is_device=user.is_device,
-        is_radius=user.is_radius,
-        privilege_level=user.privilege_level,
-        privilege_name=PRIVILEGE_LEVELS.get(user.privilege_level, "Unknown"),
-        session_timeout=user.session_timeout,
-        timezone=user.timezone,
-        last_activity=user.last_activity,
-        last_login=user.last_login,
-        created_at=user.created_at,
-        updated_at=user.updated_at,
-    )
+    return _user_response(user)
 
 
 @router.patch("/{user_id}", response_model=UserResponse)
@@ -250,22 +214,7 @@ async def update_user(
     await db.commit()
     await db.refresh(user)
 
-    return UserResponse(
-        id=user.id,
-        username=user.username,
-        email=user.email,
-        enabled=user.enabled,
-        is_device=user.is_device,
-        is_radius=user.is_radius,
-        privilege_level=user.privilege_level,
-        privilege_name=PRIVILEGE_LEVELS.get(user.privilege_level, "Unknown"),
-        session_timeout=user.session_timeout,
-        timezone=user.timezone,
-        last_activity=user.last_activity,
-        last_login=user.last_login,
-        created_at=user.created_at,
-        updated_at=user.updated_at,
-    )
+    return _user_response(user)
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -302,3 +251,131 @@ async def delete_user(
 
     await db.delete(user)
     await db.commit()
+
+
+class InviteUserRequest(BaseModel):
+    username: str = Field(..., min_length=1, max_length=64)
+    email: EmailStr
+    privilege_level: int = Field(5, ge=0, le=15)
+    session_timeout: int = Field(30, ge=1, le=1440)
+
+
+@router.post("/invite", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+async def invite_user(
+    data: InviteUserRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_privilege(7)),
+):
+    """Invite a new user via email. Creates a disabled account with an invitation token."""
+    # Check duplicate username
+    existing = await db.execute(select(User).where(User.username == data.username))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Username already exists")
+
+    # Check duplicate email
+    existing_email = await db.execute(select(User).where(User.email == data.email))
+    if existing_email.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Email already exists")
+
+    if data.privilege_level > current_user.privilege_level:
+        raise HTTPException(status_code=403, detail="Cannot invite user with higher privilege level")
+
+    token = uuid_mod.uuid4().hex
+    expires = datetime.utcnow() + timedelta(hours=72)
+
+    user = User(
+        username=data.username,
+        email=data.email,
+        password_hash="!invited",  # unusable hash
+        enabled=False,
+        privilege_level=data.privilege_level,
+        session_timeout=data.session_timeout,
+        invitation_token=token,
+        invitation_expires=expires,
+        created_by=current_user.username,
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+
+    # Build invite URL from request origin
+    origin = request.headers.get("origin", "")
+    if not origin:
+        origin = f"{request.url.scheme}://{request.url.hostname}"
+        if request.url.port and request.url.port not in (80, 443):
+            origin += f":{request.url.port}"
+    invite_url = f"{origin}/accept-invite?token={token}"
+
+    # Send invitation email
+    try:
+        ns = NotificationService(db)
+        await ns.send_email(
+            to=data.email,
+            subject="Alamo GAM - You've been invited",
+            body=f"You have been invited to Alamo GAM by {current_user.username}.\n\nClick the link below to set your password and activate your account:\n\n{invite_url}\n\nThis link expires in 72 hours.",
+            html_body=f"""
+<h2>Alamo GAM Invitation</h2>
+<p>You have been invited to Alamo GAM by <strong>{current_user.username}</strong>.</p>
+<p>Click the link below to set your password and activate your account:</p>
+<p><a href="{invite_url}" style="display:inline-block;padding:10px 20px;background:#51bcda;color:white;text-decoration:none;border-radius:4px;">Accept Invitation</a></p>
+<p style="color:#999;font-size:12px;">This link expires in 72 hours. If the button doesn't work, copy this URL: {invite_url}</p>
+""",
+        )
+    except Exception as e:
+        logger.error(f"Failed to send invitation email to {data.email}: {e}")
+        # Don't fail the creation, just warn
+        pass
+
+    return _user_response(user)
+
+
+@router.post("/{user_id}/resend-invite")
+async def resend_invite(
+    user_id: UUID,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_privilege(7)),
+):
+    """Resend invitation email for a pending user."""
+    result = await db.execute(select(User).where(User.id == user_id))
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if user.enabled:
+        raise HTTPException(status_code=400, detail="User is already active")
+
+    if not user.email:
+        raise HTTPException(status_code=400, detail="User has no email address")
+
+    # Regenerate token
+    token = uuid_mod.uuid4().hex
+    user.invitation_token = token
+    user.invitation_expires = datetime.utcnow() + timedelta(hours=72)
+    await db.commit()
+
+    origin = request.headers.get("origin", "")
+    if not origin:
+        origin = f"{request.url.scheme}://{request.url.hostname}"
+        if request.url.port and request.url.port not in (80, 443):
+            origin += f":{request.url.port}"
+    invite_url = f"{origin}/accept-invite?token={token}"
+
+    try:
+        ns = NotificationService(db)
+        await ns.send_email(
+            to=user.email,
+            subject="Alamo GAM - Invitation Reminder",
+            body=f"You have been invited to Alamo GAM.\n\nClick the link below to set your password:\n\n{invite_url}\n\nThis link expires in 72 hours.",
+            html_body=f"""
+<h2>Alamo GAM Invitation</h2>
+<p>This is a reminder that you have been invited to Alamo GAM.</p>
+<p><a href="{invite_url}" style="display:inline-block;padding:10px 20px;background:#51bcda;color:white;text-decoration:none;border-radius:4px;">Accept Invitation</a></p>
+<p style="color:#999;font-size:12px;">This link expires in 72 hours.</p>
+""",
+        )
+        return {"message": f"Invitation resent to {user.email}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {e}")

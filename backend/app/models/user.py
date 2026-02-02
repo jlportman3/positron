@@ -38,6 +38,10 @@ class User(Base):
     session_timeout: Mapped[int] = mapped_column(Integer, default=30)  # minutes
     timezone: Mapped[Optional[str]] = mapped_column(String(64))
 
+    # Invitation
+    invitation_token: Mapped[Optional[str]] = mapped_column(String(64), unique=True, index=True)
+    invitation_expires: Mapped[Optional[datetime]] = mapped_column(DateTime)
+
     # Activity tracking
     ip_address: Mapped[Optional[str]] = mapped_column(String(64))
     last_activity: Mapped[Optional[datetime]] = mapped_column(DateTime)

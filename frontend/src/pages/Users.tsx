@@ -25,12 +25,14 @@ import {
   FormControlLabel,
   Switch,
   Alert,
+  Chip,
 } from '@mui/material'
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   VpnKey as PasswordIcon,
   MoreVert as MoreIcon,
+  Send as SendIcon,
 } from '@mui/icons-material'
 import Menu from '@mui/material/Menu'
 import ListItemIcon from '@mui/material/ListItemIcon'
@@ -175,6 +177,32 @@ export default function Users() {
     },
   })
 
+  const inviteMutation = useMutation({
+    mutationFn: (data: any) => usersApi.invite(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+      handleCloseDialog()
+    },
+    onError: (error: any) => {
+      const detail = error.response?.data?.detail
+      setFormError(typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.map((d: any) => d.msg || JSON.stringify(d)).join(', ') : 'Failed to send invitation')
+    },
+  })
+
+  const resendInviteMutation = useMutation({
+    mutationFn: (id: string) => usersApi.resendInvite(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] })
+    },
+  })
+
+  const handleMenuResendInvite = () => {
+    if (selectedUser) {
+      resendInviteMutation.mutate(selectedUser.id)
+    }
+    handleCloseActionMenu()
+  }
+
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<UserFormData> }) =>
       usersApi.update(id, data),
@@ -261,13 +289,18 @@ export default function Users() {
       setFormError('Username is required')
       return
     }
-    if (dialogMode === 'create' && !formData.password) {
-      setFormError('Password is required for new users')
-      return
-    }
 
     if (dialogMode === 'create') {
-      createMutation.mutate({ ...formData, email: formData.email || undefined } as any)
+      if (!formData.email) {
+        setFormError('Email is required for invitations')
+        return
+      }
+      inviteMutation.mutate({
+        username: formData.username,
+        email: formData.email,
+        privilege_level: formData.privilege_level,
+        session_timeout: formData.session_timeout,
+      })
     } else if (editingUser) {
       const updateData: Partial<UserFormData> = {
         username: formData.username,
@@ -323,7 +356,7 @@ export default function Users() {
         pageSizeOptions={[10, 20, 50, 100]}
         actions={[
           {
-            label: 'Create New User',
+            label: 'Invite User',
             onClick: () => handleOpenDialog('create'),
           },
           {
@@ -400,7 +433,11 @@ export default function Users() {
                       <TableCell>{user.timezone || 'America/Chicago'}</TableCell>
                     )}
                     {isColumnVisible('enabled') && (
-                      <TableCell>{user.enabled ? 'Yes' : 'No'}</TableCell>
+                      <TableCell>
+                        {user.enabled ? 'Yes' : user.invitation_pending ? (
+                          <Chip label="Pending Invite" size="small" color="warning" variant="outlined" />
+                        ) : 'No'}
+                      </TableCell>
                     )}
                     {isColumnVisible('device') && (
                       <TableCell>{user.is_device ? 'Yes' : '-'}</TableCell>
@@ -430,13 +467,18 @@ export default function Users() {
         )}
       </Paper>
 
-      {/* Create/Edit Dialog */}
+      {/* Create (Invite) / Edit Dialog */}
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>{dialogMode === 'create' ? 'Add User' : 'Edit User'}</DialogTitle>
+        <DialogTitle>{dialogMode === 'create' ? 'Invite User' : 'Edit User'}</DialogTitle>
         <DialogContent>
           {formError && (
             <Alert severity="error" sx={{ mb: 2, mt: 1 }}>
               {formError}
+            </Alert>
+          )}
+          {dialogMode === 'create' && (
+            <Alert severity="info" sx={{ mb: 2, mt: 1 }}>
+              An invitation email will be sent. The user will set their own password.
             </Alert>
           )}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
@@ -453,16 +495,18 @@ export default function Users() {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              fullWidth
-            />
-            <TextField
-              label={dialogMode === 'create' ? 'Password' : 'New Password (leave blank to keep current)'}
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               required={dialogMode === 'create'}
               fullWidth
             />
+            {dialogMode === 'edit' && (
+              <TextField
+                label="New Password (leave blank to keep current)"
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                fullWidth
+              />
+            )}
             <FormControl fullWidth>
               <InputLabel>Privilege Level</InputLabel>
               <Select
@@ -485,15 +529,17 @@ export default function Users() {
               fullWidth
               inputProps={{ min: 1, max: 1440 }}
             />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={formData.enabled}
-                  onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
-                />
-              }
-              label="Enabled"
-            />
+            {dialogMode === 'edit' && (
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={formData.enabled}
+                    onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+                  />
+                }
+                label="Enabled"
+              />
+            )}
           </Box>
         </DialogContent>
         <DialogActions>
@@ -501,9 +547,9 @@ export default function Users() {
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={createMutation.isPending || updateMutation.isPending}
+            disabled={inviteMutation.isPending || createMutation.isPending || updateMutation.isPending}
           >
-            {dialogMode === 'create' ? 'Create' : 'Save'}
+            {dialogMode === 'create' ? 'Send Invitation' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -581,6 +627,14 @@ export default function Users() {
           </ListItemIcon>
           <ListItemText>Change Password</ListItemText>
         </MenuItem>
+        {selectedUser?.invitation_pending && (
+          <MenuItem onClick={handleMenuResendInvite}>
+            <ListItemIcon>
+              <SendIcon fontSize="small" color="primary" />
+            </ListItemIcon>
+            <ListItemText>Resend Invite</ListItemText>
+          </MenuItem>
+        )}
         <MenuItem onClick={handleMenuDelete} disabled={selectedUser?.username === 'admin'}>
           <ListItemIcon>
             <DeleteIcon fontSize="small" color="error" />

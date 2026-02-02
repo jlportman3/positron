@@ -47,6 +47,7 @@ class UserResponse(BaseModel):
     timezone: Optional[str] = None
     last_activity: Optional[datetime] = None
     last_login: Optional[datetime] = None
+    invitation_pending: bool = False
     created_at: datetime
     updated_at: datetime
 

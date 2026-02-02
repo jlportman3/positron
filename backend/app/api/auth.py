@@ -8,11 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.config import settings
-from app.core.security import verify_password, generate_session_id, PRIVILEGE_LEVELS
+from app.core.security import verify_password, hash_password, generate_session_id, PRIVILEGE_LEVELS
 from app.core.database import async_session_maker
 from app.models import User, Session
 from app.models.setting import Setting
 from app.schemas.auth import LoginRequest, LoginResponse, SessionInfo
+from pydantic import BaseModel
 from app.api.deps import get_db, get_current_session, get_current_user
 
 logger = logging.getLogger(__name__)
@@ -231,3 +232,67 @@ async def refresh_session(
     )
 
     return {"message": "Session refreshed", "expires_at": session.expires_at}
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+@router.post("/change-password")
+async def change_password(
+    data: ChangePasswordRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Change the current user's password."""
+    if not verify_password(data.current_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+
+    if len(data.new_password) < 4:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password must be at least 4 characters",
+        )
+
+    user.password_hash = hash_password(data.new_password)
+    await db.commit()
+
+    return {"message": "Password changed successfully"}
+
+
+class AcceptInviteRequest(BaseModel):
+    token: str
+    password: str
+
+
+@router.post("/accept-invite")
+async def accept_invite(
+    data: AcceptInviteRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Accept an invitation and set password. No auth required."""
+    if len(data.password) < 4:
+        raise HTTPException(status_code=400, detail="Password must be at least 4 characters")
+
+    result = await db.execute(
+        select(User).where(User.invitation_token == data.token)
+    )
+    user = result.scalar_one_or_none()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired invitation")
+
+    if user.invitation_expires and user.invitation_expires < datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Invitation has expired")
+
+    user.password_hash = hash_password(data.password)
+    user.enabled = True
+    user.invitation_token = None
+    user.invitation_expires = None
+    await db.commit()
+
+    return {"message": "Account activated successfully. You can now log in."}

@@ -37,6 +37,8 @@ export const authApi = {
     api.post('/auth/login', { username, password }),
   logout: () => api.post('/auth/logout'),
   getSession: () => api.get('/auth/session'),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post('/auth/change-password', { current_password: currentPassword, new_password: newPassword }),
 }
 
 // Devices API
@@ -129,6 +131,10 @@ export const usersApi = {
   create: (data: any) => api.post('/users', data),
   update: (id: string, data: any) => api.patch(`/users/${id}`, data),
   delete: (id: string) => api.delete(`/users/${id}`),
+  invite: (data: any) => api.post('/users/invite', data),
+  resendInvite: (id: string) => api.post(`/users/${id}/resend-invite`),
+  acceptInvite: (token: string, password: string) =>
+    api.post('/auth/accept-invite', { token, password }),
 }
 
 // Ports API

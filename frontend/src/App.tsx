@@ -22,6 +22,8 @@ import Timezones from './pages/Timezones'
 import Sessions from './pages/Sessions'
 import SystemInfo from './pages/SystemInfo'
 import Logs from './pages/Logs'
+import MySettings from './pages/MySettings'
+import AcceptInvite from './pages/AcceptInvite'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
@@ -37,6 +39,7 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/accept-invite" element={<AcceptInvite />} />
       <Route
         path="/*"
         element={
@@ -63,6 +66,7 @@ function App() {
                 <Route path="/sessions" element={<Sessions />} />
                 <Route path="/system-info" element={<SystemInfo />} />
                 <Route path="/logs" element={<Logs />} />
+                <Route path="/my-settings" element={<MySettings />} />
                 <Route path="/firmware/add" element={<Navigate to="/firmware?upload=true" replace />} />
               </Routes>
             </Layout>
