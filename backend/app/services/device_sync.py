@@ -85,15 +85,58 @@ class DeviceSyncService:
             except Exception as e:
                 logger.error(f"Error syncing uptime for {device.serial_number}: {e}")
 
-            # Update device online status
-            device.is_online = True
-            device.last_seen = datetime.utcnow()
+            # Update device online status - only mark online if at least one operation succeeded
+            any_success = (
+                results["endpoints"]["success"] or
+                results["subscribers"]["success"] or
+                results["bandwidths"]["success"] or
+                results["ports"]["success"]
+            )
+
+            if any_success:
+                device.is_online = True
+                device.last_seen = datetime.utcnow()
+            else:
+                # All operations failed - device is not reachable
+                device.is_online = False
+                logger.warning(f"Device {device.serial_number} marked offline - all sync operations failed")
+
+                # Cascade offline status to endpoints and subscribers
+                endpoint_result = await self.db.execute(
+                    select(Endpoint).where(Endpoint.device_id == device.id)
+                )
+                for endpoint in endpoint_result.scalars():
+                    if endpoint.alive:
+                        endpoint.alive = False
+
+                subscriber_result = await self.db.execute(
+                    select(Subscriber).where(Subscriber.device_id == device.id)
+                )
+                for subscriber in subscriber_result.scalars():
+                    if subscriber.alive:
+                        subscriber.alive = False
 
             await self.db.commit()
 
         except Exception as e:
             logger.error(f"Error connecting to device {device.serial_number}: {e}")
             device.is_online = False
+
+            # Cascade offline status to endpoints and subscribers
+            endpoint_result = await self.db.execute(
+                select(Endpoint).where(Endpoint.device_id == device.id)
+            )
+            for endpoint in endpoint_result.scalars():
+                if endpoint.alive:
+                    endpoint.alive = False
+
+            subscriber_result = await self.db.execute(
+                select(Subscriber).where(Subscriber.device_id == device.id)
+            )
+            for subscriber in subscriber_result.scalars():
+                if subscriber.alive:
+                    subscriber.alive = False
+
             await self.db.commit()
             raise
 
