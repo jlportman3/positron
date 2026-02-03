@@ -69,6 +69,9 @@ class Subscriber(Base):
     nni_if_index: Mapped[Optional[str]] = mapped_column(String(32))
     poe_mode_ctrl: Mapped[Optional[str]] = mapped_column(String(32))  # auto, on, off
 
+    # Status
+    alive: Mapped[bool] = mapped_column(Boolean, default=False)
+
     # Splynx integration
     splynx_customer_id: Mapped[Optional[int]] = mapped_column(Integer, index=True)
     splynx_service_id: Mapped[Optional[int]] = mapped_column(Integer, index=True)

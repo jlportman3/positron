@@ -86,6 +86,7 @@ async def list_subscribers(
             port_if_index=s.port_if_index,
             nni_if_index=s.nni_if_index,
             poe_mode_ctrl=s.poe_mode_ctrl,
+            alive=s.alive,
             created_at=s.created_at,
             updated_at=s.updated_at,
         )
@@ -144,6 +145,7 @@ async def get_subscriber(
         port_if_index=subscriber.port_if_index,
         nni_if_index=subscriber.nni_if_index,
         poe_mode_ctrl=subscriber.poe_mode_ctrl,
+        alive=subscriber.alive,
         created_at=subscriber.created_at,
         updated_at=subscriber.updated_at,
     )
@@ -232,6 +234,7 @@ async def create_subscriber(
         port_if_index=subscriber.port_if_index,
         nni_if_index=subscriber.nni_if_index,
         poe_mode_ctrl=subscriber.poe_mode_ctrl,
+        alive=subscriber.alive,
         created_at=subscriber.created_at,
         updated_at=subscriber.updated_at,
     )
@@ -289,6 +292,7 @@ async def update_subscriber(
         port_if_index=subscriber.port_if_index,
         nni_if_index=subscriber.nni_if_index,
         poe_mode_ctrl=subscriber.poe_mode_ctrl,
+        alive=subscriber.alive,
         created_at=subscriber.created_at,
         updated_at=subscriber.updated_at,
     )

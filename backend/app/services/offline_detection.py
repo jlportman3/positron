@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import async_session_maker
-from app.models import Device, Alarm, Setting
+from app.models import Device, Alarm, Setting, Endpoint, Subscriber
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +124,32 @@ async def check_offline_devices():
             )
             if not existing.scalar_one_or_none():
                 db.add(alarm)
+
+            # Mark all endpoints for this device as not alive
+            endpoint_result = await db.execute(
+                select(Endpoint).where(Endpoint.device_id == device.id)
+            )
+            endpoints = endpoint_result.scalars().all()
+            endpoint_count = 0
+            for endpoint in endpoints:
+                if endpoint.alive:
+                    endpoint.alive = False
+                    endpoint_count += 1
+            if endpoint_count:
+                logger.info(f"Marked {endpoint_count} endpoint(s) offline for device {device.serial_number}")
+
+            # Mark all subscribers for this device as not alive
+            subscriber_result = await db.execute(
+                select(Subscriber).where(Subscriber.device_id == device.id)
+            )
+            subscribers = subscriber_result.scalars().all()
+            subscriber_count = 0
+            for subscriber in subscribers:
+                if subscriber.alive:
+                    subscriber.alive = False
+                    subscriber_count += 1
+            if subscriber_count:
+                logger.info(f"Marked {subscriber_count} subscriber(s) offline for device {device.serial_number}")
 
         await db.commit()
 

@@ -389,6 +389,7 @@ class DeviceSyncService:
                 subscriber.double_tags = double_tags
                 subscriber.nni_if_index = nni_if_index
                 subscriber.poe_mode_ctrl = poe_mode_ctrl
+                subscriber.alive = True  # Device is online, so subscriber is alive
             else:
                 # Create new subscriber
                 subscriber = Subscriber(
@@ -414,6 +415,7 @@ class DeviceSyncService:
                     double_tags=double_tags,
                     nni_if_index=nni_if_index,
                     poe_mode_ctrl=poe_mode_ctrl,
+                    alive=True,  # Device is online, so subscriber is alive
                 )
                 self.db.add(subscriber)
 

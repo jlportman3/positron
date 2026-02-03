@@ -85,6 +85,7 @@ const defaultFormData: SubscriberFormData = {
 
 // All available columns
 const allColumns = [
+  { id: 'status', label: 'Status', visible: true },
   { id: 'name', label: 'Name', visible: true },
   { id: 'description', label: 'Description', visible: true },
   { id: 'endpoint', label: 'Endpoint', visible: true },
@@ -409,6 +410,11 @@ export default function Subscribers() {
           <Table size="small">
             <TableHead>
               <TableRow>
+                {isColumnVisible('status') && (
+                  <TableCell>
+                    <Tooltip title="Online/offline status"><span>Status</span></Tooltip>
+                  </TableCell>
+                )}
                 {isColumnVisible('name') && (
                   <TableCell>
                     <Tooltip title="Subscriber account identifier"><span>Name</span></Tooltip>
@@ -467,6 +473,16 @@ export default function Subscribers() {
                     sx={{ cursor: 'pointer' }}
                     onClick={() => navigate(`/subscribers/${sub.id}`)}
                   >
+                    {isColumnVisible('status') && (
+                      <TableCell>
+                        <Chip
+                          label={sub.alive ? 'Online' : 'Offline'}
+                          size="small"
+                          color={sub.alive ? 'success' : 'default'}
+                          variant={sub.alive ? 'filled' : 'outlined'}
+                        />
+                      </TableCell>
+                    )}
                     {isColumnVisible('name') && (
                       <TableCell>
                         <Typography variant="body2" fontWeight="medium">

@@ -101,6 +101,9 @@ class SubscriberResponse(BaseModel):
     nni_if_index: Optional[str] = None
     poe_mode_ctrl: Optional[str] = None
 
+    # Status
+    alive: bool = False
+
     # Timestamps
     created_at: datetime
     updated_at: datetime
