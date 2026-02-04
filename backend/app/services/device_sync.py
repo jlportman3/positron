@@ -5,12 +5,13 @@ Handles pulling data from GAM devices via JSON-RPC and storing it in the databas
 """
 import logging
 import re
+import time
 from datetime import datetime
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
-from app.models import Device, Endpoint, Subscriber, Bandwidth, Port
+from app.models import Device, Endpoint, Subscriber, Bandwidth, Port, SyncAttempt
 from app.rpc.client import GamRpcClient, GamRpcError, create_client_for_device
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,24 @@ class DeviceSyncService:
 
     def __init__(self, db: AsyncSession):
         self.db = db
+
+    async def _record_sync_attempt(
+        self,
+        device_id: str,
+        operation: str,
+        success: bool,
+        duration_ms: int,
+        error_message: str = None
+    ):
+        """Record a sync attempt for health tracking."""
+        attempt = SyncAttempt(
+            device_id=device_id,
+            operation=operation,
+            success=success,
+            duration_ms=duration_ms,
+            error_message=error_message
+        )
+        self.db.add(attempt)
 
     async def sync_device(self, device: Device) -> dict:
         """Sync all data from a device.
@@ -44,40 +63,96 @@ class DeviceSyncService:
 
         try:
             # Sync endpoints
+            start_time = time.monotonic()
             try:
                 count = await self.sync_endpoints(device, client)
                 results["endpoints"] = {"success": True, "count": count, "error": None}
                 device.last_endpoint_brief_pulled = datetime.utcnow()
+                await self._record_sync_attempt(
+                    device_id=str(device.id),
+                    operation="endpoints",
+                    success=True,
+                    duration_ms=int((time.monotonic() - start_time) * 1000)
+                )
             except Exception as e:
                 logger.error(f"Error syncing endpoints for {device.serial_number}: {e}")
                 results["endpoints"]["error"] = str(e)
+                await self._record_sync_attempt(
+                    device_id=str(device.id),
+                    operation="endpoints",
+                    success=False,
+                    duration_ms=int((time.monotonic() - start_time) * 1000),
+                    error_message=str(e)
+                )
 
             # Sync subscribers
+            start_time = time.monotonic()
             try:
                 count = await self.sync_subscribers(device, client)
                 results["subscribers"] = {"success": True, "count": count, "error": None}
                 device.last_subscriber_pulled = datetime.utcnow()
+                await self._record_sync_attempt(
+                    device_id=str(device.id),
+                    operation="subscribers",
+                    success=True,
+                    duration_ms=int((time.monotonic() - start_time) * 1000)
+                )
             except Exception as e:
                 logger.error(f"Error syncing subscribers for {device.serial_number}: {e}")
                 results["subscribers"]["error"] = str(e)
+                await self._record_sync_attempt(
+                    device_id=str(device.id),
+                    operation="subscribers",
+                    success=False,
+                    duration_ms=int((time.monotonic() - start_time) * 1000),
+                    error_message=str(e)
+                )
 
             # Sync bandwidth profiles
+            start_time = time.monotonic()
             try:
                 count = await self.sync_bandwidths(device, client)
                 results["bandwidths"] = {"success": True, "count": count, "error": None}
                 device.last_bandwidth_pulled = datetime.utcnow()
+                await self._record_sync_attempt(
+                    device_id=str(device.id),
+                    operation="bandwidths",
+                    success=True,
+                    duration_ms=int((time.monotonic() - start_time) * 1000)
+                )
             except Exception as e:
                 logger.error(f"Error syncing bandwidths for {device.serial_number}: {e}")
                 results["bandwidths"]["error"] = str(e)
+                await self._record_sync_attempt(
+                    device_id=str(device.id),
+                    operation="bandwidths",
+                    success=False,
+                    duration_ms=int((time.monotonic() - start_time) * 1000),
+                    error_message=str(e)
+                )
 
             # Sync port status
+            start_time = time.monotonic()
             try:
                 count = await self.sync_ports(device, client)
                 results["ports"] = {"success": True, "count": count, "error": None}
                 device.last_port_pulled = datetime.utcnow()
+                await self._record_sync_attempt(
+                    device_id=str(device.id),
+                    operation="ports",
+                    success=True,
+                    duration_ms=int((time.monotonic() - start_time) * 1000)
+                )
             except Exception as e:
                 logger.error(f"Error syncing ports for {device.serial_number}: {e}")
                 results["ports"]["error"] = str(e)
+                await self._record_sync_attempt(
+                    device_id=str(device.id),
+                    operation="ports",
+                    success=False,
+                    duration_ms=int((time.monotonic() - start_time) * 1000),
+                    error_message=str(e)
+                )
 
             # Sync uptime
             try:
