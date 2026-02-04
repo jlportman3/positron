@@ -21,6 +21,7 @@ from app.models.notification import NotificationSubscription, NotificationLog
 from app.models.timezone import Timezone
 from app.models.splynx_lookup_task import SplynxLookupTask
 from app.models.config_backup import ConfigBackup
+from app.models.sync_attempt import SyncAttempt
 
 __all__ = [
     "Base",
@@ -41,4 +42,5 @@ __all__ = [
     "Timezone",
     "SplynxLookupTask",
     "ConfigBackup",
+    "SyncAttempt",
 ]
