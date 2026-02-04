@@ -44,6 +44,8 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material'
 import { devicesApi, endpointsApi, subscribersApi, portsApi, bandwidthsApi, configBackupApi } from '../services/api'
+import HealthScore from '../components/HealthScore'
+import HealthChart from '../components/HealthChart'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -509,6 +511,24 @@ export default function DeviceDetail() {
               </Table>
             </CardContent>
           </Card>
+        </Grid>
+
+        {/* Health Section */}
+        <Grid item xs={12} md={6}>
+          <Card>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>Health Status</Typography>
+              <HealthScore
+                score={device.health_score || 100}
+                status={device.health_status || 'healthy'}
+                showBar
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <HealthChart deviceId={device.id} />
         </Grid>
 
         {/* VLANs in Use */}

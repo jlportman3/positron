@@ -3,7 +3,7 @@ API routers for Alamo GAM.
 """
 from fastapi import APIRouter
 
-from app.api import auth, devices, announcement, users, endpoints, subscribers, alarms, ports, bandwidths, firmware, groups, settings, audit_logs, dashboard, notifications, export, timezones, sessions, splynx, config_backups, subscriber_import
+from app.api import auth, devices, announcement, users, endpoints, subscribers, alarms, ports, bandwidths, firmware, groups, settings, audit_logs, dashboard, notifications, export, timezones, sessions, splynx, config_backups, subscriber_import, health
 
 # Main API router
 api_router = APIRouter()
@@ -30,3 +30,4 @@ api_router.include_router(sessions.router, tags=["Sessions"])
 api_router.include_router(splynx.router, tags=["Splynx Integration"])
 api_router.include_router(config_backups.router, prefix="/config-backups", tags=["Config Backups"])
 api_router.include_router(subscriber_import.router, prefix="/subscriber-import", tags=["Subscriber Import"])
+api_router.include_router(health.router, prefix="/health", tags=["Health Monitoring"])

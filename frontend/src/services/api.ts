@@ -359,3 +359,11 @@ export const splynxApi = {
   lookupEndpoint: (endpointId: string) =>
     api.post(`/splynx/lookup/${endpointId}`),
 }
+
+// Health Monitoring API
+export const healthApi = {
+  getFleetSummary: (period = '7d') => api.get(`/health/fleet/summary?period=${period}`),
+  getDeviceHistory: (deviceId: string, period = '7d') =>
+    api.get(`/health/devices/${deviceId}/history?period=${period}`),
+  triggerCheck: () => api.post('/health/check'),
+}

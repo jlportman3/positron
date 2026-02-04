@@ -16,6 +16,7 @@ import {
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { dashboardApi, settingsApi } from '../services/api'
 import { alarmColors } from '../theme'
+import FleetHealth from '../components/FleetHealth'
 
 // Status card - horizontal layout with icon on left
 function StatusCard({
@@ -475,6 +476,13 @@ export default function Dashboard() {
               )}
             </Box>
           </ChartCard>
+        </Grid>
+      </Grid>
+
+      {/* Row 4: Fleet Health */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={4}>
+          <FleetHealth />
         </Grid>
       </Grid>
 

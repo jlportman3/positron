@@ -34,10 +34,12 @@ import { devicesApi, exportApi, downloadFile } from '../services/api'
 import { formatDistanceToNow } from 'date-fns'
 import Breadcrumb from '../components/Breadcrumb'
 import ListToolbar from '../components/ListToolbar'
+import HealthScore from '../components/HealthScore'
 
 // All available columns
 const allColumns = [
   { id: 'status', label: 'Status', visible: true },
+  { id: 'health', label: 'Health', visible: true },
   { id: 'sync', label: 'Sync', visible: false },
   { id: 'name', label: 'System Name', visible: true },
   { id: 'serial', label: 'Serial Number', visible: true },
@@ -227,6 +229,11 @@ export default function Devices() {
                     <Tooltip title="Device online/offline status and read-only mode"><span>Status</span></Tooltip>
                   </TableCell>
                 )}
+                {isColumnVisible('health') && (
+                  <TableCell>
+                    <Tooltip title="Device health score based on alarms and metrics"><span>Health</span></Tooltip>
+                  </TableCell>
+                )}
                 {isColumnVisible('sync') && (
                   <TableCell>
                     <Tooltip title="Data synchronization status with the device"><span>Sync</span></Tooltip>
@@ -340,6 +347,14 @@ export default function Devices() {
                           <Chip label="RO" color="warning" size="small" variant="outlined" />
                         )}
                       </Box>
+                    </TableCell>
+                  )}
+                  {isColumnVisible('health') && (
+                    <TableCell>
+                      <HealthScore
+                        score={device.health_score || 100}
+                        status={device.health_status || 'healthy'}
+                      />
                     </TableCell>
                   )}
                   {isColumnVisible('sync') && (

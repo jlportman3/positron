@@ -136,6 +136,11 @@ class Device(Base):
     # Config backup
     config_backup: Mapped[Optional[str]] = mapped_column(Text)
 
+    # Health monitoring
+    health_score: Mapped[int] = mapped_column(Integer, default=100)
+    health_status: Mapped[str] = mapped_column(String(20), default="healthy")  # healthy/degraded/critical/offline
+    last_health_check: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+
     # Optimistic locking
     version: Mapped[int] = mapped_column(Integer, default=1)
 
@@ -154,6 +159,12 @@ class Device(Base):
     )
     alarms: Mapped[List["Alarm"]] = relationship(
         "Alarm", back_populates="device", cascade="all, delete-orphan"
+    )
+    sync_attempts: Mapped[List["SyncAttempt"]] = relationship(
+        "SyncAttempt", back_populates="device", cascade="all, delete-orphan"
+    )
+    health_history: Mapped[List["DeviceHealthHistory"]] = relationship(
+        "DeviceHealthHistory", back_populates="device", cascade="all, delete-orphan"
     )
 
     def __repr__(self) -> str:

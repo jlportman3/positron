@@ -201,6 +201,11 @@ class DeviceResponse(BaseModel):
     subscriber_count: int = 0
     alarm_count: int = 0
 
+    # Health monitoring
+    health_score: int = 100
+    health_status: str = "healthy"
+    last_health_check: Optional[datetime] = None
+
     class Config:
         from_attributes = True
 
