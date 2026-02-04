@@ -158,6 +158,9 @@ class Device(Base):
     sync_attempts: Mapped[List["SyncAttempt"]] = relationship(
         "SyncAttempt", back_populates="device", cascade="all, delete-orphan"
     )
+    health_history: Mapped[List["DeviceHealthHistory"]] = relationship(
+        "DeviceHealthHistory", back_populates="device", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Device {self.serial_number} ({self.name})>"

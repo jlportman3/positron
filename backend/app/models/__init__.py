@@ -22,6 +22,7 @@ from app.models.timezone import Timezone
 from app.models.splynx_lookup_task import SplynxLookupTask
 from app.models.config_backup import ConfigBackup
 from app.models.sync_attempt import SyncAttempt
+from app.models.device_health_history import DeviceHealthHistory
 
 __all__ = [
     "Base",
@@ -43,4 +44,5 @@ __all__ = [
     "SplynxLookupTask",
     "ConfigBackup",
     "SyncAttempt",
+    "DeviceHealthHistory",
 ]
